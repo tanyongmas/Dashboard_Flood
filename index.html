@@ -1,0 +1,2688 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบรายงานสถานการณ์น้ำท่วม ทต.ตันหยงมัส</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; background-color: #f0f9ff; margin: 0; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        
+        /* Sidebar Desktop Logic */
+        .sidebar-expanded { width: 14rem; }
+        .sidebar-collapsed { width: 4.5rem; }
+        .nav-text, .logo-text { transition: opacity 0.2s; }
+        .sidebar-collapsed .nav-text, .sidebar-collapsed .logo-text { display: none; }
+        
+        /* Active States */
+        .active-menu { background-color: #eff6ff; border-left: 4px solid #2563eb; color: #1e40af; font-weight: bold; }
+        .active-menu-mobile { color: #2563eb !important; font-weight: bold; }
+
+        .animate-pulse-fast { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .7; } }
+        
+        #loginPage { position: fixed; inset: 0; z-index: 1000; background-color: #2f3e5f; display: flex; align-items: center; justify-content: center; }
+        /* ค้นหาส่วน <style> และเพิ่ม/แก้ไขโค้ดด้านล่างนี้ */
+        .water-card-img-container { height: 100px; width: 100%; overflow: hidden; background-color: #e2e8f0; } /* เริ่มต้นที่ 100px สำหรับมือถือ */
+            @media (min-width: 768px) { .water-card-img-container { height: 160px; } } /* ขยายเป็น 160px สำหรับคอมพิวเตอร์ */
+
+            @media (max-width: 767px) {
+                .main-content-area { padding-bottom: 120px !important; } /* เพิ่มช่องว่างด้านล่างกัน Bottom Bar บัง */
+                .card-title { font-size: 0.75rem; } /* ย่อชื่อพื้นที่ */
+                .card-value { font-size: 1.25rem; } /* ย่อตัวเลขระดับน้ำ */
+        }
+
+        /* Responsive Display Logic */
+        @media (max-width: 767px) {
+            .sidebar-desktop { display: none !important; }
+            .bottom-nav-mobile { display: flex !important; }
+            .content-area { padding-bottom: 80px; } /* Space for Footer */
+        }
+        @media (min-width: 768px) {
+            .sidebar-desktop { display: flex !important; }
+            .bottom-nav-mobile { display: none !important; }
+            .content-area { padding-bottom: 20px; }
+        }
+
+        .shelter-filter-btn.active-shelter-btn {
+        background-color: #2563eb !important;
+        color: white !important;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .trend-btn { opacity: 0.6; transform: scale(0.95); }
+    .active-trend { 
+        opacity: 1 !important; 
+        transform: scale(1.05) !important; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+    }
+    /* สีขอบปุ่มเมื่อถูกเลือก */
+    .active-trend[onclick*="เพิ่มขึ้น"] { border-color: #ef4444 !important; }
+    .active-trend[onclick*="คงตัว"] { border-color: #eab308 !important; }
+    .active-trend[onclick*="ลดลง"] { border-color: #22c55e !important; }
+
+    /* ปรับแต่งความสูงให้แสดงผลประมาณ 15 คน (ประมาณ 650px) */
+    .no-scrollbar-style::-webkit-scrollbar {
+        width: 4px;
+    }
+    .no-scrollbar-style::-webkit-scrollbar-track {
+        background: #f8fafc;
+    }
+    .no-scrollbar-style::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+
+    /* การจัดการ Layout สำหรับมือถือ */
+@media (max-width: 1024px) {
+    /* ซ่อน Sidebar ปกติ */
+    #sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    /* เมื่อเปิด Sidebar ในมือถือ */
+    #sidebar.mobile-open {
+        transform: translateX(0);
+        width: 280px !important;
+    }
+
+    /* ปรับระยะขอบเนื้อหาหลัก */
+    #mainContent {
+        margin-left: 0 !important;
+        padding-bottom: 80px; /* เว้นที่ให้ Bottom Nav */
+    }
+
+    /* แสดง Bottom Nav เฉพาะในจอเล็ก */
+    #bottomNav {
+        display: flex !important;
+    }
+}
+
+/* สไตล์ Bottom Navigation */
+#bottomNav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #f1f5f9;
+    z-index: 100;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 800;
+    transition: all 0.2s;
+}
+
+.mobile-nav-btn.active {
+    color: #2563eb;
+}
+
+.mobile-nav-btn i {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+/* Animation สำหรับหมุดวิกฤต (สีแดง) */
+@keyframes pulse-red {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 15px rgba(220, 38, 38, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+    }
+}
+
+.critical-pulse {
+    animation: pulse-red 1.5s infinite;
+    border-radius: 50%;
+}
+/* ปรับแต่งสไตล์พื้นฐานของ Leaflet Popup */
+.leaflet-popup-content-wrapper {
+    border-radius: 1.5rem;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+    margin: 0 !important;
+    width: 220px !important;
+}
+
+.leaflet-popup-tip {
+    background: white;
+}
+
+/* คลาสช่วยสำหรับ Popup */
+.popup-badge {
+    font-size: 9px;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+/* --- CSS สำหรับการพิมพ์รายงาน (Print Styles) --- */
+@media print {
+    /* 1. ซ่อนองค์ประกอบที่ไม่เกี่ยวข้องทั้งหมด (Sidebar, Navbar, ปุ่มต่างๆ) */
+    body > *:not(#printArea) {
+        display: none !important;
+    }
+
+    /* 2. แสดงพื้นที่พิมพ์และขยายให้เต็มหน้ากระดาษ */
+    #printArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: white;
+    }
+
+    /* 3. ตั้งค่าหน้ากระดาษ A4 แนวนอน (Landscape) */
+    @page {
+        size: A4 landscape;
+        margin: 1cm;
+    }
+
+    /* 4. จัดการเลย์เอาต์หน้าแรก (หน้ากราฟ) */
+    .print-page {
+        width: 100%;
+        height: 100%;
+    }
+
+    .report-header {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #334155;
+        padding-bottom: 10px;
+    }
+
+    .chart-container-print {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .chart-container-print img {
+        width: 45%; /* แสดง 2 กราฟต่อแถว */
+        height: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        object-fit: contain;
+    }
+
+    /* 5. บังคับขึ้นหน้าใหม่สำหรับตารางรายชื่อ */
+    .page-break {
+        display: block;
+        page-break-before: always !important;
+        margin-top: 50px;
+    }
+
+    /* 6. สไตล์ตารางรายงาน (เน้นความชัดเจนและประหยัดหมึก) */
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: white;
+    }
+
+    .print-table th {
+        background-color: #f1f5f9 !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1;
+        padding: 10px 5px;
+        font-size: 14px;
+        -webkit-print-color-adjust: exact; /* บังคับพิมพ์สีพื้นหลัง */
+    }
+
+    .print-table td {
+        border: 1px solid #cbd5e1;
+        padding: 8px 5px;
+        font-size: 12px;
+        color: #334155;
+        vertical-align: middle;
+    }
+
+    /* 7. ส่วนท้ายกระดาษ (ถ้ามี) */
+    .print-footer {
+        margin-top: 30px;
+        text-align: right;
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    /* ป้องกันตารางขาดกลางแถว */
+    tr {
+        page-break-inside: avoid;
+    }
+}
+
+/* ซ่อนพื้นที่พิมพ์ในหน้าเว็บปกติ */
+#printArea.hidden {
+    display: none;
+}
+
+/* ซ่อนในโหมดหน้าจอปกติ */
+#printArea.hidden { display: none; }
+</style>
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <div id="loginPage">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center mx-4">
+            <img src="https://img2.pic.in.th/pic/71f81565dc59a7f9545542493a5514ab.png" class="w-24 mx-auto mb-4">
+            <h1 class="text-2xl font-bold text-blue-900 mb-2">รายงานสถานการณ์น้ำท่วม<br>เทศบาลตำบลตันหยงมัส</h1>
+            <p class="text-sm text-slate-500 mb-8">กรุณากรอกชื่อผู้ใช้เพื่อเข้าใช้งานระบบ</p>
+            <input type="text" id="username" placeholder="ระบุชื่อผู้ใช้งาน" class="w-full p-4 border border-blue-100 rounded-2xl mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50">
+            <button onclick="doLogin()" id="loginBtn" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-lg">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <div id="mainApp" class="hidden flex min-h-screen">
+        
+        <aside id="sidebar" class="sidebar-desktop sidebar-expanded bg-white shadow-md flex-shrink-0 flex flex-col border-r border-blue-50 transition-all duration-300 sticky top-0 h-screen no-print">
+            <div class="p-4 text-center border-b border-blue-50 relative">
+                <img src="https://img2.pic.in.th/pic/71f81565dc59a7f9545542493a5514ab.png" class="w-16 mx-auto">
+                <h1 class="logo-text text-[14px] font-bold text-blue-800 mt-2 uppercase">ระบบรายงาน<br>สถานการณ์น้ำท่วม<br>เทศบาลตำบลตันหยงมัส</h1>
+            </div>
+
+            <nav class="mt-4 flex-1">
+                <button onclick="showPage('water')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50 active-menu" data-page="water"><i class="fas fa-tint w-6 text-center"></i> <span class="nav-text ml-3">สถานการณ์ระดับน้ำ</span></button>
+                <button onclick="showPage('addWater')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="addWater"><i class="fas fa-plus-circle w-6 text-center"></i> <span class="nav-text ml-3">รายงานระดับน้ำ</span></button>
+                <button onclick="showPage('shelter')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="shelter"><i class="fas fa-hotel w-6 text-center"></i> <span class="nav-text ml-3">ศูนย์พักพิง</span></button>
+                <button onclick="showPage('regis')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="regis"><i class="fas fa-user-plus w-6 text-center"></i> <span class="nav-text ml-3">ลงทะเบียนใหม่</span></button>
+                <button onclick="showPage('relief')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-amber-50" data-page="relief"><i class="fa-solid fa-box-archive w-6 text-center"></i> <span class="nav-text ml-3">ข้อมูลผู้รับถุงยังชีพ</span></button>
+                <button onclick="showPage('looker')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="looker"><i class="fas fa-chart-pie w-6 text-center"></i> <span class="nav-text ml-3">รายงานข้อมูลน้ำท่วม</span></button>
+            </nav>
+
+            <div class="p-4 border-t border-blue-50">
+    
+    <button id="adminMenuBtn" onclick="showPage('userManagement')" class="hidden w-full items-center justify-center p-3 mb-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white transition-all shadow-md active:scale-95" data-page="userManagement">
+        <i class="fas fa-users-cog"></i>
+        <span class="nav-text ml-2 text-xs font-bold uppercase tracking-wider">จัดการผู้ใช้งาน</span>
+        
+    </button>
+    <div class="mt-auto border-t border-slate-100 p-4">
+    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl">
+        <div class="flex items-center space-x-3 overflow-hidden">
+            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="overflow-hidden">
+                <p id="displayUserName" class="text-[11px] font-black text-slate-700 truncate">Guest</p>
+                <p id="displayUserRole" class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Staff</p>
+            </div>
+        </div>
+        
+        <button onclick="handleLogout()" class="text-slate-300 hover:text-rose-500 transition-colors p-1" title="ออกจากระบบ">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+    </div>
+</div>
+    <button onclick="toggleSidebar()" class="w-full flex items-center justify-center p-2 rounded-xl hover:bg-blue-50 text-slate-400 transition-all">
+        <i id="sideIcon" class="fas fa-chevron-left"></i>
+        <span class="nav-text ml-2 text-xs font-bold uppercase tracking-wider">ย่อเมนู</span>
+    </button>
+</div>
+        </aside>
+        
+       <div class="bottom-nav-mobile hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-blue-100 flex justify-around items-center py-2 px-1 z-50 shadow-[0_-2px_20px_rgba(0,0,0,0.1)]">
+    
+    <button onclick="showPage('water')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="water">
+        <i class="fas fa-tint text-xl"></i>
+        <span class="text-[8px] mt-1 font-bold">ระดับน้ำ</span>
+    </button>
+
+    <button onclick="showPage('addWater')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="addWater">
+        <i class="fas fa-plus-circle text-xl"></i>
+        <span class="text-[8px] mt-1 font-bold">รายงานน้ำ</span>
+    </button>
+
+    <button onclick="showPage('shelter')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="shelter">
+        <i class="fas fa-hotel text-xl"></i>
+        <span class="text-[8px] mt-1 font-bold">ศูนย์พักพิง</span>
+    </button>
+
+    <button onclick="showPage('regis')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="regis">
+        <i class="fas fa-user-plus text-xl"></i>
+        <span class="text-[8px] mt-1 font-bold">ลงทะเบียน</span>
+    </button>
+
+    <button onclick="showPage('relief')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="relief">
+        <i class="fa-solid fa-box-archive text-xl"></i>
+        <span class="text-[8px] mt-1 font-bold">ถุงยังชีพ</span>
+    </button>
+
+    <button onclick="handleLogout()" class="flex flex-col items-center flex-1 text-rose-400 py-1 active:scale-90 transition-transform">
+        <i class="fas fa-sign-out-alt text-xl"></i>
+        <span class="text-[8px] mt-1 font-bold">ออก</span>
+    </button>
+    
+</div>
+
+        <main class="flex-1 flex flex-col min-w-0 main-content-area">
+            <header class="bg-white border-b border-blue-50 p-4 px-6 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+                <h2 id="pageTitle" class="font-bold text-blue-900 uppercase text-sm md:text-base tracking-wide">สถานการณ์ระดับน้ำปัจจุบัน</h2>
+                <div class="flex items-center gap-2">
+                    <div class="text-[10px] text-blue-500 bg-blue-50 px-2 py-1 rounded-full font-bold no-print"><i class="far fa-clock"></i> <span id="lastUpdate">-</span></div>
+                    <button onclick="loadData()" class="bg-blue-600 text-white w-8 h-8 rounded-lg hover:bg-blue-700 transition shadow-md active:scale-90 flex items-center justify-center"><i class="fas fa-sync-alt text-[10px]"></i></button>
+                </div>
+            </header>
+
+            <div class="p-4 md:p-8 max-w-7xl mx-auto w-full content-area">
+                
+                <section id="waterPage" class="content-page">
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-blue-50 mb-8">
+                        <div class="flex flex-wrap gap-4 items-end mb-6 no-print">
+                            <div class="w-full md:flex-1 min-w-[150px]">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ตัวกรองพื้นที่ (เฉพาะที่มีข้อมูล)</label>
+                                <select id="chartLocFilter" onchange="updateWaterChart()" class="w-full p-2.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs outline-none focus:ring-1 focus:ring-blue-300"></select>
+                            </div>
+                            <div class="w-full md:flex-1 min-w-[250px]">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ช่วงเวลา</label>
+                                <div class="flex gap-2">
+                                    <input type="date" id="startDate" onchange="updateWaterChart()" class="p-2.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs flex-1 outline-none">
+                                    <input type="date" id="endDate" onchange="updateWaterChart()" class="p-2.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs flex-1 outline-none">
+                                </div>
+                            </div>
+                            <div class="flex gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+                                <button onclick="setDateFilter('today')" class="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg hover:bg-white transition">วันนี้</button>
+                                <button onclick="setDateFilter('yesterday')" class="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg hover:bg-white transition">เมื่อวาน</button>
+                                <button onclick="setDateFilter('week')" class="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg hover:bg-white transition">7 วัน</button>
+                            </div>
+                        </div>
+                        <div class="h-[250px] md:h-[350px]"><canvas id="waterChart"></canvas></div>
+                    </div>
+
+                    <div class="mb-4 flex justify-between items-center px-1">
+                        <h3 class="font-bold text-blue-900 text-sm md:text-base">รายการล่าสุดของแต่ละพื้นที่</h3>
+                        <select id="cardLocFilter" onchange="renderWaterCards()" class="p-2 bg-white border border-blue-100 rounded-xl text-[10px] shadow-sm font-bold no-print outline-none"></select>
+                    </div>
+                    <div id="waterList" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6"></div>
+                    <div class="px-4 mt-10 mb-10">
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-4 border-b border-slate-50 flex justify-between items-center">
+            <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider">
+                <i class="fas fa-map-marked-alt mr-2 text-blue-500"></i> แผนที่จุดวัดระดับน้ำ
+            </h3>
+            <span class="text-[10px] text-slate-400 font-bold">Real-time</span>
+        </div>
+        
+        <div id="waterMap" class="w-full h-[400px] md:h-[500px] z-10"></div>
+        
+        <div class="p-4 bg-slate-50 flex flex-wrap gap-4 justify-center border-t border-slate-100">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+                <span class="text-[10px] font-bold text-slate-500">ปกติ (0 ซม.)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-yellow-400 shadow-sm"></div>
+                <span class="text-[10px] font-bold text-slate-500">เฝ้าระวัง (1-50 ซม.)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
+                <span class="text-[10px] font-bold text-slate-500">เตือนภัย (51-100 ซม.)</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-red-600 shadow-sm"></div>
+                <span class="text-[10px] font-bold text-slate-500">วิกฤต (>101 ซม.)</span>
+            </div>
+        </div>
+    </div>
+</div>
+                </section>
+
+                <section id="addWaterPage" class="content-page hidden">
+    <div class="bg-white p-6 md:p-10 rounded-3xl shadow-lg border border-blue-50 max-w-2xl mx-auto">
+        <h3 class="text-xl font-bold text-blue-900 mb-6 flex items-center tracking-tight">
+            <i class="fas fa-camera-retro mr-3 text-blue-500"></i> บันทึกระดับน้ำ
+        </h3>
+        <form id="waterForm" onsubmit="saveWater(event)" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 ml-1">พื้นที่จุดวัดน้ำ</label>
+                    <select id="water_loc" class="w-full p-3 border border-blue-100 bg-blue-50 rounded-xl outline-none" required></select>
+                </div>
+                
+                <div>
+                    <label class="text-xs font-bold text-slate-500 ml-1">แนวโน้มระดับน้ำ</label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="hidden" id="water_trend" value="คงตัว" required>
+                        <button type="button" onclick="selectTrend('เพิ่มขึ้น', this)" class="trend-btn flex-1 py-3 rounded-xl border-2 border-transparent bg-red-50 text-red-600 text-[11px] font-bold transition-all flex flex-col items-center gap-1">
+                            <i class="fas fa-chart-line"></i> เพิ่มขึ้น
+                        </button>
+                        <button type="button" onclick="selectTrend('คงตัว', this)" class="trend-btn flex-1 py-3 rounded-xl border-2 border-yellow-400 bg-yellow-50 text-yellow-600 text-[11px] font-bold transition-all flex flex-col items-center gap-1 active-trend">
+                            <i class="fas fa-equals"></i> คงตัว
+                        </button>
+                        <button type="button" onclick="selectTrend('ลดลง', this)" class="trend-btn flex-1 py-3 rounded-xl border-2 border-transparent bg-green-50 text-green-600 text-[11px] font-bold transition-all flex flex-col items-center gap-1">
+                            <i class="fas fa-chart-line fa-flip-vertical"></i> ลดลง
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 ml-1">ระดับน้ำ (ซม.)</label>
+                    <input type="number" id="water_val" class="w-full p-3 border border-blue-100 bg-blue-50 rounded-xl font-bold text-blue-600 outline-none" required>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 ml-1">พิกัด GPS</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="water_coords" readonly class="w-full p-3 border border-blue-100 bg-gray-100 rounded-xl text-[10px] outline-none" placeholder="ดึงพิกัดอัตโนมัติ">
+                        <button type="button" onclick="getLocation()" class="bg-blue-100 text-blue-600 px-4 rounded-xl hover:bg-blue-200 transition">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-slate-500 ml-1">รูปถ่ายสถานการณ์</label>
+                <input type="file" id="water_img" accept="image/*" capture="environment" onchange="previewImg(event)" class="hidden">
+                <div onclick="document.getElementById('water_img').click()" class="border-2 border-dashed border-blue-200 rounded-2xl h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition overflow-hidden" id="img_preview_box">
+                    <i class="fas fa-camera text-3xl text-blue-300"></i>
+                    <p class="text-xs text-blue-400 mt-2 font-bold">แตะเพื่อถ่ายรูปหรือเลือกไฟล์</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-slate-500 ml-1">รายละเอียดเพิ่มเติม</label>
+                <textarea id="water_note" class="w-full p-3 border border-blue-100 bg-blue-50 rounded-xl h-20 outline-none" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
+            </div>
+
+            <button id="saveWaterBtn" type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition active:scale-95">ส่งรายงานน้ำ</button>
+        </form>
+    </div>
+</section>
+
+                <section id="shelterPage" class="content-page hidden">
+    <div class="mb-6 overflow-x-auto no-scrollbar flex gap-2 pb-2">
+        <button onclick="filterShelter('all')" class="shelter-filter-btn active-shelter-btn whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all" data-center="all">ทั้งหมด</button>
+        <button onclick="filterShelter('ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา')" class="shelter-filter-btn bg-white whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all" data-center="ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา">ศูนย์เทศบาลตำบลตันหยงมัส</button>
+        <button onclick="filterShelter('ศูนย์มัสยิดตันหยงมัส')" class="shelter-filter-btn bg-white whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all" data-center="ศูนย์มัสยิดตันหยงมัส">ศูนย์มัสยิดตันหยงมัส</button>
+        <button onclick="filterShelter('ศูนย์โรงเรียนบ้านเขาพระ')" class="shelter-filter-btn bg-white whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all" data-center="ศูนย์โรงเรียนบ้านเขาพระ">ศูนย์โรงเรียนบ้านเขาพระ</button>
+        <button onclick="printShelterReport()" class="bg-slate-800 hover:bg-black text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center shadow-lg">
+        <i class="fas fa-print mr-2"></i> พิมพ์รายงาน / PDF
+    </button>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-12 gap-3 mb-6">
+    
+    <div class="col-span-2 md:col-span-7 bg-white p-5 rounded-[2.5rem] shadow-sm border border-blue-50 relative">
+        <h4 class="text-[10px] font-bold text-blue-900 mb-1 uppercase tracking-tight">จำนวนผู้เข้าพักพิง</h4>
+        <div class="h-[180px] w-full relative">
+            <canvas id="chartCapacity"></canvas>
+            <div id="capacityText" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none translate-y-1">
+                </div>
+        </div>
+    </div>
+
+    <div class="col-span-2 md:col-span-5 grid grid-rows-2 gap-3">
+    
+    <div class="bg-white rounded-[2rem] shadow-sm border border-blue-100 overflow-hidden flex flex-col">
+        <div class="bg-blue-600 px-5 py-2 flex justify-between items-center">
+            <span class="text-[10px] text-white font-black uppercase tracking-wider">จำนวนผู้เข้าพักพิง</span>
+            <i class="fas fa-users text-white/50 text-xs"></i>
+        </div>
+        <div class="p-5 flex justify-between items-center flex-1">
+            <p id="statTotalPeople" class="text-4xl font-black text-slate-700 leading-none">0</p>
+            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-user-friends"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-[2rem] shadow-sm border border-indigo-100 overflow-hidden flex flex-col">
+        <div class="bg-indigo-600 px-5 py-2 flex justify-between items-center">
+            <span class="text-[10px] text-white font-black uppercase tracking-wider">จำนวนครัวเรือน</span>
+            <i class="fas fa-home text-white/50 text-xs"></i>
+        </div>
+        <div class="p-5 flex justify-between items-center flex-1">
+            <p id="statTotalHouseholds" class="text-4xl font-black text-slate-700 leading-none">0</p>
+            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-house-user"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+    <div class="col-span-1 md:col-span-6 bg-white p-4 rounded-[2rem] shadow-sm border border-blue-50">
+        <h4 class="text-[10px] font-bold text-pink-600 mb-3 uppercase tracking-tight border-l-4 border-pink-500 pl-2">สัดส่วนเพศ</h4>
+        <div class="h-[120px]">
+            <canvas id="chartGender"></canvas>
+        </div>
+    </div>
+
+    <div class="col-span-1 md:col-span-6 bg-white p-4 rounded-[2rem] shadow-sm border border-blue-50">
+        <h4 class="text-[10px] font-bold text-amber-600 mb-3 uppercase tracking-tight border-l-4 border-amber-500 pl-2">ช่วงอายุ</h4>
+        <div class="h-[120px]">
+            <canvas id="chartAge"></canvas>
+        </div>
+    </div>
+</div>
+
+   <div class="bg-white rounded-3xl shadow-sm border border-blue-50 overflow-hidden mt-6">
+    <div class="p-4 border-b border-blue-50 flex justify-between items-center bg-blue-50/30">
+        <h3 class="font-bold text-blue-900 text-sm">รายชื่อผู้เข้าพักพิง</h3>
+        
+    </div>
+    
+    <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+        <table class="w-full text-left border-collapse min-w-[600px]">
+            <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                <tr class="text-[10px] text-slate-500 uppercase font-bold border-b border-blue-50">
+                    <th class="p-3 text-center">#</th>
+                    <th class="p-3">ชื่อ-นามสกุล</th>
+                    <th class="p-3">อายุ/เพศ</th>
+                    <th class="p-3">สถานะสุขภาพ</th>
+                    <th class="p-3">ศูนย์พักพิง</th>
+                    <th class="p-3 text-center">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="evacueeTableBody" class="text-[11px]"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="dataModal" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl transition-all scale-in-center">
+        <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-center relative">
+            <button onclick="closeDataModal()" class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+                <i class="fas fa-times-circle text-2xl"></i>
+            </button>
+            
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-3 backdrop-blur-sm">
+                <i class="fas fa-user text-3xl text-white"></i>
+            </div>
+            <h3 id="modalName" class="text-xl font-black text-white mb-1">ชื่อ-นามสกุล</h3>
+            <span id="modalShelter" class="inline-block bg-amber-400 text-amber-950 px-4 py-1 rounded-full text-[11px] font-black uppercase tracking-wider shadow-lg">
+                ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา
+            </span>
+        </div>
+
+        <div id="modalContent" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+            </div>
+
+        <div class="p-4 bg-slate-50">
+            <button onclick="closeDataModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 py-3.5 rounded-2xl font-bold transition-all">
+                ปิดหน้าต่างข้อมูล
+            </button>
+        </div>
+    </div>
+</div>
+</section>
+<section id="reliefPage" class="content-page hidden animate-fade-in">
+    
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+    
+    <div class="bg-white border border-amber-100 rounded-[2rem] p-4 shadow-sm flex items-center gap-4 min-w-[200px]">
+        <div class="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-100">
+            <i class="fas fa-boxes-stacked"></i>
+        </div>
+        <div>
+            <p class="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1.5 tracking-wider">จำนวนถุงยังชีพที่แจกแล้ว</p>
+            <div class="flex items-baseline gap-1">
+                <p id="totalReliefCount" class="text-3xl font-black text-slate-800 leading-none">0</p>
+                <p class="text-xs font-bold text-slate-400">ชุด</p>
+            </div>
+        </div>
+    </div>
+    <div id="stockModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity opacity-0 duration-300">
+    <div class="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl scale-95 transition-transform duration-300">
+        <div class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h3 class="font-black text-slate-800"><i class="fas fa-boxes mr-2 text-blue-500"></i>บันทึกรับเข้า/จ่ายออก</h3>
+            <button onclick="closeStockModal()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times-circle text-xl"></i></button>
+        </div>
+        <form id="stockForm" onsubmit="saveStock(event)" class="p-6 space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">ประเภท</label>
+                <select id="stock_type" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none font-bold text-slate-700 mt-1" required>
+                    <option value="in">รับของเข้าสต๊อก (+)</option>
+                    <option value="out">ปรับลดยอดสต๊อก (-)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">จำนวน (ถุง)</label>
+                <input type="number" id="stock_amount" min="1" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none font-black text-xl text-slate-700 mt-1" required placeholder="0">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">หมายเหตุ (แหล่งที่มา/เหตุผล)</label>
+                <input type="text" id="stock_note" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm mt-1" placeholder="เช่น รับบริจาคจาก..., ของชำรุด">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all mt-4">บันทึกสต๊อก</button>
+        </form>
+        <div class="px-6 pb-6">
+    <div class="border-t border-slate-100 pt-4 mb-3">
+        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">ประวัติการทำรายการล่าสุด</h4>
+    </div>
+    
+    <div class="overflow-y-auto pr-1 border border-slate-50 rounded-xl" style="max-height: 250px;">
+        <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-white shadow-sm z-10">
+                <tr class="text-[9px] text-slate-400 font-bold uppercase border-b border-slate-100">
+                    <th class="p-2 w-1/4">วัน/เวลา</th>
+                    <th class="p-2 text-center w-1/4">ประเภท</th>
+                    <th class="p-2 text-right w-1/6">จำนวน</th>
+                    <th class="p-2 text-right w-1/3">หมายเหตุ</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody" class="divide-y divide-slate-50">
+                <tr><td colspan="4" class="text-center py-10 text-slate-300 italic text-xs">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+    </div>
+</div>
+    <div class="flex flex-col sm:flex-row gap-3 flex-1 lg:max-w-2xl">
+        <div class="relative flex-1 group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i class="fas fa-search text-slate-300 group-focus-within:text-amber-500 transition-colors text-sm"></i>
+            </div>
+            <input type="text" id="reliefSearchInput" onkeyup="filterReliefTable()" 
+                placeholder="ค้นหาชื่อ หรือที่อยู่..." 
+                class="w-full pl-11 pr-32 py-4 bg-white border border-slate-200 rounded-[1.5rem] outline-none focus:ring-4 focus:ring-amber-50 focus:border-amber-400 transition-all shadow-sm text-sm font-medium"
+            >
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span id="reliefMatchCount" class="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100 uppercase">
+                    Ready
+                </span>
+            </div>
+        </div>
+
+        <button onclick="openReliefModal()" class="bg-amber-500 text-white px-8 py-4 rounded-[1.5rem] font-black shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all active:scale-95 flex items-center justify-center whitespace-nowrap">
+            <i class="fas fa-plus-circle mr-2"></i>
+            บันทึกการแจกถุงยังชีพ
+        </button>
+    </div>
+</div>
+        <div class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm mb-6 relative overflow-hidden">
+    <div class="absolute -right-10 -top-10 text-slate-50 opacity-50 pointer-events-none">
+        <i class="fas fa-boxes-stacked text-[150px]"></i>
+    </div>
+    
+    <div class="flex justify-between items-center mb-5 relative z-10">
+        <div>
+            <h3 class="font-black text-slate-800 text-lg flex items-center tracking-tight">
+                <i class="fas fa-warehouse text-blue-500 mr-2"></i> คลังถุงยังชีพ
+            </h3>
+            <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Inventory Management</p>
+        </div>
+        <button id="adminStockBtn" onclick="openStockModal()" class="flex bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-95 items-center">
+    <i class="fas fa-plus-minus mr-2"></i> จัดการสต๊อก
+</button>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3 relative z-10">
+        <div class="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 flex flex-col justify-center">
+            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">รับเข้าทั้งหมด (In)</p>
+            <p id="stockInCount" class="text-3xl font-black text-blue-700">0</p>
+        </div>
+        <div class="bg-rose-50/50 rounded-2xl p-4 border border-rose-100 flex flex-col justify-center">
+            <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1">จ่ายออก (Out)</p>
+            <p id="stockOutCount" class="text-3xl font-black text-rose-700">0</p>
+        </div>
+        <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-200 shadow-sm flex flex-col justify-center transform scale-105">
+            <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">คงเหลือ (Balance)</p>
+            <p id="stockRemainCount" class="text-4xl font-black text-emerald-600">0</p>
+        </div>
+    </div>
+</div>
+           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+    <button onclick="filterByZone('zone1')" class="zone-filter-btn bg-white border-l-4 border-blue-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-blue-50 transition-all active:scale-95 focus:ring-2 focus:ring-blue-200" id="btn-zone1">
+        <div>
+            <span class="text-[10px] font-black text-blue-500 uppercase tracking-wider">Zone 1</span>
+            <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">ชุมชนตลาดกลางผลไม้</p>
+        </div>
+        <div class="mt-2 flex items-end justify-between w-full">
+            <span id="zone1Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+            <i class="fas fa-map-marker-alt text-blue-100 text-lg"></i>
+        </div>
+    </button>
+
+    <button onclick="filterByZone('zone2')" class="zone-filter-btn bg-white border-l-4 border-amber-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-emerald-50 transition-all active:scale-95 focus:ring-2 focus:ring-emerald-200" id="btn-zone2">
+        <div>
+            <span class="text-[10px] font-black text-amber-500 uppercase tracking-wider">Zone 2</span>
+            <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">หลังสระรพช-ตรอ</p>
+        </div>
+        <div class="mt-2 flex items-end justify-between w-full">
+            <span id="zone2Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+            <i class="fas fa-map-marker-alt text-amber-100 text-lg"></i>
+        </div>
+    </button>
+
+    <button onclick="filterByZone('zone3')" class="zone-filter-btn bg-white border-l-4 border-rose-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-amber-50 transition-all active:scale-95 focus:ring-2 focus:ring-amber-200" id="btn-zone3">
+        <div>
+            <span class="text-[10px] font-black text-rose-500 uppercase tracking-wider">Zone 3</span>
+            <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">เขาพระ-โรงฆ่าสัตว์</p>
+        </div>
+        <div class="mt-2 flex items-end justify-between w-full">
+            <span id="zone3Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+            <i class="fas fa-map-marker-alt text-rose-100 text-lg"></i>
+        </div>
+    </button>
+
+    <button onclick="filterByZone('zone4')" class="zone-filter-btn bg-white border-l-4 border-emerald-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-purple-50 transition-all active:scale-95 focus:ring-2 focus:ring-purple-200" id="btn-zone4">
+        <div>
+            <span class="text-[10px] font-black text-emerald-500 uppercase tracking-wider">Zone 4</span>
+            <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">ดารุสสลาม-สุขาภิบาล</p>
+        </div>
+        <div class="mt-2 flex items-end justify-between w-full">
+            <span id="zone4Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+            <i class="fas fa-map-marker-alt text-emerald-100 text-lg"></i>
+        </div>
+    </button>
+
+    <button onclick="filterByZone('zone5')" class="zone-filter-btn bg-white border-l-4 border-purple-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-rose-50 transition-all active:scale-95 focus:ring-2 focus:ring-rose-200" id="btn-zone5">
+        <div>
+            <span class="text-[10px] font-black text-purple-500 uppercase tracking-wider">Zone 5</span>
+            <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">บาลูกา</p>
+        </div>
+        <div class="mt-2 flex items-end justify-between w-full">
+            <span id="zone5Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+            <i class="fas fa-map-marker-alt text-purple-100 text-lg"></i>
+        </div>
+    </button>
+</div>
+
+<div id="clearFilterArea" class="hidden mb-4 px-2">
+    <button onclick="clearZoneFilter()" class="text-[10px] font-black text-rose-500 hover:text-rose-600 flex items-center bg-rose-50 px-3 py-1 rounded-full transition-all">
+        <i class="fas fa-times-circle mr-1"></i> ล้างการกรองข้อมูลตามโซน
+    </button>
+</div>
+    <div class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden transition-all">
+        <div class="overflow-x-auto overflow-y-auto max-h-[650px] custom-scrollbar">
+            <table class="w-full text-left border-collapse min-w-[750px]">
+                <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                    <tr class="text-[10px] text-slate-500 font-bold uppercase border-b border-slate-100">
+                        <th class="p-5 text-center w-20">ลำดับ</th>
+                        <th class="p-5">วัน-เวลา / ชื่อ-นามสกุลผู้รับ</th>
+                        <th class="p-5">ที่อยู่ปัจจุบัน</th>
+                        <th class="p-5 text-center">จำนวนผู้อาศัย</th>
+                        <th class="p-5 text-center">สถานะผู้รับ</th>
+                    </tr>
+                </thead>
+                <tbody id="reliefTableBody" class="text-xs text-slate-700 divide-y divide-slate-50">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4 flex justify-between items-center px-4">
+        <p class="text-[10px] text-slate-400 font-medium italic">* แสดงข้อมูลล่าสุดอยู่ด้านบนสุด</p>
+        <div class="flex items-center gap-3">
+            <span class="text-[9px] font-bold text-green-600"><i class="fas fa-check-circle mr-1"></i>เจ้าบ้าน</span>
+            <span class="text-[9px] font-bold text-amber-600"><i class="fas fa-exclamation-circle mr-1"></i>ผู้อาศัย</span>
+        </div>
+    </div>
+</section>
+    <div id="reliefModal" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-6 shadow-2xl overflow-y-auto max-h-[90vh] scale-in-center">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-black text-slate-800">บันทึกการแจกถุงยังชีพ</h3>
+                <button onclick="closeReliefModal()" class="text-slate-400 hover:text-red-500"><i class="fas fa-times-circle text-xl"></i></button>
+            </div>
+            <form id="reliefForm" onsubmit="saveReliefData(event)" class="space-y-4">
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ชื่อ-นามสกุลผู้รับ</label><input type="text" id="rel_name" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none" required></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">สถานะ</label><select id="rel_status" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none"><option value="เจ้าบ้าน">เจ้าบ้าน</option><option value="ผู้อาศัย">ผู้อาศัย</option></select></div>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">จำนวนผู้อาศัย</label><select id="rel_members" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none"></select></div>
+                </div>
+                <div><label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ที่อยู่ปัจจุบัน (ที่รับของ)</label><select id="rel_address_select" onchange="toggleRelOtherAddr(this.value)" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none"></select><textarea id="rel_address_other" class="hidden w-full mt-2 p-3.5 bg-white border-2 border-amber-100 rounded-2xl outline-none h-20" placeholder="ระบุที่อยู่อื่นๆ..."></textarea></div>
+                <div class="pt-2">
+                    <div class="flex items-center gap-2 mb-2"><input type="checkbox" id="rel_same_addr" onchange="copyAddress(this.checked)" class="w-4 h-4"><label for="rel_same_addr" class="text-xs text-slate-500 font-bold">ที่อยู่ทะเบียนบ้าน ตรงกับที่อยู่ปัจจุบัน</label></div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ที่อยู่ตามทะเบียนบ้าน</label><textarea id="rel_regis_address" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none h-20" required></textarea>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-amber-600 transition-all mt-4">บันทึกข้อมูล</button>
+            </form>
+        </div>
+    </div>
+
+
+</section>
+
+                <section id="regisPage" class="content-page hidden">
+    <div class="bg-white p-6 md:p-10 rounded-3xl shadow-lg border border-blue-50 max-w-xl mx-auto">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h3 class="text-lg font-bold text-blue-900 tracking-tight">ลงทะเบียนผู้ประสบภัยอพยพ</h3>
+        </div>
+
+        <form id="regisForm" onsubmit="saveEvacuee(event)" class="space-y-4">
+    <div>
+        <label class="text-xs font-bold text-slate-500 ml-1">เข้าพักที่ศูนย์พักพิง</label>
+        <div class="relative">
+            <select id="regis_shelter" class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none appearance-none focus:ring-2 focus:ring-blue-400 transition-all font-bold text-blue-900" required>
+                <option value="" disabled selected>กรุณาเลือกศูนย์พักพิง</option>
+                <option value="ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกาฯ">ศูนย์เทศบาลตำบลตันหยงมัส</option>
+                <option value="ศูนย์มัสยิดตันหยงมัส">ศูนย์มัสยิดตันหยงมัส</option>
+                <option value="ศูนย์โรงเรียนบ้านเขาพระ">ศูนย์โรงเรียนบ้านเขาพระ</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-blue-400">
+                <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <label class="text-xs font-bold text-slate-500 ml-1">ชื่อ-นามสกุล</label>
+        <input type="text" id="regis_name" class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 transition-all" placeholder="ระบุชื่อ และนามสกุล" required>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="text-xs font-bold text-slate-500 ml-1">อายุ (ปี)</label>
+            <input type="number" id="regis_age" class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400" placeholder="ตัวเลข" required>
+        </div>
+        <div>
+            <label class="text-xs font-bold text-slate-500 ml-1">เพศ</label>
+            <select id="regis_gender" class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400" required>
+                <option value="ชาย">ชาย</option>
+                <option value="หญิง">หญิง</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+            <label class="text-xs font-bold text-slate-500 ml-1">เลขบัตรประจำตัวประชาชน</label>
+            <input type="text" id="regis_idcard" class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none" placeholder="13 หลัก" maxlength="13">
+        </div>
+        <div>
+            <label class="text-xs font-bold text-slate-500 ml-1">เบอร์โทรศัพท์</label>
+            <input type="tel" id="regis_phone" class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none" placeholder="08XXXXXXXX">
+        </div>
+    </div>
+
+    <div>
+        <label class="text-xs font-bold text-slate-500 ml-1">ที่อยู่เดิม/ชุมชน</label>
+        <select id="regis_address_select" onchange="toggleOtherAddress(this.value)" class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 transition-all" required>
+            </select>
+    </div>
+
+    <div id="other_address_container" class="hidden animate-fade-in">
+        <label class="text-xs font-bold text-blue-600 ml-1 italic">ระบุที่อยู่เพิ่มเติม (บ้านเลขที่/ซอย/หมู่ที่)</label>
+        <textarea id="regis_address_custom" class="w-full p-3.5 border-2 border-blue-100 bg-white rounded-2xl outline-none focus:border-blue-400 h-20 shadow-inner" placeholder="ระบุที่อยู่ที่ต้องการลงทะเบียน..."></textarea>
+    </div>
+
+    <div class="bg-amber-50 p-4 rounded-[2rem] border border-amber-100 space-y-3 shadow-sm">
+    <label class="text-xs font-bold text-amber-700 ml-1 italic uppercase">สถานะสุขภาพ/กลุ่มเปราะบาง</label>
+    <div class="grid grid-cols-1 gap-2">
+        <select id="regis_health_type" onchange="toggleHealthNote(this.value)" class="w-full p-3 border border-amber-200 bg-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-400">
+            <option value="ปกติ">สุขภาพปกติ</option>
+            <option value="ผู้ป่วย">ผู้ป่วย</option>
+            <option value="ผู้พิการ">ผู้พิการ</option>
+            <option value="กลุ่มเปราะบาง">กลุ่มเปราะบาง (คนชรา/เด็กทารก)</option>
+        </select>
+    </div>
+    
+    <div id="health_note_container" class="hidden animate-fade-in">
+        <label class="text-[10px] font-bold text-amber-600 ml-1">รายละเอียดอาการ/โรคประจำตัว</label>
+        <textarea id="regis_health_note" class="w-full p-3 border border-amber-200 bg-white rounded-xl h-20 text-sm outline-none shadow-inner" placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
+    </div>
+</div>
+
+    <div class="pt-4">
+        <button type="submit" id="saveRegisBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-[1.5rem] font-black text-lg shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+            <i class="fas fa-check-circle"></i>
+            ยืนยันการลงทะเบียน
+        </button>
+        <p class="text-center text-[10px] text-slate-400 mt-3 italic">* ตรวจสอบความถูกต้องของข้อมูลก่อนกดยืนยัน</p>
+    </div>
+</form>
+</section>
+        <section id="userManagementPage" class="content-page hidden animate-fade-in">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-black text-slate-800 tracking-tight">จัดการผู้ใช้งานระบบ</h2>
+            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">User & Role Management</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="col-span-1 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm h-fit">
+            <h3 class="font-bold text-slate-700 mb-4 flex items-center"><i class="fas fa-user-plus mr-2 text-blue-500"></i>เพิ่ม / แก้ไขสิทธิ์</h3>
+            <form id="userForm" onsubmit="saveUser(event)" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ชื่อผู้ใช้งาน (Username)</label>
+                    <input type="text" id="manage_username" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-400 text-sm font-bold text-slate-700" required placeholder="ระบุชื่อผู้ใช้...">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">สิทธิ์การเข้าถึง (Role)</label>
+                    <select id="manage_role" class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm font-bold text-slate-700" required>
+                        <option value="admin">Admin (เข้าได้ทุกหน้า)</option>
+                        <option value="shelter">Shelter (เฉพาะศูนย์พักพิง)</option>
+                        <option value="water_staff">Water Staff (เฉพาะการจัดการระดับน้ำ)</option>
+                        <option value="relief">Relief Staff (เฉพาะการจัดการถุงยังชีพ)</option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 transition-all shadow-md">บันทึกข้อมูล</button>
+            </form>
+        </div>
+
+        <div class="col-span-1 md:col-span-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-50 bg-slate-50/50">
+                <h3 class="font-bold text-slate-700 text-sm">รายชื่อผู้ใช้งานทั้งหมด</h3>
+            </div>
+            <div class="overflow-x-auto max-h-[400px] custom-scrollbar">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 sticky top-0">
+                        <tr class="text-[10px] text-slate-400 font-bold uppercase border-b border-slate-100">
+                            <th class="p-4">ชื่อผู้ใช้งาน</th>
+                            <th class="p-4 text-center">สิทธิ์ (Role)</th>
+                            <th class="p-4 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody" class="text-sm text-slate-700 divide-y divide-slate-50">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+                <section id="lookerPage" class="content-page hidden"><iframe src="" id="lookerFrame" class="w-full h-[70vh] md:h-[80vh] rounded-3xl border-0 shadow-sm bg-white"></iframe></section>
+
+            </div>
+        </main>
+    </div>
+    <div id="printArea" class="hidden">
+    <div class="print-page">
+    <div class="report-header">
+        <h1 class="text-2xl font-black">รายงานสรุปสถิติผู้พักพิง ศูนย์พักพิงชั่วคราวเทศบาลตำบลตันหยงมัส</h1>
+        <p class="text-sm mt-1">ข้อมูล ณ วันที่ <span id="printDate"></span></p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+        <div style="border: 2px solid #cbd5e1; border-radius: 12px; padding: 12px; text-align: center; background: #f8fafc;">
+            <p style="font-size: 10px; font-weight: bold; color: #64748b;">ยอดผู้พักพิงรวม</p>
+            <h2 id="printTotalEvacuees" style="font-size: 28px; font-weight: 900; margin: 2px 0;">0</h2>
+            <p style="font-size: 9px; color: #94a3b8;">ราย</p>
+        </div>
+
+        <div style="border: 2px solid #cbd5e1; border-radius: 12px; padding: 12px; text-align: center; background: #f8fafc;">
+            <p style="font-size: 10px; font-weight: bold; color: #64748b;">จำนวนครัวเรือน</p>
+            <h2 id="printTotalHouseholds" style="font-size: 28px; font-weight: 900; margin: 2px 0;">0</h2>
+            <p style="font-size: 9px; color: #94a3b8;">ครัวเรือน</p>
+        </div>
+        <div style="border: 2px solid #3b82f6; border-radius: 12px; padding: 12px; text-align: center; background: #eff6ff;">
+            <p style="font-size: 10px; font-weight: bold; color: #1d4ed8;">แยกเพศ (ชาย/หญิง)</p>
+            <div style="display: flex; justify-content: space-around; align-items: baseline; margin-top: 5px;">
+                <div><span id="printMaleTotal" style="font-size: 22px; font-weight: 900;">0</span><small> ชาย</small></div>
+                <div style="border-left: 1px solid #bfdbfe; height: 20px;"></div>
+                <div><span id="printFemaleTotal" style="font-size: 22px; font-weight: 900;">0</span><small> หญิง</small></div>
+            </div>
+        </div>
+        <div style="border: 2px solid #e11d48; border-radius: 12px; padding: 12px; text-align: center; background: #fff1f2;">
+            <p style="font-size: 10px; font-weight: bold; color: #be123c;">กลุ่มเปราะบาง/ป่วย</p>
+            <h2 id="printTotalHealth" style="font-size: 28px; font-weight: 900; margin: 2px 0; color: #e11d48;">0</h2>
+            <p style="font-size: 9px; color: #fb7185;">ราย</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+        <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+            <h3 style="font-size: 12px; font-weight: 800; border-bottom: 2px solid #3b82f6; padding-bottom: 5px; margin-bottom: 8px;">แยกตามศูนย์</h3>
+            <div id="printShelterList" style="font-size: 10px;" class="space-y-1"></div>
+        </div>
+        <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+            <h3 style="font-size: 12px; font-weight: 800; border-bottom: 2px solid #f59e0b; padding-bottom: 5px; margin-bottom: 8px;">แยกตามช่วงอายุ</h3>
+            <div id="printAgeList" style="font-size: 10px;" class="space-y-1"></div>
+        </div>
+        <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+            <h3 style="font-size: 12px; font-weight: 800; border-bottom: 2px solid #e11d48; padding-bottom: 5px; margin-bottom: 8px;">สถานะสุขภาพ</h3>
+            <div id="printHealthList" style="font-size: 10px;" class="space-y-1"></div>
+        </div>
+    </div>
+</div>
+
+    <div class="print-page page-break">
+        <div class="report-header" style="text-align: left; border-bottom: 1px solid #eee;">
+            <h2 class="text-lg font-bold">บัญชีรายชื่อผู้ลงทะเบียน</h2>
+        </div>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">ลำดับ</th>
+                    <th>ศูนย์พักพิง</th>
+                    <th>ชื่อ-นามสกุล</th>
+                    <th>เพศ</th>
+                    <th>อายุ</th>
+                    <th>ที่อยู่</th>
+                    <th>เบอร์โทรศัพท์</th>
+                </tr>
+            </thead>
+            <tbody id="printTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+    <div id="imageLightbox" onclick="closeLightbox()" class="hidden fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+    <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-50">
+        <i class="fas fa-times-circle text-4xl drop-shadow-lg"></i>
+    </button>
+    
+    <img id="lightboxImg" src="" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+</div>
+        
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwahktsrfbMuVu4oIP2ChrGVsjiGhuGFQWBdnfTitRRRQy5P_ONiRYUUVpsbzh57bFy/exec";
+        const LOOKER_URL = "https://lookerstudio.google.com/embed/reporting/e87384f5-54c2-4bb3-b838-b9927c696f34/page/p_nqf5i1oswd";
+        
+        let store = { waterPoints:[], waterLevels:[], reliefStock: [] };
+        let currentUser = "";
+        let userRole = ""; // เพิ่มตัวแปรเก็บสิทธิ์
+        let waterChartInstance = null;
+        let currentZoneFilter = null;
+        window.currentFilteredData = [];
+
+        // ฟังก์ชันจัดการ UI หลัง Login
+function setupUserInterface(user) {
+    if (!user) return;
+    
+    // อัปเดตชื่อและบทบาทใน Sidebar
+    const nameDisplay = document.getElementById('displayUserName');
+    const roleDisplay = document.getElementById('displayUserRole');
+    
+    if (nameDisplay) nameDisplay.innerText = user.name;
+    if (roleDisplay) roleDisplay.innerText = user.role.toUpperCase();
+}
+
+function updateMenuByRole() {
+    // ดึงสิทธิ์จากตัวแปร Global (ต้องมั่นใจว่าถูกอัปเดตแล้วตอน Login หรือ Load Session)
+    const allowed = PAGE_ACCESS[userRole] || ['shelter'];
+    
+    // จัดการเมนูหลัก
+    document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
+        const page = btn.getAttribute('data-page');
+        if (page) {
+            btn.style.display = allowed.includes(page) ? 'flex' : 'none';
+        }
+    });
+
+    // ปุ่มจัดการระบบ (Admin เท่านั้น)
+    const adminBtn = document.getElementById('adminMenuBtn');
+    if (adminBtn) {
+        if (userRole === 'admin') {
+            adminBtn.style.display = 'flex';
+            adminBtn.classList.remove('hidden');
+        } else {
+            adminBtn.style.display = 'none';
+            adminBtn.classList.add('hidden');
+        }
+    }
+}
+
+// ฟังก์ชันออกจากระบบ
+function handleLogout() {
+    Swal.fire({
+        title: 'ยืนยันการออกจากระบบ?',
+        text: "คุณต้องเข้าสู่ระบบใหม่เพื่อใช้งานอีกครั้ง",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        confirmButtonText: 'ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            localStorage.removeItem('user_session');
+            location.reload(); 
+        }
+    });
+}
+
+// เช็คสถานะเมื่อโหลดหน้าเว็บ
+window.addEventListener('load', async () => {
+    const savedSession = localStorage.getItem('user_session');
+    
+    if (savedSession) {
+        try {
+            const userData = JSON.parse(savedSession);
+            
+            // 1. คืนค่าตัวแปร Global
+            currentUser = userData.username;
+            userRole = userData.role;
+
+            // 2. ข้ามหน้า Login ไปหน้าแอป
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            // 3. อัปเดต UI และเมนูตามสิทธิ์
+            setupUserInterface(userData);
+            updateMenuByRole();
+            
+            // 4. โหลดข้อมูลเข้าสู่ระบบ
+            await loadData();
+
+            // --- จุดที่แก้ไข: กำหนดหน้าแรกตามสิทธิ์ (Role-Based Landing Page) ---
+            let targetPage = 'water'; // ค่าเริ่มต้นสำหรับทั่วไป
+            
+            if (userRole === 'admin') {
+                targetPage = 'water'; // หรือหน้า Dashboard ของ admin
+            } else if (userRole === 'shelter') {
+                targetPage = 'shelter';
+            } else if (userRole === 'water_staff') {
+                targetPage = 'addWater';
+            } else if (userRole === 'relief') {
+                targetPage = 'relief';
+            }
+
+            // สั่งแสดงหน้าตามสิทธิ์ที่คำนวณได้
+            showPage(targetPage);
+
+        } catch (e) {
+            console.error("Session Error:", e);
+            localStorage.removeItem('user_session');
+            location.reload();
+        }
+    }
+});
+        // กำหนดว่าแต่ละสิทธิ์เข้าหน้าไหนได้บ้าง
+        const PAGE_ACCESS = {
+        'admin': ['water', 'addWater', 'shelter', 'regis', 'relief', 'looker', 'userManagement'],
+        'shelter': ['shelter'],
+        'water_staff': ['water', 'addWater'], // <-- เพิ่มบรรทัดนี้
+        'relief': ['relief']
+        };
+        // --- Navigation Logic ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const sideIcon = document.getElementById('sideIcon');
+            sidebar.classList.toggle('sidebar-expanded');
+            sidebar.classList.toggle('sidebar-collapsed');
+            sideIcon.classList.toggle('fa-chevron-left');
+            sideIcon.classList.toggle('fa-chevron-right');
+        }
+
+        const originalShowPage = showPage; // เก็บฟังก์ชันเดิมไว้ (ถ้าคุณเขียนทับไปเลยก็ได้)
+function showPage(pageId) {
+    const allowed = PAGE_ACCESS[userRole] || ['shelter'];
+    if (!allowed.includes(pageId)) {
+        return Swal.fire('สิทธิ์ไม่เพียงพอ', 'คุณไม่มีสิทธิ์เข้าถึงส่วนนี้', 'warning');
+    }
+
+    document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
+    const target = document.getElementById(pageId + 'Page');
+    if(target) target.classList.remove('hidden');
+
+    // ถ้าแอดมินเปิดหน้าจัดการระบบ ให้ดึงข้อมูลล่าสุด
+    if (pageId === 'userManagement' && userRole === 'admin') {
+        loadUsers();
+    }
+            
+            // Update Active Menu Desktop
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-menu'));
+            const activeDesktop = document.querySelector(`.nav-btn[data-page="${pageId}"]`);
+            if(activeDesktop) activeDesktop.classList.add('active-menu');
+
+            // Update Active Menu Mobile
+            document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active-menu-mobile'));
+            const activeMobile = document.querySelector(`.mobile-nav-btn[data-page="${pageId}"]`);
+            if(activeMobile) activeMobile.classList.add('active-menu-mobile');
+            
+            const titles = { 
+                water: 'สถานการณ์ระดับน้ำ', 
+                addWater: 'รายงานระดับน้ำ', 
+                shelter: 'ศูนย์พักพิง', 
+                regis: 'ลงทะเบียนผู้ประสบภัย', 
+                relief: 'ข้อมูลผู้รับถุงยังชีพ', 
+                looker: 'รายงานสรุปข้อมูล',
+                 userManagement: 'จัดการผู้ใช้งานระบบ' // <-- เพิ่มบรรทัดนี้เข้าไปครับ
+            };
+
+            // แนะนำให้ใส่ || "ชื่อหน้าเริ่มต้น" เผื่อกรณีลืมใส่ชื่อหน้าอื่นๆ ในอนาคต จะได้ไม่ขึ้น undefined อีกครับ
+            const titleElement = document.getElementById('pageTitle');
+            if (titleElement) {
+                titleElement.innerText = titles[pageId] || "ระบบรายงานสถานการณ์น้ำท่วม"; 
+            }
+            if(pageId === 'looker') document.getElementById('lookerFrame').src = LOOKER_URL;
+            if(pageId === 'relief') renderReliefTable(store.reliefData);
+            if (pageId === 'water') {
+        // หน่วงเวลาเล็กน้อยเพื่อให้ Container กางออกเสร็จก่อน init แผนที่
+        setTimeout(() => {
+            initWaterMap();
+            updateWaterMapMarkers();
+            waterMap.invalidateSize(); // แก้ปัญหาแผนที่ขึ้นไม่เต็ม
+        }, 300);
+    }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- Auth & Data (Original Scripts) ---
+        async function doLogin() {
+    const user = document.getElementById('username').value.trim();
+    if(!user) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อผู้ใช้งาน', 'warning');
+    
+    const btn = document.getElementById('loginBtn');
+    btn.innerText = 'กำลังตรวจสอบสิทธิ์...'; 
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'login', username: user }) 
+        });
+        const data = await res.json();
+        
+        if(data.success) {
+            // 1. เตรียมข้อมูล User
+            const userData = {
+                username: user,
+                name: data.name || user, // ใช้ชื่อจริงจาก Server ถ้าไม่มีใช้ username
+                role: data.role
+            };
+
+            // 2. บันทึก Session ลง Browser
+            localStorage.setItem('user_session', JSON.stringify(userData));
+
+            // 3. อัปเดตตัวแปร Global
+            currentUser = userData.username;
+            userRole = userData.role;
+
+            // 4. จัดการหน้าจอและเมนู
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            setupUserInterface(userData); // อัปเดตชื่อใน Sidebar
+            updateMenuByRole(); // จัดการสิทธิ์เมนู
+
+            // 5. นำทางไปหน้าแรกตามสิทธิ์
+            let firstPage = 'water'; 
+            if (userRole === 'shelter') firstPage = 'shelter';
+            if (userRole === 'water_staff') firstPage = 'addWater';
+            if (userRole === 'relief') firstPage = 'relief';
+
+            showPage(firstPage);
+            await loadData();
+
+        } else {
+            Swal.fire('ผิดพลาด', data.error || 'ชื่อผู้ใช้ไม่ถูกต้อง', 'error');
+            btn.innerText = 'เข้าใช้งานระบบ'; btn.disabled = false;
+        }
+    } catch(e) { 
+        console.error(e);
+        Swal.fire('การเชื่อมต่อขัดข้อง', 'โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ต', 'error'); 
+        btn.innerText = 'เข้าใช้งานระบบ'; btn.disabled = false; 
+    }
+}
+
+
+        async function loadData() {
+    try {
+        const res = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'getInitialData' }) 
+        });
+        store = await res.json();
+        
+        // 1. จัดการ Dropdown สำหรับรายงานน้ำ
+        if (store.waterPoints) {
+            const pOpts = store.waterPoints.map(v => `<option value="${v}">${v}</option>`).join('');
+            document.getElementById('water_loc').innerHTML = pOpts;
+            
+            // กรองเฉพาะพื้นที่ที่มีข้อมูลรายงานน้ำแล้วมาทำเป็น Filter
+            const activeWaterAreas = [...new Set(store.waterLevels.map(r => r[1]))].sort();
+            const filterHtml = '<option value="all">ทุกพื้นที่ (ที่มีข้อมูล)</option>' + 
+                             activeWaterAreas.map(v => `<option value="${v}">${v}</option>`).join('');
+            document.getElementById('chartLocFilter').innerHTML = filterHtml;
+            document.getElementById('cardLocFilter').innerHTML = filterHtml;
+        }
+
+        // 2. จัดการ Dropdown ที่อยู่ในหน้าลงทะเบียนใหม่
+        if (store.addresses) {
+            const addrOpts = '<option value="" disabled selected>เลือกที่อยู่/ชุมชน</option>' + 
+                            store.addresses.map(a => `<option value="${a}">${a}</option>`).join('') +
+                            '<option value="other">อื่น ๆ (ระบุเอง)</option>';
+            document.getElementById('regis_address_select').innerHTML = addrOpts;
+
+            initReliefForm();
+        }
+
+        // 3. ประมวลผลหน้าสถานการณ์น้ำ (กราฟ + การ์ด)
+        
+        setDateFilter('week');
+        renderWaterCards();
+
+        // 3. ประมวลผลตารางข้อมูลผู้รับถุงยังชีพ
+        if (store.reliefData) {
+                renderReliefTable(store.reliefData);
+                renderStockDashboard();
+            }
+
+        // 4. ประมวลผลหน้าศูนย์พักพิง (สถิติ + กราฟวงกลม + รายชื่อ)
+        if (store.evacuees) {
+            filterShelter('all'); 
+        }
+
+        // อัปเดตเวลาล่าสุด
+        document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString('th-TH') + " น.";
+        
+    } catch(e) { 
+        console.error("Load Data Error", e); 
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+    }
+}
+        // --- Relief Functions ---
+        function initReliefForm() {
+    // 1. สร้างตัวเลือกจำนวนสมาชิก 1-30
+    let opts = "";
+    for(let i=1; i<=30; i++) {
+        opts += `<option value="${i}">${i} คน</option>`;
+    }
+    const membersSelect = document.getElementById('rel_members');
+    if(membersSelect) membersSelect.innerHTML = opts;
+
+    // 2. สร้างตัวเลือกที่อยู่จากข้อมูลใน store
+    const relAddrSelect = document.getElementById('rel_address_select');
+    if (relAddrSelect && store.addresses && store.addresses.length > 0) {
+        const addrOpts = '<option value="" disabled selected>เลือกที่อยู่</option>' + 
+                        store.addresses.map(a => `<option value="${a}">${a}</option>`).join('') + 
+                        '<option value="other">อื่นๆ (ระบุเอง)</option>';
+        relAddrSelect.innerHTML = addrOpts;
+    }
+}
+
+        function openReliefModal() { document.getElementById('reliefModal').classList.remove('hidden'); }
+        function closeReliefModal() { document.getElementById('reliefModal').classList.add('hidden'); }
+        function toggleRelOtherAddr(val) { document.getElementById('rel_address_other').classList.toggle('hidden', val !== 'other'); }
+        function copyAddress(isChecked) {
+            if (isChecked) {
+                const sel = document.getElementById('rel_address_select').value;
+                const other = document.getElementById('rel_address_other').value;
+                document.getElementById('rel_regis_address').value = (sel === 'other') ? other : sel;
+            } else { document.getElementById('rel_regis_address').value = ''; }
+        }
+
+        async function saveReliefData(e) {
+            e.preventDefault();
+            const payload = {
+                action: 'saveRelief',
+                name: document.getElementById('rel_name').value,
+                status: document.getElementById('rel_status').value,
+                members: document.getElementById('rel_members').value,
+                address: document.getElementById('rel_address_select').value === 'other' ? document.getElementById('rel_address_other').value : document.getElementById('rel_address_select').value,
+                regisAddress: document.getElementById('rel_regis_address').value
+            };
+            Swal.fire({ title: 'กำลังบันทึก...', didOpen: () => Swal.showLoading() });
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            if(result.success) {
+                Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อย', 'success');
+                closeReliefModal();
+                loadData();
+            }
+        }
+
+            // 1. ฟังก์ชันคำนวณสต๊อก
+function renderStockDashboard() {
+    if (!store.reliefStock) return;
+
+    let totalIn = 0;
+    let totalOut = 0;
+
+    // วนลูปอ่านค่าจากแท็บ ReliefStock โดยตรง
+    store.reliefStock.forEach(r => {
+        const type = r[1] ? r[1].toString().toLowerCase() : '';
+        const amount = Number(r[2]) || 0;
+        
+        if (type === 'in') totalIn += amount;
+        if (type === 'out') totalOut += amount; // รวมทั้งที่ตัดอัตโนมัติและคีย์เอง
+    });
+
+    const remain = totalIn - totalOut;
+
+    // อัปเดตตัวเลขขึ้นหน้าจอ
+    if(document.getElementById('stockInCount')) document.getElementById('stockInCount').innerText = totalIn;
+    if(document.getElementById('stockOutCount')) document.getElementById('stockOutCount').innerText = totalOut;
+    if(document.getElementById('stockRemainCount')) document.getElementById('stockRemainCount').innerText = remain;
+}
+    // 3. ฟังก์ชันเปิด-ปิด Modal
+function openStockModal() {
+    const modal = document.getElementById('stockModal');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    
+    // --- จุดสำคัญ: ตรวจสอบข้อมูลก่อนวาดตาราง ---
+    if (store && store.reliefStock) {
+        renderStockTable(); 
+    } else {
+        // ถ้ายังไม่มีข้อมูลใน store ให้แสดงข้อความรอ
+        const tbody = document.getElementById('stockTableBody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400 italic text-xs">ไม่พบข้อมูลในระบบ หรือ กำลังโหลด...</td></tr>`;
+        
+        // ลองโหลดข้อมูลใหม่ (ถ้าคุณมีฟังก์ชัน loadData)
+        if (typeof loadData === "function") loadData(); 
+    }
+
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.bg-white').classList.remove('scale-95');
+    }, 10);
+}
+
+function closeStockModal() {
+    const modal = document.getElementById('stockModal');
+    modal.classList.add('opacity-0');
+    modal.querySelector('.bg-white').classList.add('scale-95');
+    setTimeout(() => { modal.classList.add('hidden'); }, 300);
+}
+
+// 4. บันทึกข้อมูลสต๊อก
+async function saveStock(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
+
+    const payload = {
+        action: 'saveStock',
+        type: document.getElementById('stock_type').value,
+        amount: document.getElementById('stock_amount').value,
+        note: document.getElementById('stock_note').value,
+        user: currentUser
+    };
+
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire('สำเร็จ', 'อัปเดตสต๊อกเรียบร้อยแล้ว', 'success');
+            document.getElementById('stockForm').reset();
+            closeStockModal();
+            loadData(); // โหลดข้อมูลใหม่เพื่อคำนวณยอด
+        }
+    } catch (err) { Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error'); }
+    btn.innerText = "บันทึกสต๊อก"; btn.disabled = false;
+}
+// 1. ฟังก์ชันวาดตารางประวัติสต็อก
+function renderStockTable() {
+    const tbody = document.getElementById('stockTableBody');
+    if (!tbody) return;
+
+    // ตรวจสอบว่ามีข้อมูลใน store หรือไม่
+    if (!store || !store.reliefStock || store.reliefStock.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-300 italic text-xs">ยังไม่มีประวัติการทำรายการในขณะนี้</td></tr>`;
+        return;
+    }
+
+    // นำข้อมูลล่าสุดขึ้นก่อน
+    const displayData = [...store.reliefStock].reverse();
+
+    tbody.innerHTML = displayData.map(r => {
+        // ป้องกันค่า Error จากวันที่
+        let dateStr = "-";
+        let timeStr = "";
+        try {
+            if (r[0]) {
+                const d = new Date(r[0]);
+                dateStr = d.toLocaleDateString('th-TH', {day:'2-digit', month:'short'});
+                timeStr = d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+            }
+        } catch(e) { console.error("Date error", e); }
+        
+        const type = (r[1] || '').toString().toLowerCase() === 'in' ? 
+            '<span class="text-blue-500 font-bold text-[10px]">รับเข้า</span>' : 
+            '<span class="text-rose-500 font-bold text-[10px]">จ่ายออก</span>';
+        
+        const amount = Number(r[2] || 0).toLocaleString();
+        const note = r[3] || '-';
+
+        return `
+            <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
+                <td class="p-2">
+                    <div class="font-bold text-slate-700 text-[11px]">${dateStr}</div>
+                    <div class="text-[8px] opacity-40">${timeStr}</div>
+                </td>
+                <td class="p-2 text-center">${type}</td>
+                <td class="p-2 text-right font-black ${r[1] === 'in' ? 'text-blue-600' : 'text-rose-600'} text-[11px]">
+                    ${amount}
+                </td>
+                <td class="p-2 text-right">
+                    <div class="text-[10px] text-slate-400 leading-tight truncate max-w-[70px] ml-auto" title="${note}">
+                        ${note}
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+
+    // --- กฎเกณฑ์การแยก Zone ตามชื่อถนน ---
+const zoneRules = {
+    zone1: ['ถนนประชาสามัคคี', 'ถนนระแงะมรรคา', 'ถนนระแงะมรรรคา 1', 'ถนนระแงะมรรคา 2', 'ถนนระแงะมรรคา 3', 'ถนนระแงะมรรคา 4', 'ถนนระแงะมรรคา 5', 'ถนนระแงะมรรคา 6', 'ถนนมะรือโบ-บ่อทอง', 'ถนนลานไทร ซอย 1'],
+    zone2: ['ถนนลานไทร ซอย 3'],
+    zone3: ['ถนนเทศบาล 12', 'ถนนเทศบาล 15', 'ถนนเทศบาล 15 ซอย 1', 'ถนนเทศบาล 15 ซอย 2', 'ถนนเทศบาล 15 ซอย 2/1'],
+    zone4: ['ถนนเทศบาล 8 ซอย 2', 'ถนนเทศบาล 8', 'ถนนเทศบาล 11 ซอย 1', 'ถนนเทศบาล 11 ซอย 3', 'ถนนเทศบาล 11 ซอย 5'],
+    zone5: ['ถนนเทศบาล 17', 'ถนนเทศบาล 17 ซอย 1ก', 'ถนนเทศบาล 17 ซอย 3', 'ถนนพระยาระแงะ ซอย 3']
+};
+
+function renderReliefTable(data, isSearching = false) {
+    const tableBody = document.getElementById('reliefTableBody');
+    if (!tableBody) return;
+
+    // 1. กำหนดข้อมูลที่จะนำมาใช้นับสรุป (รวมทั้งหมด หรือ เฉพาะที่ค้นหา)
+    const summaryData = isSearching ? data : (store.reliefData || []);
+    
+    // อัปเดตยอดรวมทั้งหมด
+    if (document.getElementById('totalReliefCount')) {
+        document.getElementById('totalReliefCount').innerText = summaryData.length;
+    }
+
+    // 2. ตัวแปรเก็บจำนวนของแต่ละ Zone
+    let counts = { zone1: 0, zone2: 0, zone3: 0, zone4: 0, zone5: 0 };
+
+    // 3. วนลูปเช็คที่อยู่ (สมมติว่าที่อยู่เก็บในช่อง r[4])
+    summaryData.forEach(r => {
+        const address = r[4] ? r[4].toString() : '';
+        
+        if (zoneRules.zone1.some(street => address.includes(street))) counts.zone1++;
+        else if (zoneRules.zone2.some(street => address.includes(street))) counts.zone2++;
+        else if (zoneRules.zone3.some(street => address.includes(street))) counts.zone3++;
+        else if (zoneRules.zone4.some(street => address.includes(street))) counts.zone4++;
+        else if (zoneRules.zone5.some(street => address.includes(street))) counts.zone5++;
+    });
+
+    // 4. แสดงผลตัวเลขขึ้นการ์ด
+    if(document.getElementById('zone1Count')) document.getElementById('zone1Count').innerText = counts.zone1;
+    if(document.getElementById('zone2Count')) document.getElementById('zone2Count').innerText = counts.zone2;
+    if(document.getElementById('zone3Count')) document.getElementById('zone3Count').innerText = counts.zone3;
+    if(document.getElementById('zone4Count')) document.getElementById('zone4Count').innerText = counts.zone4;
+    if(document.getElementById('zone5Count')) document.getElementById('zone5Count').innerText = counts.zone5;
+
+    // --- ส่วนตารางด้านล่าง ---
+    if (!data || data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-slate-400 font-bold"><i class="fas fa-search-minus text-3xl mb-3 block opacity-20"></i>ไม่พบข้อมูล</td></tr>`;
+        return;
+    }
+
+    let displayData = isSearching ? data : [...data].reverse();
+
+    tableBody.innerHTML = displayData.map((r, index) => {
+        const timestamp = r[0] ? new Date(r[0]).toLocaleString('th-TH', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+        const statusClass = r[2] === 'เจ้าบ้าน' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-amber-50 text-amber-600 border-amber-100';
+        
+        return `
+            <tr class="hover:bg-slate-50 transition-colors">
+                <td class="p-5 text-center font-bold text-slate-300">
+                    ${isSearching ? '•' : (displayData.length - index)}
+                </td>
+                <td class="p-5">
+                    <div class="text-[9px] text-slate-400 font-bold mb-1"><i class="far fa-clock mr-1"></i>${timestamp}</div>
+                    <div class="font-black text-slate-700 text-sm">${r[1] || 'ไม่ระบุชื่อ'}</div>
+                </td>
+                <td class="p-5 text-slate-600 font-medium leading-relaxed">${r[4] || '-'}</td>
+                <td class="p-5 text-center">
+                    <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-xl font-black">${r[3] || 0}</span>
+                </td>
+                <td class="p-5 text-center">
+                    <span class="px-3 py-1 rounded-full font-black text-[9px] border ${statusClass} shadow-sm uppercase">
+                        ${r[2] || 'ปกติ'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+        async function loadUsers() {
+    const tbody = document.getElementById('userTableBody');
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center py-10"><i class="fas fa-spinner fa-spin text-slate-300 text-2xl"></i></td></tr>`;
+    
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'getUsers' }) });
+        const data = await res.json();
+        
+        if (data.success && data.users) {
+            tbody.innerHTML = data.users.map((u) => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-bold text-slate-700">${u[0]}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${u[1] === 'admin' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-500'}">${u[1]}</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="deleteUser('${u[0]}')" class="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><i class="fas fa-trash-alt text-xs"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center text-red-400 py-4">ดึงข้อมูลล้มเหลว</td></tr>`;
+    }
+}
+
+/**
+ * ฟังก์ชันสำหรับกรองข้อมูลในตารางตาม Zone
+ * @param {string} zoneKey - ชื่อโซน (zone1, zone2, ...)
+ */
+function filterByZone(zoneKey) {
+    if (!store.reliefData) return;
+    
+    // อัปเดตสถานะตัวกรองปัจจุบัน
+    currentZoneFilter = zoneKey;
+    
+    // แสดงปุ่มล้างตัวกรอง
+    document.getElementById('clearFilterArea').classList.remove('hidden');
+
+    // กรองข้อมูลจาก store.reliefData โดยใช้เงื่อนไขชื่อถนนที่เราตั้งไว้
+    const filteredData = store.reliefData.filter(r => {
+        const address = r[4] ? r[4].toString() : '';
+        return zoneRules[zoneKey].some(street => address.includes(street));
+    });
+
+    // แสดง Hilight ที่ปุ่มที่เลือก (Optional)
+    document.querySelectorAll('.zone-filter-btn').forEach(btn => {
+        btn.classList.replace('bg-blue-50', 'bg-white'); // ล้างสีปุ่มอื่น (ถ้ามี)
+        btn.style.opacity = "0.5";
+    });
+    document.getElementById(`btn-${zoneKey}`).style.opacity = "1";
+    document.getElementById(`btn-${zoneKey}`).classList.add('ring-2');
+
+    // สั่งวาดตารางใหม่ด้วยข้อมูลที่กรองแล้ว
+    // ส่ง isSearching = true เพื่อให้เลขลำดับในตารางแสดงเป็นจุดหรือตามข้อมูลที่กรอง
+    renderReliefTable(filteredData, true);
+    
+    // แจ้งเตือนเล็กน้อย (Toast)
+    console.log(`Filtering by ${zoneKey}: พบ ${filteredData.length} รายการ`);
+}
+
+/**
+ * ฟังก์ชันล้างตัวกรอง กลับไปแสดงข้อมูลทั้งหมด
+ */
+function clearZoneFilter() {
+    currentZoneFilter = null;
+    document.getElementById('clearFilterArea').classList.add('hidden');
+    
+    // รีเซ็ตสไตล์ปุ่ม
+    document.querySelectorAll('.zone-filter-btn').forEach(btn => {
+        btn.style.opacity = "1";
+        btn.classList.remove('ring-2');
+    });
+
+    // แสดงข้อมูลทั้งหมดใหม่
+    renderReliefTable(store.reliefData);
+}
+
+async function saveUser(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.innerText = "กำลังบันทึก..."; btn.disabled = true;
+
+    const payload = {
+        action: 'saveUser',
+        targetUser: document.getElementById('manage_username').value.trim(),
+        targetRole: document.getElementById('manage_role').value
+    };
+
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire('สำเร็จ', 'บันทึกสิทธิ์ผู้ใช้งานแล้ว', 'success');
+            document.getElementById('userForm').reset();
+            loadUsers(); // โหลดตารางใหม่
+        }
+    } catch (err) { Swal.fire('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'error'); }
+    btn.innerText = "บันทึกข้อมูล"; btn.disabled = false;
+}
+
+async function deleteUser(username) {
+    if(username === currentUser) return Swal.fire('ปฏิเสธ', 'ไม่สามารถลบบัญชีตัวเองขณะใช้งานได้', 'warning');
+    
+    const confirm = await Swal.fire({ title: 'ยืนยันการลบ?', text: `ต้องการลบผู้ใช้ ${username} ใช่หรือไม่`, icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบข้อมูล', confirmButtonColor: '#ef4444' });
+    if (!confirm.isConfirmed) return;
+
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteUser', targetUser: username }) });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire('ลบแล้ว', 'ลบผู้ใช้งานสำเร็จ', 'success');
+            loadUsers();
+        }
+    } catch (err) { Swal.fire('ผิดพลาด', 'ลบไม่สำเร็จ', 'error'); }
+}
+        function selectTrend(value, btn) {
+    // เก็บค่าลงใน Input Hidden เพื่อส่งไปพร้อมฟอร์ม
+    document.getElementById('water_trend').value = value;
+
+    // เคลียร์สถานะปุ่มอื่นทั้งหมด
+    document.querySelectorAll('.trend-btn').forEach(el => {
+        el.classList.remove('active-trend');
+    });
+
+    // เพิ่มสถานะให้ปุ่มที่ถูกกด
+    btn.classList.add('active-trend');
+}
+        function setDateFilter(type) {
+            const end = new Date(); let start = new Date();
+            if (type === 'today') start.setHours(0,0,0,0);
+            else if (type === 'yesterday') { start.setDate(end.getDate() - 1); start.setHours(0,0,0,0); end.setDate(end.getDate() - 1); end.setHours(23,59,59); }
+            else if (type === 'week') start.setDate(end.getDate() - 7);
+            document.getElementById('startDate').valueAsDate = start;
+            document.getElementById('endDate').valueAsDate = end;
+            updateWaterChart();
+        }
+
+        function updateWaterChart() {
+            const loc = document.getElementById('chartLocFilter').value;
+            const start = new Date(document.getElementById('startDate').value);
+            const end = new Date(document.getElementById('endDate').value);
+            if(!isNaN(end)) end.setHours(23,59,59);
+            let filtered = store.waterLevels.filter(r => {
+                const d = new Date(r[0]);
+                return (loc === 'all' || r[1] === loc) && (isNaN(start) || d >= start) && (isNaN(end) || d <= end);
+            }).sort((a,b) => new Date(a[0]) - new Date(b[0]));
+            const datasets = [];
+            const activeAreas = loc === 'all' ? [...new Set(filtered.map(r => r[1]))] : [loc];
+            const colors = ['#2563eb', '#dc2626', '#059669', '#ca8a04', '#7c3aed'];
+            activeAreas.forEach((area, i) => {
+                const areaData = filtered.filter(r => r[1] === area);
+                datasets.push({
+                    label: area,
+                    data: areaData.map(r => ({ x: new Date(r[0]), y: r[2] })),
+                    borderColor: colors[i % colors.length],
+                    borderWidth: 2, tension: 0.3, pointRadius: 3, pointHoverRadius: 6
+                });
+            });
+            const ctx = document.getElementById('waterChart').getContext('2d');
+            if (waterChartInstance) waterChartInstance.destroy();
+            waterChartInstance = new Chart(ctx, {
+                type: 'line', data: { datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', intersect: false, axis: 'x' },
+                    plugins: { 
+                        tooltip: { backgroundColor: 'rgba(255, 255, 255, 0.95)', titleColor: '#1e40af', bodyColor: '#334155', borderColor: '#e2e8f0', borderWidth: 1, padding: 10 },
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
+                    },
+                    scales: { 
+                        x: { type: 'time', time: { displayFormats: { day: 'dd MMM' } }, grid: { display: false }, ticks: { font: { size: 9 } } },
+                        y: { ticks: { font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
+       function renderWaterCards() {
+    const filter = document.getElementById('cardLocFilter').value;
+    let displayData = [];
+    
+    // 1. Logic การกรองข้อมูล (คงเดิม)
+    if (filter === 'all') {
+        const activeAreas = [...new Set(store.waterLevels.map(r => r[1]))];
+        activeAreas.forEach(area => {
+            const latest = store.waterLevels.filter(r => r[1] === area).sort((a,b) => new Date(b[0]) - new Date(a[0]))[0];
+            if (latest) displayData.push(latest);
+        });
+        displayData.sort((a,b) => new Date(b[0]) - new Date(a[0]));
+    } else {
+        displayData = store.waterLevels.filter(r => r[1] === filter).sort((a,b) => new Date(b[0]) - new Date(a[0]));
+    }
+
+    // 2. แสดงผล Card พร้อมฟังก์ชัน Pan to Marker
+    document.getElementById('waterList').innerHTML = displayData.slice(0, 12).map(r => {
+        const locationName = r[1]; // ชื่อพื้นที่/จุดวัด
+        const trend = r[4] || 'คงตัว';
+        const photoUrl = r[6] || '';
+        let displayLink = photoUrl.includes("id=") ? `https://drive.google.com/thumbnail?id=${photoUrl.split("id=")[1]}&sz=w600` : photoUrl;
+
+        let cardStyle = "bg-white text-slate-700", badgeStyle = "bg-blue-100 text-blue-600";
+        if (trend === 'เพิ่มขึ้น') { cardStyle = "bg-red-600 text-white animate-pulse-fast"; badgeStyle = "bg-red-800 text-white"; }
+        else if (trend === 'คงตัว') { cardStyle = "bg-yellow-400 text-slate-900"; badgeStyle = "bg-yellow-600 text-white"; }
+        else if (trend === 'ลดลง') { cardStyle = "bg-green-500 text-white"; badgeStyle = "bg-green-700 text-white"; }
+
+        return `
+            <div onclick="focusOnLocation('${locationName}')" 
+                 class="rounded-[2rem] border shadow-md overflow-hidden transition-all active:scale-[0.98] cursor-pointer hover:shadow-xl ${cardStyle} flex flex-col h-full group">
+                
+                <div class="water-card-img-container relative overflow-hidden">
+                    ${displayLink ? `<img src="${displayLink}" 
+                        onclick="event.stopPropagation(); openLightbox('${displayLink}')" 
+                        class="w-full h-full object-cover cursor-zoom-in group-hover:scale-110 transition-transform duration-500" 
+                        alt="สถานการณ์น้ำ"
+                        onerror="this.src='https://placehold.co/600x400?text=No+Photo'">` :
+                        `<div class="w-full h-full flex flex-col items-center justify-center text-slate-300 italic text-xs">
+                            <i class="fas fa-image text-3xl mb-2"></i>รอการอัปโหลดภาพ
+                        </div>`}
+                    
+                    <div class="absolute top-3 right-3 bg-black/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fas fa-location-arrow text-white text-xs"></i>
+                    </div>
+                </div>
+
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-[10px] font-black px-2 py-1 rounded-full ${badgeStyle} uppercase">
+                                ${new Date(r[0]).toLocaleTimeString('th-TH')}
+                            </span>
+                            <i class="fas ${trend==='เพิ่มขึ้น'?'fa-arrow-up':(trend==='ลดลง'?'fa-arrow-down':'fa-arrows-alt-h')} text-sm"></i>
+                        </div>
+                        <p class="text-sm font-black truncate mb-1">${locationName}</p>
+                        <p class="text-2xl font-black">${r[2]} <span class="text-xs font-normal opacity-70 italic">ซม.</span></p>
+                    </div>
+                    
+                    <div class="mt-3 pt-3 border-t border-black/10">
+                        <p class="text-[9px] font-bold opacity-80 uppercase leading-tight">
+                            <i class="fas fa-user-edit mr-1"></i> ${r[3]}
+                        </p>
+                        ${r[7] ? `<p class="text-[9px] mt-1 italic line-clamp-2 opacity-80">${r[7]}</p>` : ''}
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+        // --- Utils ---
+        function getLocation() {
+            if (navigator.geolocation) {
+                Swal.fire({ title: 'กำลังดึงพิกัด...', didOpen: () => Swal.showLoading() });
+                navigator.geolocation.getCurrentPosition((p) => {
+                    document.getElementById('water_coords').value = `${p.coords.latitude},${p.coords.longitude}`;
+                    Swal.close();
+                }, () => Swal.fire('กรุณาเปิด GPS', '', 'error'));
+            }
+        }
+
+        function previewImg(e) {
+            const f = e.target.files[0];
+            if (f) {
+                const r = new FileReader();
+                r.onload = (ev) => { document.getElementById('img_preview_box').innerHTML = `<img src="${ev.target.result}" class="h-full w-full object-cover">`; };
+                r.readAsDataURL(f);
+            }
+        }
+
+        async function saveWater(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveWaterBtn');
+            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                btn.disabled = true;
+                const file = document.getElementById('water_img').files[0];
+                let imageData = null, imageType = null;
+                if (file) {
+                    imageData = await new Promise(res => {
+                        const r = new FileReader();
+                        r.onload = (ev) => res(ev.target.result);
+                        r.readAsDataURL(file);
+                    });
+                    imageType = file.type;
+                }
+                const payload = { action:'saveWater', location:document.getElementById('water_loc').value, level:document.getElementById('water_val').value, trend:document.getElementById('water_trend').value, coords:document.getElementById('water_coords').value, note:document.getElementById('water_note').value, reporter:currentUser, imageData, imageType };
+                const res = await fetch(API_URL, { method:'POST', body: JSON.stringify(payload) });
+                const data = await res.json();
+                if(data.success) {
+                    Swal.fire('สำเร็จ', 'บันทึกเรียบร้อยแล้ว', 'success').then(() => {
+                        document.getElementById('waterForm').reset();
+                        document.getElementById('img_preview_box').innerHTML = `<i class="fas fa-camera text-3xl text-blue-300"></i><p class="text-xs text-blue-400 mt-2 font-bold">แตะเพื่อเปิดกล้อง</p>`;
+                        loadData(); showPage('water');
+                    });
+                } else { throw new Error(data.error); }
+            } catch(err) { Swal.fire('ผิดพลาด', err.message, 'error'); } finally { btn.disabled = false; }
+        }
+        let shelterPieInstance = null;
+
+let waterMap;
+let markerLayer = L.layerGroup();
+
+// ฟังก์ชันสร้างไอคอนหมุดตามระดับน้ำ
+function getWaterIcon(level) {
+    let color = '#22c55e'; // เขียว (ปกติ 0)
+    let shadowColor = 'rgba(34, 197, 94, 0.4)';
+    let extraClass = ''; // คลาสเสริมสำหรับ Animation
+
+    if (level >= 1 && level <= 50) {
+        color = '#facc15'; // เหลือง
+        shadowColor = 'rgba(250, 204, 21, 0.4)';
+    } else if (level >= 51 && level <= 100) {
+        color = '#f97316'; // ส้ม
+        shadowColor = 'rgba(249, 115, 22, 0.4)';
+    } else if (level >= 101) {
+        color = '#dc2626'; // แดง (วิกฤต)
+        shadowColor = 'rgba(220, 38, 38, 0.5)';
+        extraClass = 'critical-pulse'; // ใส่คลาสกระพริบ
+    }
+
+    return L.divIcon({
+        className: 'custom-water-marker',
+        html: `
+            <div class="${extraClass}" style="
+                background-color: ${color}; 
+                width: 18px; 
+                height: 18px; 
+                border-radius: 50%; 
+                border: 3px solid white; 
+                box-shadow: 0 0 0 4px ${shadowColor}, 0 2px 10px rgba(0,0,0,0.2);
+            "></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+}
+
+// ฟังก์ชันเริ่มต้นแผนที่
+function initWaterMap() {
+    if (waterMap) return; // ถ้าสร้างแล้วไม่ต้องสร้างซ้ำ
+
+    // พิกัดเริ่มต้น (เทศบาลตำบลตันหยงมัส)
+    waterMap = L.map('waterMap').setView([6.29445, 101.72362], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(waterMap);
+
+    markerLayer.addTo(waterMap);
+}
+
+// ฟังก์ชันอัปเดตหมุดบนแผนที่
+// ตัวแปรสำหรับเก็บ Marker ทั้งหมด โดยใช้ชื่อจุดวัดเป็น Key
+let waterMarkers = {}; 
+
+function updateWaterMapMarkers() {
+    if (!waterMap || !store.waterLevels) return;
+    
+    markerLayer.clearLayers();
+    waterMarkers = {};
+
+    const latestData = {};
+    store.waterLevels.forEach(r => {
+        const loc = r[1];
+        const time = new Date(r[0]).getTime();
+        if (!latestData[loc] || time > latestData[loc].time) {
+            latestData[loc] = { data: r, time: time };
+        }
+    });
+
+    Object.values(latestData).forEach(item => {
+        const r = item.data;
+        const name = r[1];
+        const level = parseFloat(r[2] || 0);
+        const coordinateStr = String(r[5] || '').trim();
+
+        // กำหนดสีและข้อความสถานะสำหรับ Popup
+        let statusText = 'ปกติ', statusColor = 'bg-green-100 text-green-600';
+        if (level >= 1 && level <= 50) { statusText = 'เฝ้าระวัง'; statusColor = 'bg-yellow-100 text-yellow-700'; }
+        else if (level >= 51 && level <= 100) { statusText = 'เตือนภัย'; statusColor = 'bg-orange-100 text-orange-600'; }
+        else if (level >= 101) { statusText = 'วิกฤต'; statusColor = 'bg-red-100 text-red-600'; }
+
+        if (coordinateStr.includes(',')) {
+            const [lat, lng] = coordinateStr.split(',').map(v => parseFloat(v.trim()));
+
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const marker = L.marker([lat, lng], { icon: getWaterIcon(level) });
+                
+                // --- ส่วนปรับปรุง Layout Popup ---
+                const popupContent = `
+                    <div class="font-sans">
+                        <div class="px-4 py-2 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Live Report</span>
+                            <span class="popup-badge ${statusColor}">${statusText}</span>
+                        </div>
+                        
+                        <div class="p-4 text-center">
+                            <p class="text-[11px] font-bold text-slate-500 mb-1 leading-tight">${name}</p>
+                            <div class="flex items-baseline justify-center space-x-1">
+                                <span class="text-4xl font-black text-slate-800 tracking-tighter">${level}</span>
+                                <span class="text-xs font-bold text-slate-400">ซม.</span>
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-2 bg-slate-50 text-center border-t border-slate-100">
+    <p class="text-[9px] text-slate-500 font-bold leading-tight">
+        <i class="far fa-calendar-alt mr-1 text-blue-400"></i> 
+        ${new Date(r[0]).toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })}
+        <span class="mx-1 text-slate-300">|</span>
+        <i class="far fa-clock mr-1 text-blue-400"></i> 
+        ${new Date(r[0]).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+    </p>
+</div>
+                `;
+
+                marker.bindPopup(popupContent);
+                waterMarkers[name] = marker;
+                markerLayer.addLayer(marker);
+            }
+        }
+    });
+}
+
+/**
+ * ฟังก์ชันเลื่อนแผนที่ไปที่จุดวัดที่กำหนด
+ * @param {string} locationName - ชื่อจุดวัดระดับน้ำ
+ */
+function focusOnLocation(locationName) {
+    // ดึง Marker จาก Object ที่เราเก็บไว้ตอนวนลูปสร้าง
+    const marker = waterMarkers[locationName];
+    
+    if (marker) {
+        // เลื่อนแผนที่และซูมไปที่หมุด
+        waterMap.setView(marker.getLatLng(), 16, {
+            animate: true,
+            duration: 1.2
+        });
+
+        // เปิด Popup อัตโนมัติ
+        setTimeout(() => {
+            marker.openPopup();
+        }, 600);
+
+        // เลื่อนหน้าจอลงมาที่แผนที่ (Smooth Scroll)
+        document.getElementById('waterMap').scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+    }
+}
+
+/**
+ * ฟังก์ชันกรองข้อมูลศูนย์พักพิง
+ * @param {string} centerName - ชื่อศูนย์ที่เลือก หรือ 'all'
+ */
+function filterShelter(centerName) {
+    // 1. ปรับสถานะปุ่ม (UI)
+    document.querySelectorAll('.shelter-filter-btn').forEach(btn => {
+        btn.classList.remove('active-shelter-btn', 'active-menu-mobile', 'bg-blue-600', 'text-white');
+        btn.classList.add('bg-white', 'text-slate-600');
+        
+        if(btn.getAttribute('data-center') === centerName) {
+            btn.classList.add('active-shelter-btn', 'active-menu-mobile', 'bg-blue-600', 'text-white');
+            btn.classList.remove('bg-white', 'text-slate-600');
+        }
+    });
+
+    // 2. ดึงข้อมูลดิบจาก Store
+    const evacuees = store.evacuees || [];
+    
+    // 3. กรองข้อมูลตามศูนย์ที่เลือก
+    let filtered = centerName === 'all' ? [...evacuees] : evacuees.filter(r => {
+        const shelterNameInSheet = (r[1] || '').toString().trim();
+        return shelterNameInSheet === centerName.trim();
+    });
+    
+    // 4. เก็บข้อมูลที่กรองไว้ในตัวแปรสำหรับแสดงผล (Card/Table)
+    store.evacuees_display = filtered;
+
+    // --- จุดที่เพิ่ม: เก็บข้อมูลลง Global Variable เพื่อให้ฟังก์ชันพิมพ์รายงานดึงไปใช้ ---
+    window.currentFilteredData = filtered;
+
+    // 5. อัปเดตการแสดงผลบนหน้าจอ (กราฟและ Card)
+    if (typeof renderShelterStats === "function") {
+        renderShelterStats(filtered, 'capacity');
+    }
+    
+    if (typeof renderEvacueeCards === "function") {
+        renderEvacueeCards(filtered);
+    }
+
+    console.log(`ตัวกรองศูนย์: ${centerName} | พบข้อมูล: ${filtered.length} รายการ`);
+}
+
+
+
+// กำหนดความจุของแต่ละศูนย์
+const SHELTER_CAPACITY = {
+    'ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา': 80,
+    'ศูนย์มัสยิดตันหยงมัส': 80,
+    'ศูนย์โรงเรียนบ้านเขาพระ': 60
+};
+
+// ฟังก์ชันหลักในการเรนเดอร์สถิติและกราฟ
+/**
+ * ฟังก์ชันแสดงสถิติและกราฟวงกลมของศูนย์พักพิง
+ * @param {Array} data - ข้อมูลผู้ลี้ภัยที่ผ่านการกรองแล้ว
+ * @param {String} chartType - ประเภทกราฟ ('capacity', 'gender', 'health')
+ */
+// ประกาศตัวแปรเก็บ Instance ของกราฟแยกกัน
+let charts = { capacity: null, gender: null, age: null };
+
+function renderShelterStats(data) {
+    const total = data.length;
+    const households = [...new Set(data.map(r => r[2]))].length;
+    const male = data.filter(r => r[6] === 'ชาย').length;
+    const female = data.filter(r => r[6] === 'หญิง').length;
+
+    const ageGroups = {
+        infant: data.filter(r => r[5] >= 0 && r[5] <= 7).length,
+        child: data.filter(r => r[5] >= 8 && r[5] <= 15).length,
+        adult: data.filter(r => r[5] >= 16 && r[5] <= 59).length,
+        elderly: data.filter(r => r[5] >= 60).length
+    };
+
+    document.getElementById('statTotalPeople').innerText = total;
+    document.getElementById('statTotalHouseholds').innerText = households;
+
+    // --- Logic คำนวณความจุ ---
+    // --- Logic คำนวณความจุและเปอร์เซ็นต์ ---
+    const activeBtn = document.querySelector('.shelter-filter-btn.active-shelter-btn');
+    const filterValue = activeBtn ? activeBtn.getAttribute('data-center') : 'all';
+
+    let totalCapacity = 0;
+    if (filterValue === 'all') {
+        totalCapacity = Object.values(SHELTER_CAPACITY).reduce((a, b) => a + b, 0);
+    } else {
+        totalCapacity = SHELTER_CAPACITY[filterValue] || 0;
+    }
+
+    const occupancyRate = (total / totalCapacity) * 100; // คำนวณเปอร์เซ็นต์การครองเตียง
+    const remaining = Math.max(0, totalCapacity - total);
+    
+    // --- เงื่อนไขการกำหนดสีตามเปอร์เซ็นต์ ---
+    let capacityColor = '#22c55e'; // Default: สีเขียว (Success)
+    let textColorClass = 'text-green-600';
+
+    if (occupancyRate >= 90) {
+        capacityColor = '#ef4444'; // มากกว่า 90%: สีแดง (Danger)
+        textColorClass = 'text-red-600';
+    } else if (occupancyRate >= 50) {
+        capacityColor = '#f59e0b'; // มากกว่า 50%: สีเหลือง (Warning)
+        textColorClass = 'text-amber-500';
+    }
+
+    // จัดข้อความตรงกลางกราฟ (ปรับสีตามเงื่อนไข)
+    document.getElementById('capacityText').innerHTML = `
+        <span class="text-3xl font-black ${textColorClass} leading-none">${total}</span>
+        <span class="text-[10px] text-slate-400 font-bold uppercase mt-1">/ ${totalCapacity}</span>
+    `;
+
+    // 1. กราฟความจุ (ส่งค่า capacityColor ที่คำนวณได้ไปใช้)
+    updateChart('capacity', 'chartCapacity', 
+        ['ผู้พักพิง', 'ที่ว่าง'], [total, remaining], [capacityColor, '#f1f5f9'], '80%', false);
+
+    // 2. กราฟเพศ
+    updateChart('gender', 'chartGender', 
+        ['ชาย', 'หญิง'], [male, female], ['#38bdf8', '#f472b6'], '60%', 'right');
+
+    // 3. กราฟอายุ
+    updateChart('age', 'chartAge', 
+        ['เด็กเล็ก 0-7', 'เด็ก 8-15', 'ผู้ใหญ่ 16-59', 'ผู้สูงอายุ 60+'], 
+        [ageGroups.infant, ageGroups.child, ageGroups.adult, ageGroups.elderly], 
+        ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], '60%', 'right');
+}
+
+// ฟังก์ชันสร้างกราฟที่ปรับปรุงแล้ว
+function updateChart(key, canvasId, labels, data, colors, cutout, legendPos) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    if (charts[key]) charts[key].destroy();
+    
+    charts[key] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            cutout: cutout,
+            plugins: {
+                legend: { 
+                    display: legendPos !== false, // ถ้าส่ง false มาจะซ่อน Legend
+                    position: legendPos || 'bottom', 
+                    labels: { 
+                        boxWidth: 8, 
+                        usePointStyle: true,
+                        font: { size: 9, family: 'Kanit' },
+                        padding: 10
+                    } 
+                },
+                tooltip: { enabled: true }
+            }
+        }
+    });
+}
+
+/**
+ * ฟังก์ชันเสริมสำหรับ Update กราฟเมื่อคลิกที่การ์ด
+ */
+function updateShelterChart(type) {
+    if (!currentShelterData || currentShelterData.length === 0) return;
+    renderShelterStats(currentShelterData, type);
+}
+
+// ฟังก์ชันสำหรับเรียกอัปเดตกราฟจาก Card ที่คลิก
+function updateShelterChart(type) {
+    // ตรวจสอบว่ามีข้อมูลให้แสดงกราฟหรือไม่
+    if (currentShelterData.length === 0) {
+        Swal.fire('ไม่มีข้อมูล', 'ไม่สามารถสร้างกราฟได้เนื่องจากไม่มีข้อมูลผู้เข้าพักพิง', 'info');
+        return;
+    }
+    renderShelterStats(currentShelterData, type);
+}
+
+// ฟังก์ชันแสดงการ์ดรายชื่อ
+function renderEvacueeCards(data) {
+    const tableBody = document.getElementById('evacueeTableBody');
+    
+    if (!data || data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-slate-400">ไม่พบข้อมูลผู้เข้าพักพิง</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = data.map((r, index) => {
+        // r[1]=ศูนย์, r[4]=ชื่อ, r[5]=อายุ, r[6]=เพศ, r[8]=สถานะสุขภาพ
+        const healthStatus = r[8] || 'ปกติ';
+        const isNotNormal = healthStatus !== 'ปกติ';
+        const gender = r[6] || '-';
+
+        return `
+    <tr class="border-b border-slate-50 hover:bg-blue-50/50 transition-colors">
+        <td class="p-3 text-center text-slate-400 font-bold">${index + 1}</td>
+        <td class="p-3">
+            <div class="font-bold text-slate-700 text-[12px]">${r[4]}</div>
+        </td>
+        <td class="p-3 text-slate-600">
+            ${r[5]} ปี / ${gender}
+        </td>
+        
+        <td class="p-3">
+            ${isNotNormal 
+                ? `<span class="bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-full font-bold text-[9px] shadow-sm whitespace-nowrap">
+                    <i class="fas fa-exclamation-circle mr-1"></i>${healthStatus}
+                   </span>` 
+                : `<span class="bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded-full font-bold text-[9px] shadow-sm whitespace-nowrap">
+                    <i class="fas fa-check-circle mr-1"></i>ปกติ
+                   </span>`
+            }
+        </td>
+        
+        <td class="p-3">
+            <span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg font-bold text-[10px]">
+                ${r[1]}
+            </span>
+        </td>
+        <td class="p-3 text-center">
+            <button onclick="checkPasswordBeforeDetail(${index})" 
+                    class="bg-white border border-blue-200 text-blue-600 w-8 h-8 rounded-full shadow-sm hover:bg-blue-600 hover:text-white transition-all active:scale-90">
+                <i class="fas fa-search-plus text-xs"></i>
+            </button>
+        </td>
+    </tr>
+    `;
+}).join('');
+}
+// 1. ฟังก์ชันตรวจสอบรหัสผ่าน 1111
+async function checkPasswordBeforeDetail(index) {
+    const { value: password } = await Swal.fire({
+        title: 'ระบบรักษาความปลอดภัย',
+        text: 'กรุณาระบุรหัสผ่านเพื่อดูข้อมูลส่วนตัว',
+        input: 'password',
+        inputPlaceholder: ' ',
+        confirmButtonText: 'ยืนยัน',
+        confirmButtonColor: '#2563eb',
+        showCancelButton: true,
+        cancelButtonText: 'ยกเลิก'
+    });
+
+    if (password === '1111') {
+        showDetails(index);
+    } else if (password) {
+        Swal.fire('รหัสผ่านไม่ถูกต้อง', 'คุณไม่ได้รับอนุญาตให้ดูข้อมูลนี้', 'error');
+    }
+}
+
+// ฟังก์ชันปิด Modal (แก้ไขให้ทำงานได้แน่นอน)
+function closeDataModal() {
+    const modal = document.getElementById('dataModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+// ฟังก์ชันแสดงรายละเอียดข้อมูล
+function showDetails(index) {
+    // ดึงข้อมูลจากตัวแปรที่เก็บค่าล่าสุดที่แสดงผลหน้าเว็บ
+    const person = store.evacuees_display[index]; 
+    if (!person) return;
+
+    // แสดงชื่อและศูนย์ในส่วน Header ให้โดดเด่น
+    document.getElementById('modalName').innerText = person[4]; // ชื่อ (Index 4)
+    document.getElementById('modalShelter').innerText = person[1]; // ศูนย์ (Index 1)
+
+    const modal = document.getElementById('dataModal');
+    const content = document.getElementById('modalContent');
+
+    // จัดการเบอร์โทร (ลบเครื่องหมาย ' ออกถ้ามี)
+    const rawPhone = person[7] ? person[7].toString() : "";
+    const cleanPhone = rawPhone.replace(/'/g, "");
+
+    const healthStatus = person[8] || 'ปกติ';
+    const isNotNormal = healthStatus !== 'ปกติ';
+
+    content.innerHTML = `
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">อายุ</p>
+                <p class="text-sm font-black text-slate-700">${person[5]} ปี</p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">เพศ</p>
+                <p class="text-sm font-black text-slate-700">${person[6] || '-'}</p>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex items-center gap-3 px-1 border-b pb-3">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 shadow-sm">
+                    <i class="fas fa-id-card text-xs"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[9px] text-slate-400 font-bold uppercase">เลขบัตรประจำตัวประชาชน</p>
+                    <p class="text-sm font-bold text-slate-700">${person[3] || '-'}</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 px-1 border-b pb-3">
+                <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-500 shadow-sm">
+                    <i class="fas fa-phone-alt text-xs"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[9px] text-slate-400 font-bold uppercase">เบอร์โทรศัพท์</p>
+                    <a href="tel:${cleanPhone}" class="text-sm font-bold text-blue-600 underline">
+                        ${cleanPhone || 'ไม่ระบุ'}
+                    </a>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 px-1 border-b pb-3">
+                <div class="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500 shadow-sm">
+                    <i class="fas fa-map-marker-alt text-xs"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[9px] text-slate-400 font-bold uppercase">ที่อยู่</p>
+                    <p class="text-xs font-medium text-slate-600 leading-relaxed">${person[2]}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 p-4 rounded-3xl ${isNotNormal ? 'bg-red-50 border-2 border-red-100 shadow-red-50' : 'bg-slate-50 border border-slate-100'} shadow-sm">
+            <p class="text-[10px] font-bold ${isNotNormal ? 'text-red-500' : 'text-slate-400'} uppercase mb-1">สถานะสุขภาพ</p>
+            <div class="flex items-center gap-2">
+                <p class="text-md font-black ${isNotNormal ? 'text-red-700' : 'text-slate-700'}">
+                    ${isNotNormal ? `<i class="fas fa-notes-medical mr-1"></i>${healthStatus}` : '<i class="fas fa-check-circle mr-1 text-green-500"></i>สุขภาพปกติ'}
+                </p>
+            </div>
+            ${isNotNormal && person[9] ? `
+                <div class="mt-3 text-xs text-red-600 bg-white/80 p-3 rounded-xl italic border-l-4 border-red-400 shadow-inner">
+                    ${person[9]}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+async function saveEvacuee(e) {
+    e.preventDefault();
+    const btn = document.getElementById('saveRegisBtn');
+    
+    // จัดการเรื่องเบอร์โทรศัพท์ (ใส่ ' นำหน้าเพื่อให้ Google Sheets มองเป็นข้อความและคงเลข 0 ไว้)
+    let phoneVal = document.getElementById('regis_phone').value.trim();
+    if (phoneVal && !phoneVal.startsWith("'")) {
+        phoneVal = "'" + phoneVal; 
+    }
+
+    const healthType = document.getElementById('regis_health_type').value;
+    const healthNote = document.getElementById('regis_health_note').value.trim();
+
+    try {
+        btn.disabled = true;
+        const payload = {
+            action: 'saveEvacuee',
+            shelter: document.getElementById('regis_shelter').value,
+            address: (document.getElementById('regis_address_select').value === 'other') ? document.getElementById('regis_address_custom').value : document.getElementById('regis_address_select').value,
+            idCard: document.getElementById('regis_idcard').value.trim(),
+            name: document.getElementById('regis_name').value.trim(),
+            age: document.getElementById('regis_age').value,
+            gender: document.getElementById('regis_gender').value,
+            phone: phoneVal,
+            healthType: healthType, // ส่งค่าประเภทสุขภาพ (ผู้ป่วย/พิการ/ปกติ)
+            healthNote: healthNote
+        };
+
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+
+        if (result.success) {
+            Swal.fire('สำเร็จ', 'ลงทะเบียนเรียบร้อย', 'success').then(() => {
+                document.getElementById('regisForm').reset();
+                loadData();
+                showPage('shelter');
+            });
+        }
+    } catch (err) { Swal.fire('ผิดพลาด', err.message, 'error'); } 
+    finally { btn.disabled = false; }
+}
+
+// ฟังก์ชันเปิด/ปิดช่องรายละเอียด
+function toggleHealthNote(val) {
+    const container = document.getElementById('health_note_container');
+    container.classList.toggle('hidden', val === 'ปกติ');
+}
+function filterReliefTable() {
+    const searchTerm = document.getElementById('reliefSearchInput').value.toLowerCase();
+    const allData = store.reliefData || [];
+    
+    // กรองข้อมูลจากชื่อ (Index 1) และ ที่อยู่ (Index 4)
+    const filtered = allData.filter(r => {
+        const name = (r[1] || "").toLowerCase();
+        const address = (r[4] || "").toLowerCase();
+        return name.includes(searchTerm) || address.includes(searchTerm);
+    });
+
+    // อัปเดตตัวเลขจำนวนที่ค้นเจอ
+    const matchCountEl = document.getElementById('reliefMatchCount');
+    if (matchCountEl) {
+        matchCountEl.innerText = `พบ ${filtered.length} จาก ${allData.length} รายการ`;
+    }
+
+    // ส่งข้อมูลที่กรองแล้วไปแสดงผลในตาราง
+    renderReliefTable(filtered);
+}
+function openLightbox(url) {
+    const modal = document.getElementById('imageLightbox');
+    const img = document.getElementById('lightboxImg');
+    
+    // แปลง URL ให้เป็นขนาดใหญ่ (กรณีเป็นรูปจาก Google Drive)
+    // เปลี่ยนจาก sz=w400 เป็น sz=w1200 เพื่อความคมชัด
+    let highResUrl = url.replace('sz=w400', 'sz=w1200').replace('sz=w600', 'sz=w1200');
+    
+    img.src = highResUrl;
+    
+    // แสดง Modal พร้อม Animation
+    modal.classList.remove('hidden');
+    // ใช้ setTimeout เล็กน้อยเพื่อให้ CSS Transition ทำงาน
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        img.classList.remove('scale-95');
+        img.classList.add('scale-100');
+    }, 10);
+}
+
+function closeLightbox() {
+    const modal = document.getElementById('imageLightbox');
+    const img = document.getElementById('lightboxImg');
+    
+    // ซ่อน Modal พร้อม Animation
+    modal.classList.add('opacity-0');
+    img.classList.remove('scale-100');
+    img.classList.add('scale-95');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        img.src = ''; // เคลียร์รูปออก
+    }, 300); // รอให้ Animation จบก่อนซ่อน
+}
+
+// เมื่อหน้าเว็บโหลดเสร็จ
+window.addEventListener('load', () => {
+    const savedSession = localStorage.getItem('user_session');
+
+    if (savedSession) {
+        try {
+            const userData = JSON.parse(savedSession);
+            // ถ้ามีข้อมูลผู้ใช้ ให้เข้าหน้าแอปทันทีโดยไม่ต้อง Login ใหม่
+            setupUserInterface(userData);
+            console.log("Session Restored:", userData.name);
+        } catch (e) {
+            console.error("Session Error", e);
+            localStorage.removeItem('user_session');
+        }
+    }
+});
+
+// ฟังก์ชันสำหรับพิมพ์รายงานศูนย์พักพิง
+window.printShelterReport = function() {
+    // 1. ดึงข้อมูลที่กำลัง "แสดงผลอยู่ในตารางปัจจุบัน" (ข้อมูลที่ผ่านการกรองแล้ว)
+    // โดยปกติจะเก็บไว้ใน window.currentFilteredData จากฟังก์ชัน filterShelter
+    let data = (window.currentFilteredData && window.currentFilteredData.length > 0) 
+               ? window.currentFilteredData 
+               : (window.store && window.store.evacuees ? window.store.evacuees : []);
+    
+    if (data.length === 0) {
+        Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลในตัวกรองนี้เพื่อจัดทำรายงาน', 'warning');
+        return;
+    }
+
+    const printArea = document.getElementById('printArea');
+    printArea.classList.remove('hidden');
+
+    // 2. แสดงวันที่และเวลาพิมพ์
+    document.getElementById('printDate').innerText = new Date().toLocaleString('th-TH');
+
+    // --- 3. คำนวณสถิติใหม่ทั้งหมด (เฉพาะข้อมูลที่กรองมา) ---
+    const totalCount = data.length;
+    const maleCount = data.filter(r => String(r[6] || '').trim() === 'ชาย').length;
+    const femaleCount = data.filter(r => String(r[6] || '').trim() === 'หญิง').length;
+    
+    // นับครัวเรือน (อิงที่อยู่ไม่ซ้ำกันจาก Index 2)
+    const uniqueHouseholds = new Set(data.map(r => String(r[2] || '').trim()).filter(a => a !== '')).size;
+    
+    // นับกลุ่มเปราะบาง (ทุกอย่างใน Index 8 ที่ไม่ใช่ 'ปกติ')
+    const vulnerableCount = data.filter(r => {
+        const h = String(r[8] || 'ปกติ').trim();
+        return h !== 'ปกติ' && h !== '-' && h !== '';
+    }).length;
+
+    // --- 4. อัปเดตตัวเลขลงในการ์ดสรุป (หน้า 1) ---
+    document.getElementById('printTotalEvacuees').innerText = totalCount.toLocaleString();
+    document.getElementById('printMaleTotal').innerText = maleCount.toLocaleString();
+    document.getElementById('printFemaleTotal').innerText = femaleCount.toLocaleString();
+    document.getElementById('printTotalHouseholds').innerText = uniqueHouseholds.toLocaleString();
+    document.getElementById('printTotalHealth').innerText = vulnerableCount.toLocaleString();
+
+    // --- 5. สรุปรายละเอียด (แยกตามศูนย์, อายุ, สุขภาพ) ---
+    // แยกตามศูนย์ (จะเหลือแค่ศูนย์ที่เลือก หรือทุกศูนย์ถ้าไม่ได้กรอง)
+    const shelterMap = {};
+    data.forEach(r => { shelterMap[r[1] || 'ไม่ระบุ'] = (shelterMap[r[1] || 'ไม่ระบุ'] || 0) + 1; });
+    document.getElementById('printShelterList').innerHTML = Object.entries(shelterMap).map(([n, c]) => `
+        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #ddd; padding:2px 0;">
+            <span>${n}</span><b>${c} ราย</b>
+        </div>`).join('');
+
+    // แยกตามสถานะสุขภาพ
+    const healthMap = {};
+    data.forEach(r => { 
+        const h = String(r[8] || 'ปกติ').trim();
+        healthMap[h] = (healthMap[h] || 0) + 1; 
+    });
+    document.getElementById('printHealthList').innerHTML = Object.entries(healthMap).map(([n, c]) => `
+        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #ddd; padding:2px 0;">
+            <span>${n}</span><b>${c} ราย</b>
+        </div>`).join('');
+
+    // แยกตามช่วงอายุ
+    const ages = { 'เด็ก (0-12)': 0, 'วัยรุ่น (13-20)': 0, 'ผู้ใหญ่ (21-59)': 0, 'ผู้สูงอายุ (60+)': 0 };
+    data.forEach(r => {
+        const a = parseInt(r[5]) || 0;
+        if (a <= 12) ages['เด็ก (0-12)']++;
+        else if (a <= 20) ages['วัยรุ่น (13-20)']++;
+        else if (a < 60) ages['ผู้ใหญ่ (21-59)']++;
+        else ages['ผู้สูงอายุ (60+)']++;
+    });
+    document.getElementById('printAgeList').innerHTML = Object.entries(ages).map(([l, c]) => `
+        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #ddd; padding:2px 0;">
+            <span>${l}</span><b>${c} ราย</b>
+        </div>`).join('');
+
+    // --- 6. เติมตารางรายชื่อ (หน้า 2) ---
+    const tbody = document.getElementById('printTableBody');
+    tbody.innerHTML = data.map((r, i) => `
+        <tr>
+            <td style="text-align:center">${i + 1}</td>
+            <td>${r[1] || '-'}</td>
+            <td style="font-weight:bold">${r[4] || '-'}</td>
+            <td style="text-align:center">${r[6] || '-'}</td>
+            <td style="text-align:center">${r[5] || '-'}</td>
+            <td>${r[2] || '-'}</td>
+            <td>${r[8] || 'ปกติ'}</td>
+        </tr>`).join('');
+
+    // 7. สั่งพิมพ์
+    setTimeout(() => {
+        window.print();
+        printArea.classList.add('hidden');
+    }, 600);
+};
+
+function handleLogout() {
+    Swal.fire({
+        title: 'ยืนยันการออกจากระบบ?',
+        text: "คุณต้องเข้าสู่ระบบใหม่เพื่อใช้งาน",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48', // สีแดง rose
+        confirmButtonText: 'ใช่, ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // ล้างข้อมูล Session ทั้งหมด
+            localStorage.removeItem('user_session');
+            // รีเฟรชหน้าเพื่อกลับไปหน้า Login
+            location.reload();
+        }
+    });
+}
+    </script>
+</body>
+</html>
