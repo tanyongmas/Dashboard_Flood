@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -12,6 +13,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@0.4.14/dist/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet-draw@0.4.14/dist/leaflet.draw.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap');
         body { font-family: 'Sarabun', sans-serif; background-color: #f0f9ff; margin: 0; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
@@ -190,6 +193,15 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
+/* แก้ไข Z-Index ของ Leaflet Draw */
+.leaflet-draw-toolbar a {
+    background-image: url('https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/images/spritesheet.png') !important;
+}
+
+/* สไตล์ Marker */
+.evac-marker-pulse {
+    animation: pulse-red 2s infinite;
+}
 /* --- CSS สำหรับการพิมพ์รายงาน (Print Styles) --- */
 @media print {
     /* 1. ซ่อนองค์ประกอบที่ไม่เกี่ยวข้องทั้งหมด (Sidebar, Navbar, ปุ่มต่างๆ) */
@@ -324,7 +336,8 @@
                 <button onclick="showPage('addWater')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="addWater"><i class="fas fa-plus-circle w-6 text-center"></i> <span class="nav-text ml-3">รายงานระดับน้ำ</span></button>
                 <button onclick="showPage('shelter')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="shelter"><i class="fas fa-hotel w-6 text-center"></i> <span class="nav-text ml-3">ศูนย์พักพิง</span></button>
                 <button onclick="showPage('regis')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="regis"><i class="fas fa-user-plus w-6 text-center"></i> <span class="nav-text ml-3">ลงทะเบียนใหม่</span></button>
-                <button onclick="showPage('relief')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-amber-50" data-page="relief"><i class="fa-solid fa-box-archive w-6 text-center"></i> <span class="nav-text ml-3">ข้อมูลผู้รับถุงยังชีพ</span></button>
+                <button onclick="showPage('relief')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="relief"><i class="fa-solid fa-box-archive w-6 text-center"></i> <span class="nav-text ml-3">ข้อมูลผู้รับถุงยังชีพ</span></button>
+                <button onclick="showPage('evacuation')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="evacuation"><i class="fas fa-map-marked-alt w-6 text-center"></i> <span class="nav-text ml-3">สถานะการอพยพ</span></button>
                 <button onclick="showPage('looker')" class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50" data-page="looker"><i class="fas fa-chart-pie w-6 text-center"></i> <span class="nav-text ml-3">รายงานข้อมูลน้ำท่วม</span></button>
             </nav>
 
@@ -359,38 +372,55 @@
 </div>
         </aside>
         
-       <div class="bottom-nav-mobile hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-blue-100 flex justify-around items-center py-2 px-1 z-50 shadow-[0_-2px_20px_rgba(0,0,0,0.1)]">
-    
-    <button onclick="showPage('water')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="water">
+       <div class="bottom-nav-mobile lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-around items-center py-2 px-1 z-50">
+    <!-- 1. ระดับน้ำ -->
+    <button onclick="showPage('water')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400" data-page="water">
         <i class="fas fa-tint text-xl"></i>
-        <span class="text-[8px] mt-1 font-bold">ระดับน้ำ</span>
+        <span class="text-[9px] mt-1 font-bold">ระดับน้ำ</span>
     </button>
 
-    <button onclick="showPage('addWater')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="addWater">
-        <i class="fas fa-plus-circle text-xl"></i>
-        <span class="text-[8px] mt-1 font-bold">รายงานน้ำ</span>
-    </button>
-
-    <button onclick="showPage('shelter')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="shelter">
+    <!-- 2. ศูนย์พักพิง -->
+    <button onclick="showPage('shelter')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400" data-page="shelter">
         <i class="fas fa-hotel text-xl"></i>
-        <span class="text-[8px] mt-1 font-bold">ศูนย์พักพิง</span>
+        <span class="text-[9px] mt-1 font-bold">ศูนย์พักพิง</span>
     </button>
 
-    <button onclick="showPage('regis')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="regis">
-        <i class="fas fa-user-plus text-xl"></i>
-        <span class="text-[8px] mt-1 font-bold">ลงทะเบียน</span>
+    <!-- 3. สถานะการอพยพ (หน้าใหม่) -->
+    <button onclick="showPage('evacuation')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400" data-page="evacuation">
+        <i class="fas fa-map-marked-alt text-xl"></i>
+        <span class="text-[9px] mt-1 font-bold">สถานะอพยพ</span>
     </button>
 
-    <button onclick="showPage('relief')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400 py-1" data-page="relief">
-        <i class="fa-solid fa-box-archive text-xl"></i>
-        <span class="text-[8px] mt-1 font-bold">ถุงยังชีพ</span>
+    <!-- 4. ถุงยังชีพ -->
+    <button onclick="showPage('relief')" class="mobile-nav-btn flex flex-col items-center flex-1 text-slate-400" data-page="relief">
+        <i class="fas fa-box-open text-xl"></i>
+        <span class="text-[9px] mt-1 font-bold">ถุงยังชีพ</span>
     </button>
 
-    <button onclick="handleLogout()" class="flex flex-col items-center flex-1 text-rose-400 py-1 active:scale-90 transition-transform">
-        <i class="fas fa-sign-out-alt text-xl"></i>
-        <span class="text-[8px] mt-1 font-bold">ออก</span>
+    <!-- 5. Hamburger Menu (เมนูเพิ่มเติม) -->
+    <button onclick="toggleMoreMenu()" class="flex flex-col items-center flex-1 text-slate-400">
+        <i class="fas fa-bars text-xl"></i>
+        <span class="text-[9px] mt-1 font-bold">เพิ่มเติม</span>
     </button>
-    
+</div>
+
+<!-- Popup More Menu (Mobile) -->
+<div id="moreMenuMobile" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden transition-all" onclick="toggleMoreMenu()">
+    <div class="absolute bottom-20 left-4 right-4 bg-white rounded-3xl p-6 space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+        <h4 class="text-sm font-black text-slate-700 mb-4 border-b pb-2">เมนูเพิ่มเติม</h4>
+        
+        <!-- รายงานข้อมูลน้ำท่วม -->
+        <button onclick="openFloodReportModal()" class="w-full flex items-center space-x-4 p-4 bg-blue-50 rounded-2xl text-blue-700">
+            <i class="fas fa-house-flood-water text-xl"></i>
+            <span class="font-bold">รายงานข้อมูลน้ำท่วม</span>
+        </button>
+
+        <!-- ปุ่มออกจากระบบ -->
+        <button onclick="handleLogout()" class="w-full flex items-center space-x-4 p-4 bg-rose-50 rounded-2xl text-rose-600">
+            <i class="fas fa-sign-out-alt text-xl"></i>
+            <span class="font-bold">ออกจากระบบ</span>
+        </button>
+    </div>
 </div>
 
         <main class="flex-1 flex flex-col min-w-0 main-content-area">
@@ -405,7 +435,15 @@
             <div class="p-4 md:p-8 max-w-7xl mx-auto w-full content-area">
                 
                 <section id="waterPage" class="content-page">
+                    <!-- ปุ่มรายงานระดับน้ำ (Popup) -->
+<div class="flex justify-center mb-10 lg:hidden"> <!-- เพิ่ม lg:hidden ตรงนี้ -->
+    <button onclick="showPage('addWater')" class="w-full max-w-md py-4 bg-blue-600 text-white rounded-3xl shadow-lg shadow-blue-200 flex items-center justify-center space-x-3 active:scale-95 transition-all">
+        <i class="fas fa-plus-circle text-xl"></i>
+        <span class="text-lg font-black uppercase tracking-wider">รายงานระดับน้ำ</span>
+    </button>
+</div>
                     <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-blue-50 mb-8">
+                        
                         <div class="flex flex-wrap gap-4 items-end mb-6 no-print">
                             <div class="w-full md:flex-1 min-w-[150px]">
                                 <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ตัวกรองพื้นที่ (เฉพาะที่มีข้อมูล)</label>
@@ -464,7 +502,41 @@
     </div>
 </div>
                 </section>
+<!-- หน้าสถานะการอพยพ -->
+<section id="evacuationPage" class="content-page hidden">
+    <div class="bg-white p-4 md:p-6 rounded-[2.5rem] shadow-lg border border-slate-50 max-w-6xl mx-auto h-[calc(100vh-120px)] flex flex-col">
+        
+        <!-- Header &ปุ่มรายงาน -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+            <div class="flex items-center">
+                <div class="bg-orange-100 p-3 rounded-2xl mr-3">
+                    <i class="fas fa-map-marked-alt text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-slate-800 tracking-tight">สถานะการอพยพ</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Real-time Evacuation Map</p>
+                </div>
+            </div>
 
+            <!-- ปุ่มรายงานสถานะ (แสดงผลเด่นชัดตรงกลางบนมือถือ) -->
+            <button onclick="openEvacReportModal()" class="w-full md:w-auto px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-center space-x-3 transition-all active:scale-95">
+                <i class="fas fa-bullhorn animate-bounce"></i>
+                <span class="font-black">รายงานสถานะการอพยพ</span>
+            </button>
+
+            <!-- ตัวสลับแผนที่ -->
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button onclick="changeMapLayer('osm')" id="btn-osm" class="px-4 py-2 rounded-lg text-[10px] font-bold transition-all bg-white shadow-sm text-blue-600">MAP</button>
+                <button onclick="changeMapLayer('satellite')" id="btn-sat" class="px-4 py-2 rounded-lg text-[10px] font-bold transition-all text-slate-500">SATELLITE</button>
+            </div>
+        </div>
+
+        <!-- แผนที่ -->
+        <div class="flex-1 relative rounded-[2rem] overflow-hidden border-2 border-slate-100">
+            <div id="evacMap" class="w-full h-full z-10"></div>
+        </div>
+    </div>
+</section>
                 <section id="addWaterPage" class="content-page hidden">
     <div class="bg-white p-6 md:p-10 rounded-3xl shadow-lg border border-blue-50 max-w-2xl mx-auto">
         <h3 class="text-xl font-bold text-blue-900 mb-6 flex items-center tracking-tight">
@@ -530,6 +602,13 @@
 </section>
 
                 <section id="shelterPage" class="content-page hidden">
+                    <!-- ปุ่มลงทะเบียนใหม่ (Popup) -->
+<div class="flex justify-center mb-6 lg:hidden"> <!-- เพิ่ม lg:hidden ตรงนี้ -->
+    <button onclick="showPage('regis')" class="w-full max-w-md py-4 bg-emerald-600 text-white rounded-3xl shadow-lg shadow-emerald-200 flex items-center justify-center space-x-3 active:scale-95 transition-all">
+        <i class="fas fa-user-plus text-xl"></i>
+        <span class="text-lg font-black uppercase tracking-wider">ลงทะเบียนผู้อพยพ</span>
+    </button>
+</div>
     <div class="mb-6 overflow-x-auto no-scrollbar flex gap-2 pb-2">
         <button onclick="filterShelter('all')" class="shelter-filter-btn active-shelter-btn whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all" data-center="all">ทั้งหมด</button>
         <button onclick="filterShelter('ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา')" class="shelter-filter-btn bg-white whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all" data-center="ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา">ศูนย์เทศบาลตำบลตันหยงมัส</button>
@@ -1215,8 +1294,8 @@ window.addEventListener('load', async () => {
 });
         // กำหนดว่าแต่ละสิทธิ์เข้าหน้าไหนได้บ้าง
         const PAGE_ACCESS = {
-        'admin': ['water', 'addWater', 'shelter', 'regis', 'relief', 'looker', 'userManagement'],
-        'shelter': ['shelter'],
+        'admin': ['water', 'addWater', 'shelter', 'evacuation', 'regis', 'relief', 'looker', 'userManagement'],
+        'shelter': ['shelter', 'regis'],
         'water_staff': ['water', 'addWater'], // <-- เพิ่มบรรทัดนี้
         'relief': ['relief']
         };
@@ -1231,59 +1310,101 @@ window.addEventListener('load', async () => {
         }
 
         const originalShowPage = showPage; // เก็บฟังก์ชันเดิมไว้ (ถ้าคุณเขียนทับไปเลยก็ได้)
+
 function showPage(pageId) {
+    // 1. ตรวจสอบสิทธิ์การเข้าถึง
     const allowed = PAGE_ACCESS[userRole] || ['shelter'];
     if (!allowed.includes(pageId)) {
-        return Swal.fire('สิทธิ์ไม่เพียงพอ', 'คุณไม่มีสิทธิ์เข้าถึงส่วนนี้', 'warning');
+        return Swal.fire({
+            title: 'สิทธิ์ไม่เพียงพอ',
+            text: 'คุณไม่มีสิทธิ์เข้าถึงส่วนนี้',
+            icon: 'warning',
+            customClass: { popup: 'rounded-[2rem]' }
+        });
     }
 
-    document.querySelectorAll('.content-page').forEach(p => p.classList.add('hidden'));
+    // 2. สลับการแสดงผลหน้า Page (รองรับทั้งคลาส content-page และ page-section)
+    document.querySelectorAll('.content-page, .page-section').forEach(p => p.classList.add('hidden'));
     const target = document.getElementById(pageId + 'Page');
-    if(target) target.classList.remove('hidden');
+    if (target) {
+        target.classList.remove('hidden');
+    }
 
-    // ถ้าแอดมินเปิดหน้าจัดการระบบ ให้ดึงข้อมูลล่าสุด
+    // 3. อัปเดตสถานะปุ่มเมนู (Active State)
+    // สำหรับ Desktop (Sidebar)
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-menu', 'bg-blue-50', 'text-blue-600'));
+    const activeDesktop = document.querySelector(`.nav-btn[data-page="${pageId}"]`);
+    if (activeDesktop) {
+        activeDesktop.classList.add('active-menu', 'bg-blue-50', 'text-blue-600');
+    }
+
+    // สำหรับ Mobile (Bottom Nav)
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active-menu-mobile', 'text-blue-600'));
+    const activeMobile = document.querySelector(`.mobile-nav-btn[data-page="${pageId}"]`);
+    if (activeMobile) {
+        activeMobile.classList.add('active-menu-mobile', 'text-blue-600');
+    }
+
+    // 4. อัปเดตหัวข้อหน้า (Page Title)
+    const titles = { 
+        water: 'สถานการณ์ระดับน้ำ', 
+        addWater: 'รายงานระดับน้ำ', 
+        shelter: 'ข้อมูลศูนย์พักพิง', 
+        regis: 'ลงทะเบียนผู้ประสบภัย', 
+        relief: 'ข้อมูลผู้รับถุงยังชีพ', 
+        looker: 'รายงานสรุปข้อมูล (Dashboard)',
+        evacuation: 'สถานะการอพยพและแผนที่',
+        userManagement: 'จัดการผู้ใช้งานระบบ'
+    };
+    const titleElement = document.getElementById('pageTitle');
+    if (titleElement) {
+        titleElement.innerText = titles[pageId] || "ระบบรายงานสถานการณ์น้ำท่วม"; 
+    }
+
+    // 5. Logic เฉพาะแต่ละหน้า (Special Logic)
+    
+    // หน้าจัดการผู้ใช้
     if (pageId === 'userManagement' && userRole === 'admin') {
         loadUsers();
     }
-            
-            // Update Active Menu Desktop
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-menu'));
-            const activeDesktop = document.querySelector(`.nav-btn[data-page="${pageId}"]`);
-            if(activeDesktop) activeDesktop.classList.add('active-menu');
 
-            // Update Active Menu Mobile
-            document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active-menu-mobile'));
-            const activeMobile = document.querySelector(`.mobile-nav-btn[data-page="${pageId}"]`);
-            if(activeMobile) activeMobile.classList.add('active-menu-mobile');
-            
-            const titles = { 
-                water: 'สถานการณ์ระดับน้ำ', 
-                addWater: 'รายงานระดับน้ำ', 
-                shelter: 'ศูนย์พักพิง', 
-                regis: 'ลงทะเบียนผู้ประสบภัย', 
-                relief: 'ข้อมูลผู้รับถุงยังชีพ', 
-                looker: 'รายงานสรุปข้อมูล',
-                 userManagement: 'จัดการผู้ใช้งานระบบ' // <-- เพิ่มบรรทัดนี้เข้าไปครับ
-            };
+    // หน้า Dashboard (Looker Studio)
+    if (pageId === 'looker') {
+        const frame = document.getElementById('lookerFrame');
+        if (frame && !frame.src) frame.src = LOOKER_URL;
+    }
 
-            // แนะนำให้ใส่ || "ชื่อหน้าเริ่มต้น" เผื่อกรณีลืมใส่ชื่อหน้าอื่นๆ ในอนาคต จะได้ไม่ขึ้น undefined อีกครับ
-            const titleElement = document.getElementById('pageTitle');
-            if (titleElement) {
-                titleElement.innerText = titles[pageId] || "ระบบรายงานสถานการณ์น้ำท่วม"; 
-            }
-            if(pageId === 'looker') document.getElementById('lookerFrame').src = LOOKER_URL;
-            if(pageId === 'relief') renderReliefTable(store.reliefData);
-            if (pageId === 'water') {
-        // หน่วงเวลาเล็กน้อยเพื่อให้ Container กางออกเสร็จก่อน init แผนที่
+    // หน้าถุงยังชีพ
+    if (pageId === 'relief') {
+        renderReliefTable(store.reliefData);
+    }
+
+    // หน้าสถานการณ์ระดับน้ำ (แผนที่จุดวัดน้ำ)
+    if (pageId === 'water') {
         setTimeout(() => {
-            initWaterMap();
-            updateWaterMapMarkers();
-            waterMap.invalidateSize(); // แก้ปัญหาแผนที่ขึ้นไม่เต็ม
+            if (typeof initWaterMap === 'function') initWaterMap();
+            if (typeof updateWaterMapMarkers === 'function') updateWaterMapMarkers();
+            if (window.waterMap) window.waterMap.invalidateSize();
         }, 300);
     }
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    // หน้าสถานะการอพยพ (แผนที่ใหม่)
+    if (pageId === 'evacuation') {
+    setTimeout(function() {
+        if (!evacMap) {
+            initEvacMap();
         }
+        
+        if (evacMap) {
+            evacMap.invalidateSize(); // บังคับให้แผนที่แสดงผลเต็มหน้าจอ
+            loadEvacuationMarkers();  // เรียกโหลดหมุด
+        }
+    }, 400); // เพิ่มเวลาหน่วงเล็กน้อยเพื่อให้หน้าจอ Render เสร็จสมบูรณ์
+    }
+
+    // 6. เลื่อนหน้าจอกลับไปด้านบนสุด (Smooth Scroll)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
         // --- Auth & Data (Original Scripts) ---
         async function doLogin() {
@@ -1450,6 +1571,7 @@ function showPage(pageId) {
             }
         }
 
+      
             // 1. ฟังก์ชันคำนวณสต๊อก
 function renderStockDashboard() {
     if (!store.reliefStock) return;
@@ -1503,6 +1625,34 @@ function closeStockModal() {
     modal.classList.add('opacity-0');
     modal.querySelector('.bg-white').classList.add('scale-95');
     setTimeout(() => { modal.classList.add('hidden'); }, 300);
+}
+
+
+
+
+function changeMapLayer(type) {
+    const btnOsm = document.getElementById('btn-osm');
+    const btnSat = document.getElementById('btn-sat');
+
+    if (type === 'satellite') {
+        evacMap.removeLayer(osmLayer);
+        satelliteLayer.addTo(evacMap);
+        
+        // สลับ Style ปุ่ม
+        btnSat.classList.add('bg-white', 'shadow-sm', 'text-blue-600');
+        btnSat.classList.remove('text-slate-500');
+        btnOsm.classList.remove('bg-white', 'shadow-sm', 'text-blue-600');
+        btnOsm.classList.add('text-slate-500');
+    } else {
+        evacMap.removeLayer(satelliteLayer);
+        osmLayer.addTo(evacMap);
+        
+        // สลับ Style ปุ่ม
+        btnOsm.classList.add('bg-white', 'shadow-sm', 'text-blue-600');
+        btnOsm.classList.remove('text-slate-500');
+        btnSat.classList.remove('bg-white', 'shadow-sm', 'text-blue-600');
+        btnSat.classList.add('text-slate-500');
+    }
 }
 
 // 4. บันทึกข้อมูลสต๊อก
@@ -1687,6 +1837,7 @@ function renderReliefTable(data, isSearching = false) {
         tbody.innerHTML = `<tr><td colspan="3" class="text-center text-red-400 py-4">ดึงข้อมูลล้มเหลว</td></tr>`;
     }
 }
+
 
 /**
  * ฟังก์ชันสำหรับกรองข้อมูลในตารางตาม Zone
@@ -2569,6 +2720,124 @@ window.addEventListener('load', () => {
         }
     }
 });
+function toggleMoreMenu() {
+    const menu = document.getElementById('moreMenuMobile');
+    menu.classList.toggle('hidden');
+}
+
+// ฟังก์ชันเปิด Modal (ตัวอย่าง)
+function openWaterReportModal() {
+    // โค้ดสำหรับแสดง Modal/Swal รายงานระดับน้ำ
+    // คุณสามารถนำฟอร์มจากหน้า addWater เดิมมาใส่ใน SweetAlert2 หรือ Modal Custom ได้เลยครับ
+    Swal.fire({
+        title: 'รายงานระดับน้ำ',
+        html: `<div id="modalFormContainer">...</div>`, // ใส่ HTML ฟอร์มที่นี่
+        showConfirmButton: false,
+        width: '95%',
+        padding: '1em',
+        customClass: { popup: 'rounded-[2rem]' }
+    });
+}
+//---------------ฟังก์ชั่นที่เกี่ยวข้องกับหน้า "สถานะการอพยพ"-----------//
+//------------------------------------------------------------//
+let evacMap; // ตัวแปร Global สำหรับเก็บอ็อบเจกต์แผนที่
+
+function initEvacMap() {
+    // 1. ตรวจสอบว่ามีแผนที่อยู่แล้วหรือยัง เพื่อไม่ให้สร้างซ้ำ
+    if (evacMap) return;
+
+    // 2. สร้างแผนที่และตั้งค่ามุมมองเริ่มต้น (พิกัดเทศบาลตันหยงมัส)
+    evacMap = L.map('evacMap').setView([6.2891, 101.7371], 15);
+
+    // 3. เพิ่มเลเยอร์แผนที่ (OSM)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(evacMap);
+
+    // 4. สร้าง Layer Group สำหรับเก็บหมุดบ้านเรือน
+    if (!evacMarkerLayer) {
+        evacMarkerLayer = L.layerGroup().addTo(evacMap);
+    }
+}
+function renderEvacMarkers() {
+  // ตรวจสอบความพร้อมของแผนที่และเลเยอร์
+  if (!evacMap || !evacMarkerLayer) return;
+
+  // ล้างหมุดเก่าออกก่อนเริ่มวาดใหม่
+  evacMarkerLayer.clearLayers();
+
+  store.addresses.forEach(addr => {
+    const lat = parseFloat(addr.lat);
+    const lng = parseFloat(addr.lng);
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      // สร้างหมุดเริ่มต้น (เช่น สีเทา สำหรับบ้านที่ยังไม่ได้ระบุสถานะอพยพ)
+      const marker = L.circleMarker([lat, lng], {
+        radius: 8,
+        fillColor: "#94a3b8", // สี Slate-400
+        color: "#fff",
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+      });
+
+      marker.bindPopup(`<b>รหัสบ้าน:</b> ${addr.id}`);
+      evacMarkerLayer.addLayer(marker);
+    }
+  });
+}
+// 1. ตัวแปรสำหรับเก็บเลเยอร์หมุด
+let evacMarkerLayer;
+
+// 2. ฟังก์ชันดึงข้อมูลพิกัดและวาดหมุด
+function loadEvacuationMarkers() {
+    console.log("กำลังดึงข้อมูลพิกัดจากชีท..."); // Debug: เช็คว่าฟังก์ชันทำงานหรือไม่
+
+    google.script.run.withSuccessHandler(function(data) {
+        console.log("ข้อมูลที่ได้รับ:", data); // Debug: ดูข้อมูลที่ดึงมาใน Console (F12)
+        
+        if (!evacMap) return;
+        
+        // 1. สร้าง Layer Group หากยังไม่มี
+        if (!window.evacMarkerLayer) {
+            window.evacMarkerLayer = L.layerGroup().addTo(evacMap);
+        }
+        
+        // 2. ล้างหมุดเดิมออกก่อน
+        window.evacMarkerLayer.clearLayers();
+
+        if (data && data.length > 0) {
+            data.forEach(function(row) {
+                // คอลัมน์ A=0 (ID), B=1 (Lat), C=2 (Lng)
+                const addrId = row[0]; 
+                const lat = parseFloat(row[1]); 
+                const lng = parseFloat(row[2]); 
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    // สร้างหมุดวงกลม
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: 8,
+                        fillColor: "#64748b", // สีเทาเริ่มต้น
+                        color: "#ffffff",
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+
+                    marker.bindPopup(`<b>รหัสที่อยู่:</b> ${addrId}`);
+                    window.evacMarkerLayer.addLayer(marker);
+                }
+            });
+            console.log("วาดหมุดเสร็จสิ้น: " + data.length + " จุด");
+        } else {
+            console.warn("ไม่พบข้อมูลพิกัดในชีท Address_Evacuation");
+        }
+    })
+    .withFailureHandler(function(err) {
+        console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
+    })
+    .getEvacuationData(); // ชื่อต้องตรงกับใน Code.gs
+}
 
 // ฟังก์ชันสำหรับพิมพ์รายงานศูนย์พักพิง
 window.printShelterReport = function() {
@@ -2672,7 +2941,7 @@ function handleLogout() {
         showCancelButton: true,
         confirmButtonColor: '#e11d48', // สีแดง rose
         confirmButtonText: 'ใช่, ออกจากระบบ',
-        cancelButtonText: 'ยกเลิก',
+        cancelButtonText: 'ยกเลิก',  
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
