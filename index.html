@@ -3312,7 +3312,6 @@ function initEvacMap() {
     }
 }
 
-// ฟังก์ชันดึงข้อมูลพิกัด/รายงานมาแสดงบนแผนที่ และอัปเดตการ์ดสรุปข้อมูล
 window.loadEvacuationMarkers = function() {
     if (!evacMap || !evacMarkerLayer) return;
     
@@ -3361,6 +3360,9 @@ window.loadEvacuationMarkers = function() {
         const destName = report[4];
         const reporter = report[5] || 'ไม่มีข้อมูล';
         const customCoords = report[6] ? report[6].toString().trim() : '';
+        
+        // 🌟 ดึงชื่อผู้อพยพ (คอลัมน์ที่ 8 หรือ index 7)
+        const evacName = report[7] ? report[7].toString().trim() : '<span class="text-slate-400 italic font-normal">ไม่ระบุชื่อ</span>';
 
         // --- ส่วนคำนวณข้อมูลสรุป (การ์ด) ---
         totalHouseholds++; // นับ 1 ที่อยู่ = 1 ครัวเรือนใหญ่ที่อพยพ
@@ -3402,6 +3404,7 @@ window.loadEvacuationMarkers = function() {
 
             const marker = L.marker([pos.lat, pos.lng], { icon: evacIcon });
             
+            // 🌟 อัปเดต HTML ของ Popup โดยแทรก "ชื่อ-สกุล" ลงไปอย่างสวยงาม
             const popupHTML = `
                 <div class="w-full font-sans bg-white relative min-w-[200px]">
                     <div class="bg-orange-500 p-3 flex justify-between items-center text-white relative overflow-hidden">
@@ -3411,8 +3414,16 @@ window.loadEvacuationMarkers = function() {
                         </span>
                     </div>
                     <div class="p-4">
+                        <!-- ส่วนแสดงที่อยู่เดิม -->
                         <h4 class="font-black text-slate-800 text-[14px] leading-tight mb-2">${address}</h4>
+                        
                         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner space-y-1.5">
+                            <!-- 🌟 ส่วนแสดงชื่อ-สกุล ที่เพิ่มเข้ามาใหม่ -->
+                            <p class="text-[11px] text-slate-600 flex items-start border-b border-slate-200 pb-1.5 mb-1.5">
+                                <span class="font-bold text-slate-500 w-16 shrink-0">ชื่อ-สกุล:</span> 
+                                <span class="font-bold text-blue-600">${evacName}</span>
+                            </p>
+
                             <p class="text-[11px] text-slate-600 flex items-start">
                                 <span class="font-bold text-slate-500 w-16 shrink-0">ปลายทาง:</span> 
                                 <span><span class="font-bold text-slate-800">${destName}</span> <br><span class="text-[9px] text-slate-400">ประเภท: ${destType}</span></span>
@@ -4277,7 +4288,7 @@ window.getEvacLocation = function() {
 };
 
 window.openEvacReportModal = function() {
-    // โหลดรายชื่อที่อยู่เข้าตัวแปร Global สำหรับให้ระบบค้นหาดึงไปใช้
+    // โหลดรายชื่อที่อยู่เข้าตัวแปร Global
     window.evacAddressList = (typeof store !== 'undefined' && store.addressEvac) ? store.addressEvac.map(row => row[0]).filter(a => a && a.toString().trim() !== '') : [];
 
     const shelters = ["ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา", "ศูนย์มัสยิดตันหยงมัส", "ศูนย์โรงเรียนบ้านเขาพระ"];
@@ -4287,13 +4298,16 @@ window.openEvacReportModal = function() {
         title: '<div class="flex items-center justify-center gap-2 text-orange-600 text-lg font-black"><i class="fas fa-bullhorn"></i> รายงานการอพยพ</div>',
         html: `
             <div class="text-left space-y-4 p-2 mt-2" style="overflow: visible;">
-                
+                <!-- 🌟 ส่วนกรอกชื่อ-สกุล (อยู่ใน Swal) -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ชื่อ-สกุล (หัวหน้าครอบครัว/ผู้อพยพ)</label>
+                    <input type="text" id="swal_evac_name" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50 transition-all" placeholder="ระบุชื่อ-สกุล..." required>
+                </div>
+
                 <!-- ส่วนที่ 1: ค้นหาที่อยู่ -->
                 <div class="relative">
                     <label class="text-[11px] font-bold text-slate-500 ml-1">ค้นหาที่อยู่ / ชุมชน</label>
                     <input type="text" id="swal_evac_addr_search" onkeyup="handleEvacAddressSearch(this.value)" autocomplete="off" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="พิมพ์เพื่อค้นหาที่อยู่เดิม...">
-                    
-                    <!-- กล่องแสดงผลค้นหา -->
                     <div id="swal_evac_addr_results" class="absolute z-[99] w-full bg-white border border-slate-200 rounded-xl shadow-2xl hidden max-h-40 overflow-y-auto mt-1"></div>
                     
                     <div class="mt-3 flex items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
@@ -4320,6 +4334,7 @@ window.openEvacReportModal = function() {
                     <label class="text-[11px] font-bold text-slate-500 ml-1">จำนวนคนอพยพ (คน)</label>
                     <input type="number" id="swal_evac_count" min="1" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="ระบุจำนวนคน">
                 </div>
+
                 <div>
                     <label class="text-[11px] font-bold text-slate-500 ml-1">อพยพไปที่ใด?</label>
                     <div class="flex gap-2 mt-1">
@@ -4347,16 +4362,23 @@ window.openEvacReportModal = function() {
         confirmButtonColor: '#f97316',
         customClass: { popup: 'rounded-[2rem]' },
         didOpen: () => {
-            // อนุญาตให้ผลการค้นหาล้นทะลักกรอบของ Swal ได้
             const content = Swal.getHtmlContainer();
             if(content) content.style.overflow = 'visible';
         },
         preConfirm: () => {
+            // 🌟 1. ดึงค่าชื่อจากใน Swal
+            const evacName = document.getElementById('swal_evac_name').value.trim();
             const isOtherAddr = document.getElementById('swal_evac_is_other').checked;
             let address = document.getElementById('swal_evac_addr_search').value.trim();
             let coords = '';
 
-            // ตรวจสอบความถูกต้องก่อนส่ง
+            // ตรวจสอบชื่อ
+            if (!evacName) {
+                Swal.showValidationMessage('กรุณาระบุชื่อ-สกุล ผู้อพยพ');
+                return false;
+            }
+
+            // ตรวจสอบที่อยู่
             if (isOtherAddr) {
                 address = document.getElementById('swal_evac_custom_addr').value.trim();
                 coords = document.getElementById('swal_evac_coords').value;
@@ -4377,7 +4399,9 @@ window.openEvacReportModal = function() {
                 Swal.showValidationMessage('กรุณากรอกข้อมูลจำนวนคนและปลายทางให้ครบถ้วน');
                 return false;
             }
-            return { address, count, type, dest, coords };
+
+            // 🌟 2. ส่งค่าชื่อออกไปพร้อมกับข้อมูลอื่น
+            return { evacName, address, count, type, dest, coords };
         }
     }).then((result) => {
         if (result.isConfirmed) {
@@ -4393,6 +4417,10 @@ async function saveEvacuationData(data) {
         didOpen: () => { Swal.showLoading(); }
     });
 
+    // ดึงข้อมูลชื่อจากช่อง input (ป้องกัน Error ถ้าหาช่องไม่เจอ)
+    const nameInput = document.getElementById('evac_name');
+    const evacName = data.evacName;
+
     const payload = {
         action: 'saveEvacuation',
         address: data.address,
@@ -4400,8 +4428,12 @@ async function saveEvacuationData(data) {
         type: data.type,
         dest: data.dest,
         user: currentUser,
-        coords: data.coords // แนบพิกัด GPS ไปด้วย
+        coords: data.coords,
+        evacName: evacName, // ข้อมูลนี้จะมาจาก preConfirm ของ Swal แล้ว
     };
+
+    // 🌟 เรดาร์ตรวจจับ: เช็คว่ารอบนี้มีชื่อติดไปไหม!
+    console.log("🚀 ข้อมูลที่จะส่งไปเซิร์ฟเวอร์:", payload);
 
     try {
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
@@ -4415,11 +4447,12 @@ async function saveEvacuationData(data) {
                 timer: 1500,
                 showConfirmButton: false
             });
+
+            // เคลียร์ช่องชื่อทิ้งหลังบันทึกเสร็จ
+            if (nameInput) nameInput.value = '';
             
-            // รอให้โหลดข้อมูลจาก Code.gs มาอัปเดตตัวแปร store ให้เสร็จ 100% ก่อน
             await loadData(); 
             
-            // เมื่อโหลดเสร็จแล้ว สั่งวาดหมุดใหม่ลงบนแผนที่
             if (typeof loadEvacuationMarkers === 'function') {
                 loadEvacuationMarkers();
             }
