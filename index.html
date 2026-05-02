@@ -522,10 +522,58 @@
 </div>
                 </section>
 <!-- หน้าสถานะการอพยพ -->
-<section id="evacuationPage" class="content-page hidden">
-    
+<section id="evacuationPage" class="content-page hidden animate-fade-in">
+    <div class="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-blue-50 mb-8 max-w-7xl mx-auto flex flex-col h-auto lg:h-[calc(100vh-120px)]">
         
+        <!-- Header แผนที่และปุ่ม -->
+        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4 border-b border-slate-50 pb-3">
+            <div>
+                <h3 class="text-lg font-black text-slate-800 flex items-center tracking-tight">
+                    <i class="fas fa-map-marked-alt mr-2 text-blue-500"></i> แผนที่สถานะการอพยพ
+                </h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Evacuation & Area Mapping</p>
+            </div>
+            
+            <div class="flex gap-2">
+                
+                <button onclick="openEvacReportModal()" class="w-full md:w-auto justify-center bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-orange-200 transition-all active:scale-95 flex items-center">
+                    <i class="fas fa-bullhorn mr-2"></i> รายงานอพยพ
+                </button>
+            </div>
+        </div>
+
+        <!-- การ์ดสรุปข้อมูล 4 ช่อง -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 shrink-0">
+            <!-- รวมผู้คนอพยพ -->
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
+                <i class="fas fa-users absolute -right-2 -bottom-2 text-4xl text-blue-500/10 transform -rotate-12"></i>
+                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1 z-10">ผู้อพยพรวม (คน)</p>
+                <p id="sumEvacTotal" class="text-3xl font-black text-blue-700 z-10">0</p>
+            </div>
+            <!-- รวมครัวเรือน/พื้นที่ -->
+            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
+                <i class="fas fa-home absolute -right-2 -bottom-2 text-4xl text-indigo-500/10 transform -rotate-12"></i>
+                <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1 z-10">ครัวเรือน</p>
+                <p id="sumEvacHousehold" class="text-3xl font-black text-indigo-700 z-10">0</p>
+            </div>
+            <!-- ไปศูนย์พักพิง -->
+            <div class="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
+                <i class="fas fa-campground absolute -right-2 -bottom-2 text-4xl text-orange-500/10 transform -rotate-12"></i>
+                <p class="text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1 z-10">พักพิงที่ศูนย์ (คน)</p>
+                <p id="sumEvacCenter" class="text-3xl font-black text-orange-700 z-10">0</p>
+            </div>
+            <!-- ไปที่อื่นๆ -->
+            <div class="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
+                <i class="fas fa-house-user absolute -right-2 -bottom-2 text-4xl text-purple-500/10 transform -rotate-12"></i>
+                <p class="text-[10px] font-bold text-purple-500 uppercase tracking-wider mb-1 z-10">อพยพที่อื่นๆ (คน)</p>
+                <p id="sumEvacOther" class="text-3xl font-black text-purple-700 z-10">0</p>
+            </div>
+        </div>
         
+        <!-- พื้นที่แสดงแผนที่ -->
+        <div id="evacMap" class="w-full flex-1 min-h-[400px] lg:min-h-0 rounded-2xl z-10 border-2 border-slate-100 bg-slate-50 relative overflow-hidden"></div>
+        
+    </div>
 </section>
                 <section id="addWaterPage" class="content-page hidden">
     <div class="bg-white p-6 md:p-10 rounded-3xl shadow-lg border border-blue-50 max-w-2xl mx-auto">
@@ -1060,6 +1108,7 @@
                         <option value="shelter">Shelter (เฉพาะศูนย์พักพิง)</option>
                         <option value="water_staff">Water Staff (เฉพาะการจัดการระดับน้ำ)</option>
                         <option value="relief">Relief Staff (เฉพาะการจัดการถุงยังชีพ)</option>
+                        <option value="community">Community (ตัวแทนชุมชน - ระดับน้ำและอพยพ)</option> <!-- เพิ่มบรรทัดนี้ -->
                     </select>
                 </div>
                 <button type="submit" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 transition-all shadow-md">บันทึกข้อมูล</button>
@@ -1263,18 +1312,19 @@ window.addEventListener('load', async () => {
             let targetPage = 'water'; // ค่าเริ่มต้นสำหรับทั่วไป
             
             if (userRole === 'admin') {
-                targetPage = 'water'; // หรือหน้า Dashboard ของ admin
+                targetPage = 'water';
             } else if (userRole === 'shelter') {
                 targetPage = 'shelter';
             } else if (userRole === 'water_staff') {
                 targetPage = 'addWater';
             } else if (userRole === 'relief') {
                 targetPage = 'relief';
+            } else if (userRole === 'community') {
+                targetPage = 'water'; // <-- เพิ่มเงื่อนไขพาไปหน้าระดับน้ำ
             }
 
             // สั่งแสดงหน้าตามสิทธิ์ที่คำนวณได้
             showPage(targetPage);
-
         } catch (e) {
             console.error("Session Error:", e);
             localStorage.removeItem('user_session');
@@ -1286,9 +1336,10 @@ window.addEventListener('load', async () => {
         const PAGE_ACCESS = {
         'admin': ['water', 'addWater', 'shelter', 'evacuation', 'regis', 'relief', 'looker', 'userManagement'],
         'shelter': ['shelter', 'regis'],
-        'water_staff': ['water', 'addWater'], // <-- เพิ่มบรรทัดนี้
-        'relief': ['relief']
-        };
+        'water_staff': ['water', 'addWater'], 
+        'relief': ['relief'],
+        'community': ['water', 'addWater', 'evacuation'] // <-- เพิ่มสิทธิ์ตัวแทนชุมชนตรงนี้
+};
         // --- Navigation Logic ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -1380,21 +1431,15 @@ function showPage(pageId) {
 
     // หน้าสถานะการอพยพ (แผนที่ใหม่)
     if (pageId === 'evacuation') {
-    setTimeout(function() {
-        if (!evacMap) {
-            initEvacMap();
-        }
-        
-        if (evacMap) {
-            evacMap.invalidateSize();
-            // ตรวจสอบก่อนว่า google.script มีตัวตนหรือไม่
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                loadEvacuationMarkers(); 
-            } else {
-                console.error("ระบบ Google Script ยังไม่พร้อมใช้งาน");
+        setTimeout(function() {
+            if (!evacMap) {
+                initEvacMap();
             }
-        }
-    }, 500); // เพิ่มเวลาหน่วงเป็น 500ms
+            if (evacMap) {
+                evacMap.invalidateSize();
+                loadEvacuationMarkers(); // เรียกฟังก์ชันโหลดหมุดทันที
+            }
+        }, 500);
     }
 
     // 6. เลื่อนหน้าจอกลับไปด้านบนสุด (Smooth Scroll)
@@ -1444,6 +1489,7 @@ function showPage(pageId) {
             if (userRole === 'shelter') firstPage = 'shelter';
             if (userRole === 'water_staff') firstPage = 'addWater';
             if (userRole === 'relief') firstPage = 'relief';
+            if (userRole === 'community') firstPage = 'water'; // <-- เพิ่มเงื่อนไข
 
             showPage(firstPage);
             await loadData();
@@ -2141,6 +2187,322 @@ function getWaterIcon(level) {
         iconAnchor: [12, 12]
     });
 }
+//---------------ฟังก์ชั่นที่เกี่ยวข้องกับหน้า "สถานะการอพยพ"-----------//
+//------------------------------------------------------------//
+// ประกาศตัวแปร Global สำหรับแผนที่อพยพ
+let evacMap;
+let evacDrawnItems; // สำหรับเก็บ Layer รูปทรงที่วาด (Polygon, Rectangle, Circle)
+let evacMarkerLayer; // สำหรับเก็บ Layer หมุด (Marker)
+
+// ฟังก์ชันสร้างแผนที่และเครื่องมือวาด
+// ฟังก์ชันสร้างแผนที่และเครื่องมือวาด
+function initEvacMap() {
+    if (evacMap) return;
+
+    evacMap = L.map('evacMap').setView([6.29445, 101.72362], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(evacMap);
+
+    evacDrawnItems = new L.FeatureGroup();
+    evacMap.addLayer(evacDrawnItems);
+    evacMarkerLayer = L.layerGroup().addTo(evacMap);
+
+    // ----------------------------------------------------
+    // ตรวจสอบสิทธิ์: แสดงเครื่องมือวาดเฉพาะ Admin เท่านั้น
+    // ----------------------------------------------------
+    if (userRole === 'admin') {
+        const drawControl = new L.Control.Draw({
+            edit: {
+                featureGroup: evacDrawnItems,
+                remove: true
+            },
+            draw: {
+                polygon: {
+                    allowIntersection: false,
+                    showArea: true,
+                    shapeOptions: { color: '#3b82f6', weight: 3, fillOpacity: 0.3 }
+                },
+                polyline: false,
+                rectangle: { shapeOptions: { color: '#f59e0b', weight: 3, fillOpacity: 0.3 } },
+                circle: { shapeOptions: { color: '#ef4444', weight: 3, fillOpacity: 0.3 } },
+                marker: true,
+                circlemarker: false
+            }
+        });
+        
+        evacMap.addControl(drawControl);
+
+        // ดักจับ Event เมื่อผู้ใช้วาดหรือลงหมุดเสร็จ
+        evacMap.on(L.Draw.Event.CREATED, function (e) {
+            const type = e.layerType;
+            const layer = e.layer;
+
+            // เด้ง SweetAlert2 เพื่อให้กรอกรายละเอียด
+            Swal.fire({
+                title: '<div class="text-blue-700 text-lg font-black"><i class="fas fa-edit"></i> บันทึกรายละเอียดพื้นที่</div>',
+                html: `
+                    <div class="text-left space-y-3 mt-2">
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-500 ml-1">ชื่อสถานที่/จุดสังเกต</label>
+                            <input type="text" id="draw_title" class="w-full p-3 border border-slate-200 rounded-xl outline-none text-sm focus:border-blue-400" placeholder="ระบุชื่อ...">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-500 ml-1">รายละเอียดเพิ่มเติม</label>
+                            <textarea id="draw_detail" class="w-full p-3 border border-slate-200 rounded-xl outline-none text-sm h-20 focus:border-blue-400" placeholder="รายละเอียด เช่น สถานะ, ความจุ, เส้นทาง..."></textarea>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-slate-500 ml-1">ประเภท</label>
+                            <select id="draw_type" class="w-full p-3 border border-slate-200 rounded-xl outline-none text-sm">
+                                <option value="จุดอพยพ">จุดอพยพชั่วคราว</option>
+                                <option value="พื้นที่เสี่ยง">พื้นที่เสี่ยงภัย</option>
+                                <option value="จุดแจกของ">จุดแจกถุงยังชีพ</option>
+                                <option value="อื่นๆ">อื่นๆ</option>
+                            </select>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'บันทึกข้อมูล',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#2563eb',
+                customClass: { popup: 'rounded-[2rem]' },
+                preConfirm: () => {
+                    const title = document.getElementById('draw_title').value;
+                    if (!title) {
+                        Swal.showValidationMessage('กรุณาระบุชื่อสถานที่');
+                        return false;
+                    }
+                    return {
+                        title: title,
+                        detail: document.getElementById('draw_detail').value,
+                        drawType: document.getElementById('draw_type').value
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const data = result.value;
+                    let locationText = '';
+
+                    // 1. กำหนด Theme (เพิ่มรหัสสี Hex สำหรับเปลี่ยนสีรูปร่างด้วย)
+                    let theme = { bg: 'bg-blue-600', text: 'text-blue-600', lightBg: 'bg-blue-50', icon: 'fa-campground', hex: '#2563eb' };
+                    if (data.drawType === 'พื้นที่เสี่ยง') {
+                        theme = { bg: 'bg-rose-500', text: 'text-rose-600', lightBg: 'bg-rose-50', icon: 'fa-exclamation-triangle', hex: '#f43f5e' };
+                    } else if (data.drawType === 'จุดแจกของ') {
+                        theme = { bg: 'bg-amber-500', text: 'text-amber-600', lightBg: 'bg-amber-50', icon: 'fa-box-open', hex: '#f59e0b' };
+                    } else if (data.drawType === 'อื่นๆ') {
+                        theme = { bg: 'bg-slate-600', text: 'text-slate-600', lightBg: 'bg-slate-100', icon: 'fa-map-pin', hex: '#475569' };
+                    }
+
+                    // 2. ดึงพิกัด และ "เปลี่ยนสีไอคอน/รูปร่าง"
+                    if (type === 'marker') {
+                        const latlng = layer.getLatLng();
+                        locationText = `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+                        
+                        // สร้างหมุด (Icon) ดีไซน์ใหม่ให้ตรงกับสี Theme
+                        const customIcon = L.divIcon({
+                            className: 'custom-type-marker bg-transparent border-0',
+                            html: `
+                                <div class="${theme.bg} text-white w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md text-[14px]">
+                                    <i class="fas ${theme.icon}"></i>
+                                </div>
+                                <!-- ติ่งสามเหลี่ยมชี้ลงแผนที่ -->
+                                <div class="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-${theme.bg.split('-')[1]}-${theme.bg.split('-')[2]} mx-auto -mt-[2px]"></div>
+                            `,
+                            iconSize: [32, 40],
+                            iconAnchor: [16, 40], // จุดศูนย์กลางชี้ที่ปลายสามเหลี่ยม
+                            popupAnchor: [0, -40] // ให้ Popup ลอยเหนือหมุด
+                        });
+                        layer.setIcon(customIcon);
+
+                    } else {
+                        // กรณีเป็นรูปร่าง (Polygon, Circle, Rectangle)
+                        locationText = 'ขอบเขตพื้นที่ถูกกำหนดไว้แล้ว';
+                        
+                        // เปลี่ยนสีเส้น (color) และสีพื้นผิว (fillColor)
+                        layer.setStyle({
+                            color: theme.hex,
+                            fillColor: theme.hex,
+                            weight: 3,
+                            fillOpacity: 0.3
+                        });
+                    }
+
+                    // 3. สร้างโครงสร้าง HTML ของ Popup
+                    const popupHTML = `
+                        <div class="w-full font-sans bg-white relative">
+                            <!-- ส่วนหัว (Header) -->
+                            <div class="${theme.bg} p-3 flex justify-between items-center text-white relative overflow-hidden">
+                                <i class="fas ${theme.icon} absolute -right-2 -bottom-2 text-5xl opacity-20 transform -rotate-12"></i>
+                                <span class="text-[9px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/20 z-10 shadow-sm">
+                                    <i class="fas ${theme.icon} mr-1"></i> ${data.drawType}
+                                </span>
+                            </div>
+                            
+                            <!-- ส่วนเนื้อหา (Body) -->
+                            <div class="p-4">
+                                <h4 class="font-black text-slate-800 text-[14px] leading-tight mb-2">${data.title}</h4>
+                                ${data.detail ? `
+                                <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 mb-3 shadow-inner">
+                                    <p class="text-[11px] text-slate-600 leading-relaxed line-clamp-4">${data.detail}</p>
+                                </div>` : ''}
+                                
+                                <!-- ส่วนท้าย (Footer) -->
+                                <div class="flex items-center text-[9px] font-bold text-slate-400 border-t border-slate-100 pt-3">
+                                    <div class="w-6 h-6 rounded-full ${theme.lightBg} ${theme.text} flex items-center justify-center mr-2 shrink-0">
+                                        <i class="fas fa-location-arrow"></i>
+                                    </div>
+                                    <span class="truncate tracking-wide">${locationText}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // ผูก Popup และเพิ่มลงแผนที่
+                    layer.bindPopup(popupHTML);
+                    evacDrawnItems.addLayer(layer);
+                    
+                    setTimeout(() => { layer.openPopup(); }, 300);
+                }
+            });
+        });
+    }
+}
+
+// ฟังก์ชันดึงข้อมูลพิกัด/รายงานมาแสดงบนแผนที่ และอัปเดตการ์ดสรุปข้อมูล
+window.loadEvacuationMarkers = function() {
+    if (!evacMap || !evacMarkerLayer) return;
+    
+    // เคลียร์หมุดเก่าก่อนวาดใหม่
+    evacMarkerLayer.clearLayers();
+    
+    if (!store.addressEvac || !store.evacReports) {
+        console.warn("ไม่พบข้อมูล Address_Evacuation หรือ Evacuation_Reports");
+        return;
+    }
+
+    // 1. สร้าง Map พิกัดจากชีท Address_Evacuation
+    const coordsMap = {};
+    store.addressEvac.forEach(row => {
+        const address = row[0] ? row[0].toString().trim() : '';
+        const lat = parseFloat(row[1]); 
+        const lng = parseFloat(row[2]); 
+        if (address && !isNaN(lat) && !isNaN(lng)) {
+            coordsMap[address] = { lat, lng };
+        }
+    });
+
+    // 2. กรองข้อมูลเฉพาะการรายงานล่าสุดของแต่ละที่อยู่
+    const latestReports = {};
+    store.evacReports.forEach(report => {
+        const address = report[1] ? report[1].toString().trim() : '';
+        const time = new Date(report[0]).getTime();
+        if (address && (!latestReports[address] || time > latestReports[address].time)) {
+            latestReports[address] = { data: report, time: time };
+        }
+    });
+
+    // --- ตัวแปรสำหรับสรุปข้อมูลการ์ด ---
+    let totalPeople = 0;
+    let totalHouseholds = 0;
+    let centerPeople = 0;
+    let otherPeople = 0;
+
+    // 3. วนลูปข้อมูลล่าสุดเพื่อวาดหมุดและบวกเลขสรุป
+    Object.values(latestReports).forEach(item => {
+        const report = item.data;
+        const timestamp = new Date(report[0]).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+        const address = report[1].toString().trim();
+        const count = parseInt(report[2]) || 0;
+        const destType = report[3]; // 'ศูนย์' หรือ 'ที่อื่น'
+        const destName = report[4];
+        const reporter = report[5] || 'ไม่มีข้อมูล';
+        const customCoords = report[6] ? report[6].toString().trim() : '';
+
+        // --- ส่วนคำนวณข้อมูลสรุป (การ์ด) ---
+        totalHouseholds++; // นับ 1 ที่อยู่ = 1 ครัวเรือนใหญ่ที่อพยพ
+        totalPeople += count;
+        if (destType === 'ศูนย์') {
+            centerPeople += count;
+        } else {
+            otherPeople += count;
+        }
+
+        // --- ส่วนวาดหมุดบนแผนที่ ---
+        let pos = null;
+        if (customCoords && customCoords.includes(',')) {
+            const parts = customCoords.split(',');
+            pos = { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) };
+        } else {
+            pos = coordsMap[address];
+        }
+        
+        if (pos) {
+            const markerColor = destType === 'ศูนย์' ? '#3b82f6' : '#8b5cf6';
+            const iconClass = destType === 'ศูนย์' ? 'fa-campground' : 'fa-house-user';
+
+            const evacIcon = L.divIcon({
+                className: 'custom-evac-marker bg-transparent border-0',
+                html: `
+                    <div class="relative flex flex-col items-center">
+                        <div style="color: ${markerColor}; border-color: ${markerColor}" class="bg-white w-8 h-8 rounded-full flex items-center justify-center border-2 shadow-md text-sm z-10 relative">
+                            <i class="fas ${iconClass}"></i>
+                            <span class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[8px] font-black min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm leading-none px-1">${count}</span>
+                        </div>
+                        <div style="border-top-color: ${markerColor}" class="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent mx-auto -mt-[1px] z-0"></div>
+                    </div>
+                `,
+                iconSize: [32, 38],
+                iconAnchor: [16, 38],
+                popupAnchor: [0, -38]
+            });
+
+            const marker = L.marker([pos.lat, pos.lng], { icon: evacIcon });
+            
+            const popupHTML = `
+                <div class="w-full font-sans bg-white relative min-w-[200px]">
+                    <div class="bg-orange-500 p-3 flex justify-between items-center text-white relative overflow-hidden">
+                        <i class="fas fa-running absolute -right-2 -bottom-2 text-5xl opacity-20 transform -rotate-12"></i>
+                        <span class="text-[10px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/20 z-10 shadow-sm">
+                            <i class="fas fa-users mr-1"></i> ผู้อพยพ ${count} คน
+                        </span>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="font-black text-slate-800 text-[14px] leading-tight mb-2">${address}</h4>
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner space-y-1.5">
+                            <p class="text-[11px] text-slate-600 flex items-start">
+                                <span class="font-bold text-slate-500 w-16 shrink-0">ปลายทาง:</span> 
+                                <span><span class="font-bold text-slate-800">${destName}</span> <br><span class="text-[9px] text-slate-400">ประเภท: ${destType}</span></span>
+                            </p>
+                            <p class="text-[11px] text-slate-600 flex items-start">
+                                <span class="font-bold text-slate-500 w-16 shrink-0">ผู้รายงาน:</span> 
+                                <span>${reporter}</span>
+                            </p>
+                            <p class="text-[11px] text-slate-600 flex items-start">
+                                <span class="font-bold text-slate-500 w-16 shrink-0">เวลา:</span> 
+                                <span>${timestamp}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            marker.bindPopup(popupHTML);
+            evacMarkerLayer.addLayer(marker);
+        }
+    });
+
+    // 4. แสดงผลตัวเลขขึ้นการ์ด
+    if(document.getElementById('sumEvacTotal')) document.getElementById('sumEvacTotal').innerText = totalPeople.toLocaleString();
+    if(document.getElementById('sumEvacHousehold')) document.getElementById('sumEvacHousehold').innerText = totalHouseholds.toLocaleString();
+    if(document.getElementById('sumEvacCenter')) document.getElementById('sumEvacCenter').innerText = centerPeople.toLocaleString();
+    if(document.getElementById('sumEvacOther')) document.getElementById('sumEvacOther').innerText = otherPeople.toLocaleString();
+};
+// ฟังก์ชันรองรับการโหลดหมุด (เพื่อไม่ให้เกิด Error ใน showPage)
+function loadEvacuationMarkers() {
+    console.log("ระบบพร้อม: รอการเชื่อมต่อฐานข้อมูลหมุดอพยพ");
+    // อนาคตจะใส่โค้ด google.script.run ตรงนี้
+}
 
 // ฟังก์ชันเริ่มต้นแผนที่
 function initWaterMap() {
@@ -2733,8 +3095,7 @@ function openWaterReportModal() {
         customClass: { popup: 'rounded-[2rem]' }
     });
 }
-//---------------ฟังก์ชั่นที่เกี่ยวข้องกับหน้า "สถานะการอพยพ"-----------//
-//------------------------------------------------------------//
+
 
 // ฟังก์ชันสำหรับพิมพ์รายงานศูนย์พักพิง
 window.printShelterReport = function() {
@@ -2848,6 +3209,254 @@ function handleLogout() {
             location.reload();
         }
     });
+}
+//---------------ฟังก์ชั่นที่เกี่ยวข้องกับการรายงานสถานะการอพยพ"--------//
+//------------------------------------------------------------//
+// ==========================================
+// ระบบรายงานสถานะการอพยพ
+// ==========================================
+
+// ฟังก์ชันสลับตัวเลือกสถานที่อพยพใน Popup
+window.toggleEvacDest = function(type) {
+    const boxC = document.getElementById('box_dest_center');
+    const boxO = document.getElementById('box_dest_other');
+    const btnC = document.getElementById('btn_dest_center');
+    const btnO = document.getElementById('btn_dest_other');
+    document.getElementById('swal_evac_type').value = type;
+
+    if (type === 'ศูนย์') {
+        boxC.classList.remove('hidden'); boxO.classList.add('hidden');
+        btnC.className = "flex-1 py-3 rounded-xl border-2 border-orange-400 bg-orange-50 text-orange-600 font-bold text-xs transition-all";
+        btnO.className = "flex-1 py-3 rounded-xl border-2 border-transparent bg-slate-50 text-slate-500 font-bold text-xs transition-all";
+    } else {
+        boxO.classList.remove('hidden'); boxC.classList.add('hidden');
+        btnO.className = "flex-1 py-3 rounded-xl border-2 border-orange-400 bg-orange-50 text-orange-600 font-bold text-xs transition-all";
+        btnC.className = "flex-1 py-3 rounded-xl border-2 border-transparent bg-slate-50 text-slate-500 font-bold text-xs transition-all";
+    }
+};
+
+// ฟังก์ชันค้นหาที่อยู่ (Autocomplete)
+window.handleEvacAddressSearch = function(val) {
+    const resultBox = document.getElementById('swal_evac_addr_results');
+    if (!resultBox) return;
+
+    if (val.length < 1) { 
+        resultBox.classList.add('hidden'); 
+        return; 
+    }
+
+    const filtered = window.evacAddressList.filter(a => a.toLowerCase().includes(val.toLowerCase())).slice(0, 10);
+    
+    if (filtered.length > 0) {
+        let html = '';
+        filtered.forEach(addr => {
+            html += `<div onclick='selectEvacAddress(${JSON.stringify(addr)})' class="p-3 hover:bg-orange-100 cursor-pointer border-b text-sm text-slate-700">${addr}</div>`;
+        });
+        resultBox.innerHTML = html;
+        resultBox.classList.remove('hidden');
+    } else {
+        resultBox.innerHTML = '<div class="p-3 text-xs text-rose-500">ไม่พบที่อยู่นี้ กรุณาเลือก "ระบุที่อยู่อื่นๆ" ด้านล่าง</div>';
+        resultBox.classList.remove('hidden');
+    }
+};
+
+// ฟังก์ชันเมื่อคลิกเลือกที่อยู่จากการค้นหา
+window.selectEvacAddress = function(addr) {
+    document.getElementById('swal_evac_addr_search').value = addr;
+    document.getElementById('swal_evac_addr_results').classList.add('hidden');
+};
+
+// เปิด/ปิดช่องกรอกที่อยู่อื่น + เรียก GPS
+window.toggleEvacOtherAddress = function(isChecked) {
+    const boxOther = document.getElementById('box_evac_other_addr');
+    const inputSearch = document.getElementById('swal_evac_addr_search');
+    
+    if (isChecked) {
+        boxOther.classList.remove('hidden');
+        inputSearch.disabled = true;
+        inputSearch.classList.add('opacity-50');
+        getEvacLocation(); // สั่งดึงพิกัดอัตโนมัติ
+    } else {
+        boxOther.classList.add('hidden');
+        inputSearch.disabled = false;
+        inputSearch.classList.remove('opacity-50');
+    }
+};
+
+// ดึง GPS ผู้ใช้งาน
+window.getEvacLocation = function() {
+    const coordsInput = document.getElementById('swal_evac_coords');
+    coordsInput.value = 'กำลังค้นหาตำแหน่งพิกัด GPS...';
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (p) => {
+                coordsInput.value = `${p.coords.latitude},${p.coords.longitude}`;
+            }, 
+            (err) => {
+                console.warn(err);
+                coordsInput.value = 'กรุณาเปิด GPS และกดปุ่มดึงพิกัดอีกครั้ง';
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    } else {
+        coordsInput.value = 'อุปกรณ์ไม่รองรับระบบพิกัด';
+    }
+};
+
+window.openEvacReportModal = function() {
+    // โหลดรายชื่อที่อยู่เข้าตัวแปร Global สำหรับให้ระบบค้นหาดึงไปใช้
+    window.evacAddressList = (typeof store !== 'undefined' && store.addressEvac) ? store.addressEvac.map(row => row[0]).filter(a => a && a.toString().trim() !== '') : [];
+
+    const shelters = ["ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา", "ศูนย์มัสยิดตันหยงมัส", "ศูนย์โรงเรียนบ้านเขาพระ"];
+    const shelterOptions = shelters.map(s => `<option value="${s}">${s}</option>`).join('');
+
+    Swal.fire({
+        title: '<div class="flex items-center justify-center gap-2 text-orange-600 text-lg font-black"><i class="fas fa-bullhorn"></i> รายงานการอพยพ</div>',
+        html: `
+            <div class="text-left space-y-4 p-2 mt-2" style="overflow: visible;">
+                
+                <!-- ส่วนที่ 1: ค้นหาที่อยู่ -->
+                <div class="relative">
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">ค้นหาที่อยู่ / ชุมชน</label>
+                    <input type="text" id="swal_evac_addr_search" onkeyup="handleEvacAddressSearch(this.value)" autocomplete="off" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="พิมพ์เพื่อค้นหาที่อยู่เดิม...">
+                    
+                    <!-- กล่องแสดงผลค้นหา -->
+                    <div id="swal_evac_addr_results" class="absolute z-[99] w-full bg-white border border-slate-200 rounded-xl shadow-2xl hidden max-h-40 overflow-y-auto mt-1"></div>
+                    
+                    <div class="mt-3 flex items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <input type="checkbox" id="swal_evac_is_other" onchange="toggleEvacOtherAddress(this.checked)" class="w-4 h-4 text-orange-500 border-slate-300 rounded focus:ring-orange-500">
+                        <label for="swal_evac_is_other" class="ml-2 text-xs font-bold text-slate-600">ระบุที่อยู่อื่นๆ (ดึงพิกัดปัจจุบันอัตโนมัติ)</label>
+                    </div>
+                </div>
+
+                <!-- ส่วนที่ 2: ระบุที่อยู่อื่น และพิกัด -->
+                <div id="box_evac_other_addr" class="hidden animate-fade-in bg-slate-100 p-3 rounded-xl border border-slate-200 shadow-inner">
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">พิมพ์ที่อยู่อื่นๆ ที่ไม่ได้อยู่ในระบบ</label>
+                    <input type="text" id="swal_evac_custom_addr" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400 mb-3" placeholder="ระบุบ้านเลขที่/ซอย/จุดสังเกต">
+                    
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">พิกัด GPS (ดึงอัตโนมัติ)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="swal_evac_coords" readonly class="w-full p-3 border border-slate-200 bg-white text-slate-500 rounded-xl outline-none text-[10px]" placeholder="รอการดึงพิกัด...">
+                        <button type="button" onclick="getEvacLocation()" class="bg-blue-100 text-blue-600 px-4 rounded-xl hover:bg-blue-200 transition shadow-sm active:scale-95">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">จำนวนคนอพยพ (คน)</label>
+                    <input type="number" id="swal_evac_count" min="1" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="ระบุจำนวนคน">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">อพยพไปที่ใด?</label>
+                    <div class="flex gap-2 mt-1">
+                        <button onclick="toggleEvacDest('ศูนย์')" id="btn_dest_center" class="flex-1 py-3 rounded-xl border-2 border-orange-400 bg-orange-50 text-orange-600 font-bold text-xs transition-all">ศูนย์พักพิง</button>
+                        <button onclick="toggleEvacDest('ที่อื่น')" id="btn_dest_other" class="flex-1 py-3 rounded-xl border-2 border-transparent bg-slate-50 text-slate-500 font-bold text-xs transition-all">ที่อื่น ๆ</button>
+                    </div>
+                </div>
+                
+                <div id="box_dest_center" class="animate-fade-in">
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">เลือกศูนย์พักพิง</label>
+                    <select id="swal_evac_shelter" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400">
+                        ${shelterOptions}
+                    </select>
+                </div>
+                <div id="box_dest_other" class="hidden animate-fade-in">
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">ระบุสถานที่อพยพ (คร่าวๆ)</label>
+                    <input type="text" id="swal_evac_other_text" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400" placeholder="เช่น บ้านญาติ, ตึกแถวชั้น 2">
+                </div>
+                <input type="hidden" id="swal_evac_type" value="ศูนย์">
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึกรายงาน',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: '#f97316',
+        customClass: { popup: 'rounded-[2rem]' },
+        didOpen: () => {
+            // อนุญาตให้ผลการค้นหาล้นทะลักกรอบของ Swal ได้
+            const content = Swal.getHtmlContainer();
+            if(content) content.style.overflow = 'visible';
+        },
+        preConfirm: () => {
+            const isOtherAddr = document.getElementById('swal_evac_is_other').checked;
+            let address = document.getElementById('swal_evac_addr_search').value.trim();
+            let coords = '';
+
+            // ตรวจสอบความถูกต้องก่อนส่ง
+            if (isOtherAddr) {
+                address = document.getElementById('swal_evac_custom_addr').value.trim();
+                coords = document.getElementById('swal_evac_coords').value;
+                if (!address || !coords || coords.includes('กำลัง') || coords.includes('กรุณา')) {
+                    Swal.showValidationMessage('กรุณาระบุที่อยู่อื่นๆ และตรวจสอบพิกัด GPS');
+                    return false;
+                }
+            } else if (!address) {
+                Swal.showValidationMessage('กรุณาค้นหาและเลือกที่อยู่ หรือติ๊กเพื่อระบุที่อยู่อื่น');
+                return false;
+            }
+
+            const count = document.getElementById('swal_evac_count').value;
+            const type = document.getElementById('swal_evac_type').value;
+            const dest = (type === 'ศูนย์') ? document.getElementById('swal_evac_shelter').value : document.getElementById('swal_evac_other_text').value;
+
+            if (!count || !dest) {
+                Swal.showValidationMessage('กรุณากรอกข้อมูลจำนวนคนและปลายทางให้ครบถ้วน');
+                return false;
+            }
+            return { address, count, type, dest, coords };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            saveEvacuationData(result.value);
+        }
+    });
+};
+
+async function saveEvacuationData(data) {
+    Swal.fire({
+        title: 'กำลังบันทึกข้อมูล...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    const payload = {
+        action: 'saveEvacuation',
+        address: data.address,
+        count: data.count,
+        type: data.type,
+        dest: data.dest,
+        user: currentUser,
+        coords: data.coords // แนบพิกัด GPS ไปด้วย
+    };
+
+    try {
+        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await res.json();
+        
+        if (result.success) {
+            Swal.fire({
+                title: 'บันทึกสำเร็จ',
+                text: 'อัปเดตสถานะการอพยพเรียบร้อยแล้ว',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+            
+            // รอให้โหลดข้อมูลจาก Code.gs มาอัปเดตตัวแปร store ให้เสร็จ 100% ก่อน
+            await loadData(); 
+            
+            // เมื่อโหลดเสร็จแล้ว สั่งวาดหมุดใหม่ลงบนแผนที่
+            if (typeof loadEvacuationMarkers === 'function') {
+                loadEvacuationMarkers();
+            }
+        } else {
+            throw new Error(result.error || 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์');
+        }
+    } catch (err) {
+        Swal.fire('ผิดพลาด', err.message, 'error');
+    }
 }
     </script>
 </body>
