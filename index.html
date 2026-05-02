@@ -529,7 +529,7 @@
     <!-- Header -->
     <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-black text-slate-800">ภาพรวมสถานการณ์ DASHBOARD</h2>
+             <h1 class="text-2xl font-black text-slate-800">ภาพรวมสถานการณ์ DASHBOARD</h1>
         </div>
         <div class="hidden md:block bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm">
             <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
@@ -1441,9 +1441,21 @@
 </section>
     <div id="reliefModal" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-6 shadow-2xl overflow-y-auto max-h-[90vh] scale-in-center">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-black text-slate-800">บันทึกการแจกถุงยังชีพ</h3>
             <button type="button" onclick="closeReliefModal()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times-circle text-xl"></i></button>
+        </div>
+
+        <!-- 🌟 ส่วนที่เพิ่มใหม่: ปุ่มสแกนบัตรประชาชนด้วย AI OCR -->
+        <div class="mb-5 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col items-center justify-center transition-all">
+            <!-- input file ซ่อนไว้ ใช้สำหรับเปิดกล้องถ่ายรูป หรือเลือกไฟล์รูป -->
+            <input type="file" id="ocr_id_card" accept="image/*" capture="environment" class="hidden" onchange="processIdCardOCR(event)">
+            
+            <button type="button" onclick="document.getElementById('ocr_id_card').click()" class="w-full py-3.5 bg-white text-indigo-600 font-black rounded-[1.2rem] shadow-sm border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-all active:scale-95 flex items-center justify-center group">
+                <i class="fas fa-id-card text-xl mr-2 group-hover:scale-110 transition-transform"></i> 
+                สแกนบัตรประชาชน (AI OCR)
+            </button>
+            <p class="text-[10px] text-indigo-400 mt-2 font-bold"><i class="fas fa-magic mr-1"></i>ดึงชื่อและที่อยู่ตามทะเบียนบ้านอัตโนมัติ</p>
         </div>
         <form id="reliefForm" onsubmit="saveReliefData(event)" class="space-y-4">
             
@@ -2661,7 +2673,111 @@ function clearZoneFilter() {
         console.log(`Cleared filters: แสดงข้อมูลทั้งหมด ${store.reliefData.length} รายการ`);
     }
 }
+// ==========================================
+// ระบบ AI OCR (สแกนบัตรประชาชน)
+// ==========================================
 
+// ฟังก์ชันสำหรับย่อขนาดรูปภาพก่อนส่งให้ AI (แก้ปัญหาไฟล์รูปใหญ่เกินไป)
+function compressImage(file, maxWidth, maxHeight, quality) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                // คำนวณสัดส่วนใหม่ถ้าภาพใหญ่เกิน
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // คืนค่าเป็น Base64
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            }
+        }
+    });
+}
+
+async function processIdCardOCR(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    event.target.value = ''; 
+
+    Swal.fire({
+        title: 'กำลังอ่านข้อมูลด้วย AI...',
+        html: 'ระบบกำลังดึงชื่อและที่อยู่จากบัตรประชาชน<br><span class="text-xs text-indigo-500 font-bold mt-2 block">Powered by Typhoon OCR</span>',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        // 1. ย่อรูปและแปลงเป็น Base64
+        const base64DataUrl = await compressImage(file, 1200, 1200, 0.7);
+        const base64Image = base64DataUrl.split(',')[1]; 
+
+        // 2. ส่งรูปภาพไปให้ Google Apps Script เป็นคนคุยกับ AI ให้
+        const payload = {
+            action: 'ocrIdCard',
+            image: base64Image
+        };
+
+        const response = await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify(payload) 
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'ไม่สามารถอ่านข้อมูลได้');
+        }
+
+        // 3. นำข้อมูลที่ได้จาก Apps Script มากรอกลงฟอร์ม
+        const extractedName = result.data.name || ""; 
+        const extractedAddress = result.data.address || "";
+
+        if (extractedName) document.getElementById('rel_name').value = extractedName;
+        if (extractedAddress) {
+            document.getElementById('rel_regis_address').value = extractedAddress;
+            const sameAddrCheckbox = document.getElementById('rel_same_addr');
+            if (sameAddrCheckbox) sameAddrCheckbox.checked = false;
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'ดึงข้อมูลสำเร็จ!',
+            text: 'กรุณาตรวจสอบความถูกต้องในฟอร์มก่อนกดยืนยัน',
+            timer: 2500,
+            showConfirmButton: false
+        });
+
+    } catch (error) {
+        console.error("OCR Error:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'อ่านข้อมูลไม่สำเร็จ',
+            text: error.message || 'ภาพอาจไม่ชัดเจน หรือระบบ AI ขัดข้อง กรุณาลองใหม่อีกครั้ง'
+        });
+    }
+}
 async function saveUser(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button');
