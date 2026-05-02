@@ -2187,22 +2187,48 @@ window.selectReliefAddress = function(addr) {
     // ตรงนี้ระบบจะรอให้ผู้ใช้ติ๊กเอง หรือถ้าติ๊กค้างไว้แล้วให้กดติ๊กใหม่
 };
 
-// 2. ฟังก์ชันเปิด/ปิด Modal (อัปเดตให้โหลดประวัติที่อยู่ด้วย)
+/// 2. ฟังก์ชันเปิด/ปิด Modal (อัปเดตให้โหลดประวัติที่อยู่และเคลียร์ฟอร์มทุกครั้งที่เปิด)
 window.openReliefModal = function() { 
-    // ดึงรายชื่อที่อยู่แบบไม่ซ้ำกันจากประวัติมาเก็บไว้ในตัวแปร Global
+    // ==========================================
+    // 🌟 ส่วนที่เพิ่มใหม่: เคลียร์ฟอร์มก่อนเปิดใช้งาน
+    // ==========================================
+    const form = document.getElementById('reliefForm');
+    if (form) form.reset(); // ล้างข้อความทุกช่อง
+
+    const sameAddrCheckbox = document.getElementById('rel_same_addr');
+    if (sameAddrCheckbox) sameAddrCheckbox.checked = false; // เอาเครื่องหมายถูกออก
+
+    if (typeof copyAddress === 'function') {
+        copyAddress(false); // ปลดล็อคช่องที่อยู่ทะเบียนบ้านให้กลับมาพิมพ์ได้
+    }
+
+    const ocrInput = document.getElementById('ocr_id_card');
+    if (ocrInput) ocrInput.value = ''; // ล้างไฟล์รูปภาพ AI OCR เดิมออก
+
+    const resultBox = document.getElementById('rel_address_results');
+    if(resultBox) resultBox.classList.add('hidden'); // ซ่อนกล่องค้นหา (ถ้ามีค้างอยู่)
+
+
+    // ==========================================
+    // ส่วนเดิม: โหลดข้อมูลประวัติที่อยู่สำหรับ AutoComplete
+    // ==========================================
     window.reliefAddressList = [];
     if (store.reliefData) {
         const allAddresses = store.reliefData.map(r => r[4] ? r[4].toString().trim() : '').filter(a => a !== '');
         window.reliefAddressList = [...new Set(allAddresses)];
     }
     
+    // สั่งเปิด Modal
     document.getElementById('reliefModal').classList.remove('hidden'); 
 };
 
 window.closeReliefModal = function() { 
+    // สั่งปิด Modal
     document.getElementById('reliefModal').classList.add('hidden'); 
+    
+    // ซ่อนกล่องค้นหาด้วย
     const resultBox = document.getElementById('rel_address_results');
-    if(resultBox) resultBox.classList.add('hidden'); // ซ่อนกล่องค้นหาด้วย
+    if(resultBox) resultBox.classList.add('hidden'); 
 };
 
 // (ลบฟังก์ชัน toggleRelOtherAddr ของเดิมทิ้งไปได้เลยครับ เพราะเรารวมช่องแล้ว)
@@ -2714,7 +2740,32 @@ function compressImage(file, maxWidth, maxHeight, quality) {
         }
     });
 }
+// ฟังก์ชันท่าไม้ตายสำหรับบังคับยัดข้อมูลผ่าน AutoComplete
+function forceFillInput(elementId, value) {
+    const el = document.getElementById(elementId);
+    if (!el) return; // ถ้าหาช่องไม่เจอให้ข้ามไป
 
+    // 1. ใส่ข้อความลงไปตรงๆ
+    el.value = value;
+
+    // 2. ถ้าในระบบของคุณมีการใช้ jQuery (ปลั๊กอิน AutoComplete ส่วนใหญ่ใช้)
+    if (typeof window.jQuery !== 'undefined') {
+        window.jQuery(el).val(value).trigger('input').trigger('change').trigger('keyup');
+    }
+
+    // 3. จำลอง Event คีย์บอร์ดทุกรูปแบบ (หลอก AutoComplete ว่ามีคนกำลังพิมพ์)
+    const eventsToTrigger = ['focus', 'keydown', 'input', 'keyup', 'change', 'blur'];
+    eventsToTrigger.forEach(eventType => {
+        let event;
+        if (eventType.includes('key')) {
+            // จำลองการกดคีย์บอร์ด
+            event = new KeyboardEvent(eventType, { bubbles: true, cancelable: true, key: 'a', charCode: 65, keyCode: 65 });
+        } else {
+            event = new Event(eventType, { bubbles: true, cancelable: true });
+        }
+        el.dispatchEvent(event);
+    });
+}
 async function processIdCardOCR(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -2750,22 +2801,67 @@ async function processIdCardOCR(event) {
             throw new Error(result.error || 'ไม่สามารถอ่านข้อมูลได้');
         }
 
-        // 3. นำข้อมูลที่ได้จาก Apps Script มากรอกลงฟอร์ม
-        const extractedName = result.data.name || ""; 
-        const extractedAddress = result.data.address || "";
+        // 🌟 เพิ่ม console.log เพื่อให้ดูข้อมูลดิบในหน้าต่าง Developer Tools ได้
+        console.log("ข้อมูลที่ AI ส่งกลับมา:", result.data);
 
-        if (extractedName) document.getElementById('rel_name').value = extractedName;
-        if (extractedAddress) {
-            document.getElementById('rel_regis_address').value = extractedAddress;
-            const sameAddrCheckbox = document.getElementById('rel_same_addr');
-            if (sameAddrCheckbox) sameAddrCheckbox.checked = false;
+        // 3. นำข้อมูลที่ได้จาก Apps Script มากรอกลงฟอร์ม
+        const extractedName = result.data.name || result.data.Name || result.data.ชื่อ || result.data['ชื่อ-นามสกุล'] || ""; 
+        const extractedAddress = result.data.address || result.data.nationality || result.data.Address || result.data.ที่อยู่ || result.data['ที่อยู่'] || "";
+
+        if(!extractedAddress) {
+             Swal.fire('พบปัญหา!', 'ดึงข้อมูลสำเร็จ แต่ไม่พบฟิลด์ที่อยู่ (AI อาจตอบมาผิดรูปแบบ)', 'warning');
+             return; 
         }
 
+        // กรอกชื่อ
+        if (extractedName) {
+            document.getElementById('rel_name').value = extractedName;
+        }
+
+        // 🌟 จัดการเรื่องที่อยู่ (แก้ปัญหาช่องว่างเปล่า)
+        if (extractedAddress) {
+            
+            // 1. นำข้อมูลไปใส่ในช่อง "ที่อยู่ตามทะเบียนบ้าน"
+            const regisInput = document.getElementById('rel_regis_address');
+            if (regisInput) {
+                regisInput.value = extractedAddress;
+            }
+
+            // 2. นำข้อมูลไปใส่ในช่อง "ที่อยู่ปัจจุบัน (ค้นหา)" ด้วย 
+            // เพื่อป้องกันไม่ให้ copyAddress ก๊อปค่าว่างเปล่ามาทับ
+            const searchInput = document.getElementById('rel_address_search');
+            if (searchInput) {
+                searchInput.value = extractedAddress;
+            }
+
+            // 3. ติ๊กถูกที่ช่อง Checkbox "ที่อยู่ตรงกัน"
+            const sameAddrCheckbox = document.getElementById('rel_same_addr');
+            if (sameAddrCheckbox) {
+                sameAddrCheckbox.checked = true; // สั่งติ๊กถูก
+
+                // เรียกฟังก์ชัน copyAddress ของคุณให้ทำงานตามปกติ (ตอนนี้ปลอดภัยแล้วเพราะช่องปัจจุบันมีข้อมูลแล้ว)
+                if (typeof copyAddress === 'function') {
+                    copyAddress(true);
+                }
+            }
+
+            // 4. ซ่อนกล่องค้นหา (ถ้ามันเด้งขึ้นมา)
+            const searchResults = document.getElementById('rel_address_results');
+            if (searchResults) {
+                searchResults.classList.add('hidden');
+            }
+        }
+
+        // 4. แสดงผล Popup แจ้งเตือนแบบมีชื่อและที่อยู่
         Swal.fire({
             icon: 'success',
             title: 'ดึงข้อมูลสำเร็จ!',
-            text: 'กรุณาตรวจสอบความถูกต้องในฟอร์มก่อนกดยืนยัน',
-            timer: 2500,
+            html: '<div class="text-left text-sm mt-2 bg-slate-50 p-4 rounded-xl border border-slate-100">' +
+                  '<p class="mb-2"><strong class="text-slate-700">ชื่อ-สกุล:</strong> <span class="text-blue-600">' + extractedName + '</span></p>' +
+                  '<p><strong class="text-slate-700">ที่อยู่:</strong> <span class="text-emerald-600">' + extractedAddress + '</span></p>' +
+                  '</div>' +
+                  '<p class="text-[10px] text-slate-400 mt-3 font-bold">กรุณาตรวจสอบความถูกต้องในฟอร์มอีกครั้ง</p>',
+            timer: 4000,
             showConfirmButton: false
         });
 
