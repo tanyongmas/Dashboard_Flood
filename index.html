@@ -657,73 +657,170 @@
     </button>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-12 gap-3 mb-6">
-    
-    <div class="col-span-2 md:col-span-7 bg-white p-5 rounded-[2.5rem] shadow-sm border border-blue-50 relative">
-        <h4 class="text-[10px] font-bold text-blue-900 mb-1 uppercase tracking-tight">จำนวนผู้เข้าพักพิง</h4>
-        <div class="h-[180px] w-full relative">
-            <canvas id="chartCapacity"></canvas>
-            <div id="capacityText" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none translate-y-1">
-                </div>
-        </div>
-    </div>
-
-    <div class="col-span-2 md:col-span-5 grid grid-rows-2 gap-3">
-    
-    <div class="bg-white rounded-[2rem] shadow-sm border border-blue-100 overflow-hidden flex flex-col">
-        <div class="bg-blue-600 px-5 py-2 flex justify-between items-center">
-            <span class="text-[10px] text-white font-black uppercase tracking-wider">จำนวนผู้เข้าพักพิง</span>
-            <i class="fas fa-users text-white/50 text-xs"></i>
-        </div>
-        <div class="p-5 flex justify-between items-center flex-1">
-            <p id="statTotalPeople" class="text-4xl font-black text-slate-700 leading-none">0</p>
-            <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-                <i class="fas fa-user-friends"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-[2rem] shadow-sm border border-indigo-100 overflow-hidden flex flex-col">
-        <div class="bg-indigo-600 px-5 py-2 flex justify-between items-center">
-            <span class="text-[10px] text-white font-black uppercase tracking-wider">จำนวนครัวเรือน</span>
-            <i class="fas fa-home text-white/50 text-xs"></i>
-        </div>
-        <div class="p-5 flex justify-between items-center flex-1">
-            <p id="statTotalHouseholds" class="text-4xl font-black text-slate-700 leading-none">0</p>
-            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                <i class="fas fa-house-user"></i>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-    <div class="col-span-1 md:col-span-6 bg-white p-4 rounded-[2rem] shadow-sm border border-blue-50">
-        <h4 class="text-[10px] font-bold text-pink-600 mb-3 uppercase tracking-tight border-l-4 border-pink-500 pl-2">สัดส่วนเพศ</h4>
-        <div class="h-[120px]">
-            <canvas id="chartGender"></canvas>
-        </div>
-    </div>
-
-    <div class="col-span-1 md:col-span-6 bg-white p-4 rounded-[2rem] shadow-sm border border-blue-50">
-        <h4 class="text-[10px] font-bold text-amber-600 mb-3 uppercase tracking-tight border-l-4 border-amber-500 pl-2">ช่วงอายุ</h4>
-        <div class="h-[120px]">
-            <canvas id="chartAge"></canvas>
-        </div>
-    </div>
-</div>
-
-   <div class="bg-white rounded-3xl shadow-sm border border-blue-50 overflow-hidden mt-6">
-    <div class="p-4 border-b border-blue-50 flex justify-between items-center bg-blue-50/30">
-        <h3 class="font-bold text-blue-900 text-sm">รายชื่อผู้เข้าพักพิง</h3>
+    <!-- กลุ่มการ์ดสถิติ (ปรับใหม่) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         
+        <!-- 1. การ์ดจำนวนผู้เข้าพักพิง (ใหญ่) -->
+        <div class="col-span-2 md:col-span-2 row-span-2 bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] shadow-md p-6 flex flex-col justify-between relative overflow-hidden">
+            <i class="fas fa-users absolute -right-6 -bottom-6 text-[9rem] text-white/10 transform -rotate-12"></i>
+            <div>
+                <h4 class="text-white/80 font-bold text-[11px] uppercase tracking-wider mb-1">จำนวนผู้เข้าพักพิงทั้งหมด</h4>
+            </div>
+            <div class="mt-4 flex items-end gap-3 z-10">
+                <span id="statTotalPeople" class="text-6xl md:text-7xl font-black text-white leading-none tracking-tighter">0</span>
+                <span class="text-white/80 font-bold mb-2">คน</span>
+            </div>
+            
+            <!-- หลอดความจุศูนย์พักพิง (ย้ายจากกราฟวงกลมเดิมมาไว้ตรงนี้) -->
+            <div class="mt-8 z-10">
+                <div class="flex justify-between text-[10px] text-white/80 font-bold mb-1.5">
+                    <span>ความจุศูนย์ที่เลือก</span>
+                    <span id="statCapacityText">0 / 0</span>
+                </div>
+                <div class="w-full bg-black/20 rounded-full h-2.5 overflow-hidden border border-white/10">
+                    <div id="statCapacityBar" class="bg-green-400 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. การ์ดจำนวนครัวเรือน -->
+        <div class="col-span-1 md:col-span-1 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-center transition hover:shadow-md">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-inner"><i class="fas fa-house-user"></i></div>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide">ครัวเรือน</span>
+            </div>
+            <div class="flex items-end gap-1 mt-1">
+                <p id="statTotalHouseholds" class="text-3xl font-black text-slate-700 leading-none">0</p>
+                <span class="text-[9px] text-slate-400 font-bold mb-0.5">ครอบครัว</span>
+            </div>
+        </div>
+
+        <!-- 3. การ์ดผู้ป่วย/ผู้พิการ -->
+        <div class="col-span-1 md:col-span-1 bg-white rounded-[2rem] shadow-sm border border-rose-50 p-5 flex flex-col justify-center transition hover:shadow-md">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center shadow-inner"><i class="fas fa-wheelchair"></i></div>
+                <span class="text-[10px] font-black text-rose-400 uppercase tracking-wide">ป่วย/พิการ</span>
+            </div>
+            <div class="flex items-end gap-1 mt-1">
+                <p id="statSick" class="text-3xl font-black text-rose-600 leading-none">0</p>
+                <span class="text-[9px] text-rose-400 font-bold mb-0.5">คน</span>
+            </div>
+        </div>
+
+        <!-- 4. การ์ดกลุ่มเปราะบาง -->
+        <div class="col-span-2 md:col-span-2 bg-white rounded-[2rem] shadow-sm border border-amber-50 p-5 flex items-center justify-between transition hover:shadow-md">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-500 flex items-center justify-center text-xl shadow-inner"><i class="fas fa-baby"></i></div>
+                <div>
+                    <h4 class="text-[11px] font-black text-amber-600 uppercase tracking-wide">กลุ่มเปราะบาง</h4>
+                    <p class="text-[9px] text-slate-400 font-bold mt-0.5">(เด็กทารก, ผู้สูงอายุ)</p>
+                </div>
+            </div>
+            <div class="flex items-end gap-1">
+                <p id="statVulnerable" class="text-4xl font-black text-amber-500 leading-none">0</p>
+                <span class="text-[11px] text-amber-400 font-bold mb-1">คน</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- แถวที่ 2: กราฟสัดส่วนเพศ และ อายุ (แสดงกราฟ + ตัวเลข) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        
+        <!-- สัดส่วนเพศ -->
+        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-blue-50 flex flex-col">
+            <h4 class="text-[11px] font-bold text-pink-600 mb-3 uppercase tracking-tight border-l-4 border-pink-500 pl-2">สัดส่วนเพศ</h4>
+            <div class="flex items-center justify-between flex-1">
+                <div class="h-[120px] w-1/2 relative">
+                    <canvas id="chartGender"></canvas>
+                </div>
+                <div class="w-1/2 pl-4 space-y-3">
+                    <div class="flex justify-between items-end border-b border-slate-50 pb-2">
+                        <span class="text-xs font-bold text-slate-500"><i class="fas fa-male text-blue-400 w-4"></i> ชาย</span>
+                        <span id="numMale" class="text-xl font-black text-blue-500">0</span>
+                    </div>
+                    <div class="flex justify-between items-end border-b border-slate-50 pb-2">
+                        <span class="text-xs font-bold text-slate-500"><i class="fas fa-female text-pink-400 w-4"></i> หญิง</span>
+                        <span id="numFemale" class="text-xl font-black text-pink-500">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ช่วงอายุ -->
+        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-blue-50 flex flex-col">
+            <h4 class="text-[11px] font-bold text-emerald-600 mb-3 uppercase tracking-tight border-l-4 border-emerald-500 pl-2">ช่วงอายุ</h4>
+            <div class="flex items-center justify-between flex-1">
+                <div class="h-[120px] w-[45%] relative">
+                    <canvas id="chartAge"></canvas>
+                </div>
+                <div class="w-[55%] pl-4 grid grid-cols-2 gap-2">
+                    <div class="bg-emerald-50 rounded-xl p-2 text-center border border-emerald-100">
+                        <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-wide">0-7 ปี</p>
+                        <p id="numAgeInfant" class="text-lg font-black text-emerald-600 leading-tight">0</p>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-2 text-center border border-blue-100">
+                        <p class="text-[9px] text-blue-600 font-bold uppercase tracking-wide">8-15 ปี</p>
+                        <p id="numAgeChild" class="text-lg font-black text-blue-600 leading-tight">0</p>
+                    </div>
+                    <div class="bg-amber-50 rounded-xl p-2 text-center border border-amber-100">
+                        <p class="text-[9px] text-amber-600 font-bold uppercase tracking-wide">16-59 ปี</p>
+                        <p id="numAgeAdult" class="text-lg font-black text-amber-600 leading-tight">0</p>
+                    </div>
+                    <div class="bg-rose-50 rounded-xl p-2 text-center border border-rose-100">
+                        <p class="text-[9px] text-rose-600 font-bold uppercase tracking-wide">60+ ปี</p>
+                        <p id="numAgeElderly" class="text-lg font-black text-rose-600 leading-tight">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <!-- ส่วนแสดงตารางรายชื่อและตัวกรอง -->
+<div class="bg-white rounded-[2rem] shadow-sm border border-blue-50 overflow-hidden mt-6">
+    
+    <!-- แถบเครื่องมือ: ค้นหา / ตัวกรองอายุ / ปุ่มพิมพ์ -->
+    <div class="p-4 border-b border-blue-50 flex flex-col lg:flex-row justify-between lg:items-center bg-blue-50/30 gap-3">
+        <h3 class="font-bold text-blue-900 text-sm flex items-center shrink-0">
+            <i class="fas fa-list-ul mr-2 text-blue-500"></i> รายชื่อผู้เข้าพักพิง
+        </h3>
+        
+        <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+            <!-- 1. ช่องค้นหาชื่อ/ที่อยู่ -->
+            <div class="relative flex-1 sm:w-48">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="evacSearchInput" onkeyup="applyEvacFilters()" placeholder="ค้นหาชื่อ, ที่อยู่..." class="w-full pl-8 pr-3 py-2 border border-blue-100 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-blue-300">
+            </div>
+            
+            <!-- 2. ตัวกรองช่วงอายุ -->
+            <select id="evacAgeFilter" onchange="applyEvacFilters()" class="py-2 px-2 border border-blue-100 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-blue-300 bg-white font-bold text-slate-600">
+                <option value="all">ทุกช่วงอายุ</option>
+                <option value="infant">เด็กเล็ก (0-7 ปี)</option>
+                <option value="child">เด็กโต (8-15 ปี)</option>
+                <option value="adult">ผู้ใหญ่ (16-59 ปี)</option>
+                <option value="elderly">ผู้สูงอายุ (60+ ปี)</option>
+            </select>
+
+            <!-- 3. ตัวกรองสถานะสุขภาพ (เพิ่มใหม่) -->
+            <select id="evacHealthFilter" onchange="applyEvacFilters()" class="py-2 px-2 border border-rose-100 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-rose-300 bg-rose-50/30 font-bold text-rose-600">
+                <option value="all">ทุกสถานะสุขภาพ</option>
+                <option value="normal">ร่างกายปกติ</option>
+                <option value="sick">ป่วย / พิการ</option>
+                <option value="vulnerable">กลุ่มเปราะบาง</option>
+            </select>
+            
+            <!-- 4. ปุ่มพิมพ์ตารางเฉพาะที่กรอง -->
+            <button onclick="printFilteredEvacuees()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center shadow-md">
+                <i class="fas fa-print mr-2"></i> พิมพ์ตาราง
+            </button>
+        </div>
     </div>
     
-    <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+    <!-- พื้นที่ตาราง -->
+    <div class="overflow-x-auto max-h-[550px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left border-collapse min-w-[600px]">
             <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
                 <tr class="text-[10px] text-slate-500 uppercase font-bold border-b border-blue-50">
-                    <th class="p-3 text-center">#</th>
+                    <th class="p-3 text-center w-12">#</th>
                     <th class="p-3">ชื่อ-นามสกุล</th>
                     <th class="p-3">อายุ/เพศ</th>
                     <th class="p-3">สถานะสุขภาพ</th>
@@ -731,10 +828,11 @@
                     <th class="p-3 text-center">จัดการ</th>
                 </tr>
             </thead>
-            <tbody id="evacueeTableBody" class="text-[11px]"></tbody>
+            <tbody id="evacueeTableBody" class="text-[11px] divide-y divide-slate-50"></tbody>
         </table>
     </div>
 </div>
+
 
 <div id="dataModal" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl transition-all scale-in-center">
@@ -2622,44 +2720,37 @@ function focusOnLocation(locationName) {
  * ฟังก์ชันกรองข้อมูลศูนย์พักพิง
  * @param {string} centerName - ชื่อศูนย์ที่เลือก หรือ 'all'
  */
-function filterShelter(centerName) {
-    // 1. ปรับสถานะปุ่ม (UI)
+// อัปเดตฟังก์ชัน filterShelter ให้เคลียร์ตัวกรองสุขภาพด้วย
+window.filterShelter = function(centerName) {
     document.querySelectorAll('.shelter-filter-btn').forEach(btn => {
         btn.classList.remove('active-shelter-btn', 'active-menu-mobile', 'bg-blue-600', 'text-white');
         btn.classList.add('bg-white', 'text-slate-600');
-        
         if(btn.getAttribute('data-center') === centerName) {
             btn.classList.add('active-shelter-btn', 'active-menu-mobile', 'bg-blue-600', 'text-white');
             btn.classList.remove('bg-white', 'text-slate-600');
         }
     });
 
-    // 2. ดึงข้อมูลดิบจาก Store
     const evacuees = store.evacuees || [];
-    
-    // 3. กรองข้อมูลตามศูนย์ที่เลือก
     let filtered = centerName === 'all' ? [...evacuees] : evacuees.filter(r => {
-        const shelterNameInSheet = (r[1] || '').toString().trim();
-        return shelterNameInSheet === centerName.trim();
+        return (r[1] || '').toString().trim() === centerName.trim();
     });
     
-    // 4. เก็บข้อมูลที่กรองไว้ในตัวแปรสำหรับแสดงผล (Card/Table)
     store.evacuees_display = filtered;
+    window.currentFilteredData = filtered; 
 
-    // --- จุดที่เพิ่ม: เก็บข้อมูลลง Global Variable เพื่อให้ฟังก์ชันพิมพ์รายงานดึงไปใช้ ---
-    window.currentFilteredData = filtered;
-
-    // 5. อัปเดตการแสดงผลบนหน้าจอ (กราฟและ Card)
-    if (typeof renderShelterStats === "function") {
-        renderShelterStats(filtered, 'capacity');
-    }
+    // เคลียร์ตัวกรองทั้งหมด
+    const searchInput = document.getElementById('evacSearchInput');
+    const ageFilter = document.getElementById('evacAgeFilter');
+    const healthFilter = document.getElementById('evacHealthFilter'); // เพิ่มการดึง ID ใหม่
     
-    if (typeof renderEvacueeCards === "function") {
-        renderEvacueeCards(filtered);
-    }
+    if (searchInput) searchInput.value = '';
+    if (ageFilter) ageFilter.value = 'all';
+    if (healthFilter) healthFilter.value = 'all'; // สั่งรีเซ็ต
 
-    console.log(`ตัวกรองศูนย์: ${centerName} | พบข้อมูล: ${filtered.length} รายการ`);
-}
+    if (typeof renderShelterStats === "function") renderShelterStats(filtered);
+    if (typeof applyEvacFilters === "function") applyEvacFilters();
+};
 
 
 
@@ -2681,10 +2772,15 @@ let charts = { capacity: null, gender: null, age: null };
 
 function renderShelterStats(data) {
     const total = data.length;
-    const households = [...new Set(data.map(r => r[2]))].length;
+    
+    // นับครัวเรือน (อิงจากที่อยู่ Index 2)
+    const households = [...new Set(data.map(r => String(r[2]).trim()).filter(a => a !== ''))].length;
+
+    // นับเพศ
     const male = data.filter(r => r[6] === 'ชาย').length;
     const female = data.filter(r => r[6] === 'หญิง').length;
 
+    // นับช่วงอายุ
     const ageGroups = {
         infant: data.filter(r => r[5] >= 0 && r[5] <= 7).length,
         child: data.filter(r => r[5] >= 8 && r[5] <= 15).length,
@@ -2692,11 +2788,27 @@ function renderShelterStats(data) {
         elderly: data.filter(r => r[5] >= 60).length
     };
 
-    document.getElementById('statTotalPeople').innerText = total;
-    document.getElementById('statTotalHouseholds').innerText = households;
+    // นับกลุ่มสถานะสุขภาพ (อิงจาก Index 8)
+    const sickCount = data.filter(r => ['ผู้ป่วย', 'ผู้พิการ'].includes(String(r[8]).trim())).length;
+    const vulnerableCount = data.filter(r => String(r[8]).trim() === 'กลุ่มเปราะบาง').length;
 
-    // --- Logic คำนวณความจุ ---
-    // --- Logic คำนวณความจุและเปอร์เซ็นต์ ---
+    // 1. อัปเดตตัวเลขในการ์ดสถิติส่วนบน
+    if(document.getElementById('statTotalPeople')) document.getElementById('statTotalPeople').innerText = total;
+    if(document.getElementById('statTotalHouseholds')) document.getElementById('statTotalHouseholds').innerText = households;
+    if(document.getElementById('statSick')) document.getElementById('statSick').innerText = sickCount;
+    if(document.getElementById('statVulnerable')) document.getElementById('statVulnerable').innerText = vulnerableCount;
+
+    // 2. อัปเดตตัวเลขข้างกราฟเพศ
+    if(document.getElementById('numMale')) document.getElementById('numMale').innerText = male;
+    if(document.getElementById('numFemale')) document.getElementById('numFemale').innerText = female;
+
+    // 3. อัปเดตตัวเลขข้างกราฟช่วงอายุ
+    if(document.getElementById('numAgeInfant')) document.getElementById('numAgeInfant').innerText = ageGroups.infant;
+    if(document.getElementById('numAgeChild')) document.getElementById('numAgeChild').innerText = ageGroups.child;
+    if(document.getElementById('numAgeAdult')) document.getElementById('numAgeAdult').innerText = ageGroups.adult;
+    if(document.getElementById('numAgeElderly')) document.getElementById('numAgeElderly').innerText = ageGroups.elderly;
+
+    // 4. คำนวณความจุศูนย์ (แสดงเป็นหลอด Progress Bar ในการ์ดผู้เข้าพักพิงรวม)
     const activeBtn = document.querySelector('.shelter-filter-btn.active-shelter-btn');
     const filterValue = activeBtn ? activeBtn.getAttribute('data-center') : 'all';
 
@@ -2707,40 +2819,26 @@ function renderShelterStats(data) {
         totalCapacity = SHELTER_CAPACITY[filterValue] || 0;
     }
 
-    const occupancyRate = (total / totalCapacity) * 100; // คำนวณเปอร์เซ็นต์การครองเตียง
-    const remaining = Math.max(0, totalCapacity - total);
-    
-    // --- เงื่อนไขการกำหนดสีตามเปอร์เซ็นต์ ---
-    let capacityColor = '#22c55e'; // Default: สีเขียว (Success)
-    let textColorClass = 'text-green-600';
+    const occupancyRate = totalCapacity > 0 ? (total / totalCapacity) * 100 : 0;
+    let capacityColorClass = 'bg-green-400';
+    if (occupancyRate >= 90) capacityColorClass = 'bg-rose-500';
+    else if (occupancyRate >= 60) capacityColorClass = 'bg-amber-400';
 
-    if (occupancyRate >= 90) {
-        capacityColor = '#ef4444'; // มากกว่า 90%: สีแดง (Danger)
-        textColorClass = 'text-red-600';
-    } else if (occupancyRate >= 50) {
-        capacityColor = '#f59e0b'; // มากกว่า 50%: สีเหลือง (Warning)
-        textColorClass = 'text-amber-500';
+    if(document.getElementById('statCapacityText')) {
+        document.getElementById('statCapacityText').innerText = `${total} / ${totalCapacity}`;
+        const bar = document.getElementById('statCapacityBar');
+        bar.style.width = `${Math.min(occupancyRate, 100)}%`;
+        bar.className = `h-full rounded-full transition-all duration-1000 ${capacityColorClass}`;
     }
 
-    // จัดข้อความตรงกลางกราฟ (ปรับสีตามเงื่อนไข)
-    document.getElementById('capacityText').innerHTML = `
-        <span class="text-3xl font-black ${textColorClass} leading-none">${total}</span>
-        <span class="text-[10px] text-slate-400 font-bold uppercase mt-1">/ ${totalCapacity}</span>
-    `;
-
-    // 1. กราฟความจุ (ส่งค่า capacityColor ที่คำนวณได้ไปใช้)
-    updateChart('capacity', 'chartCapacity', 
-        ['ผู้พักพิง', 'ที่ว่าง'], [total, remaining], [capacityColor, '#f1f5f9'], '80%', false);
-
-    // 2. กราฟเพศ
+    // 5. อัปเดตกราฟโดนัท (ปิด Legend เพราะเรามีตัวเลขกำกับด้านข้างแล้ว)
     updateChart('gender', 'chartGender', 
-        ['ชาย', 'หญิง'], [male, female], ['#38bdf8', '#f472b6'], '60%', 'right');
+        ['ชาย', 'หญิง'], [male, female], ['#3b82f6', '#ec4899'], '65%', false);
 
-    // 3. กราฟอายุ
     updateChart('age', 'chartAge', 
-        ['เด็กเล็ก 0-7', 'เด็ก 8-15', 'ผู้ใหญ่ 16-59', 'ผู้สูงอายุ 60+'], 
+        ['0-7 ปี', '8-15 ปี', '16-59 ปี', '60+ ปี'], 
         [ageGroups.infant, ageGroups.child, ageGroups.adult, ageGroups.elderly], 
-        ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'], '60%', 'right');
+        ['#10b981', '#3b82f6', '#f59e0b', '#f43f5e'], '65%', false);
 }
 
 // ฟังก์ชันสร้างกราฟที่ปรับปรุงแล้ว
@@ -3181,7 +3279,7 @@ window.printShelterReport = function() {
             <td style="text-align:center">${r[6] || '-'}</td>
             <td style="text-align:center">${r[5] || '-'}</td>
             <td>${r[2] || '-'}</td>
-            <td>${r[8] || 'ปกติ'}</td>
+            <td>${r[7] || '-'}</td>
         </tr>`).join('');
 
     // 7. สั่งพิมพ์
@@ -3210,8 +3308,7 @@ function handleLogout() {
         }
     });
 }
-//---------------ฟังก์ชั่นที่เกี่ยวข้องกับการรายงานสถานะการอพยพ"--------//
-//------------------------------------------------------------//
+
 // ==========================================
 // ระบบรายงานสถานะการอพยพ
 // ==========================================
@@ -3458,6 +3555,120 @@ async function saveEvacuationData(data) {
         Swal.fire('ผิดพลาด', err.message, 'error');
     }
 }
+// ==========================================
+// ข้อมูลตารางหน้าศูนย์พักพิง
+// ==========================================
+// ตัวแปรเก็บข้อมูลที่ผ่านการกรอง เพื่อนำไปใช้พิมพ์
+window.currentTableData = [];
+
+// ฟังก์ชันทำงานเมื่อพิมพ์ค้นหา หรือเปลี่ยนตัวกรองอายุ/สุขภาพ
+window.applyEvacFilters = function() {
+    let data = store.evacuees_display || [];
+    
+    const searchText = document.getElementById('evacSearchInput').value.toLowerCase();
+    const ageFilter = document.getElementById('evacAgeFilter').value;
+    const healthFilter = document.getElementById('evacHealthFilter').value;
+
+    const filtered = data.filter(r => {
+        const name = (r[4] || '').toString().toLowerCase();
+        const address = (r[2] || '').toString().toLowerCase();
+        const age = parseInt(r[5]) || 0;
+        const health = String(r[8] || 'ปกติ').trim();
+
+        // 1. เช็คการค้นหา (แมตช์ชื่อ หรือ ที่อยู่)
+        const matchText = name.includes(searchText) || address.includes(searchText);
+
+        // 2. เช็คอายุ
+        let matchAge = true;
+        if (ageFilter === 'infant') matchAge = (age >= 0 && age <= 7);
+        else if (ageFilter === 'child') matchAge = (age >= 8 && age <= 15);
+        else if (ageFilter === 'adult') matchAge = (age >= 16 && age <= 59);
+        else if (ageFilter === 'elderly') matchAge = (age >= 60);
+
+        // 3. เช็คสถานะสุขภาพ
+        let matchHealth = true;
+        if (healthFilter === 'normal') matchHealth = (health === 'ปกติ');
+        else if (healthFilter === 'sick') matchHealth = (health === 'ผู้ป่วย' || health === 'ผู้พิการ');
+        else if (healthFilter === 'vulnerable') matchHealth = (health === 'กลุ่มเปราะบาง');
+
+        // ข้อมูลต้องตรงกับทุกเงื่อนไข (ค้นหา + อายุ + สุขภาพ)
+        return matchText && matchAge && matchHealth;
+    });
+
+    window.currentTableData = filtered;
+
+    if (typeof renderEvacueeCards === 'function') {
+        renderEvacueeCards(filtered);
+    }
+};
+
+// ฟังก์ชันพิมพ์ตาราง โดยเพิ่มข้อมูลสุขภาพในหัวกระดาษด้วย
+window.printFilteredEvacuees = function() {
+    if (!window.currentTableData || window.currentTableData.length === 0) {
+        Swal.fire('ไม่พบข้อมูล', 'ไม่มีข้อมูลที่ตรงกับเงื่อนไขการกรอง', 'warning');
+        return;
+    }
+
+    const data = window.currentTableData;
+    const printArea = document.getElementById('printArea');
+    
+    const activeBtn = document.querySelector('.shelter-filter-btn.active-shelter-btn');
+    const shelterName = activeBtn ? activeBtn.innerText : 'ทุกศูนย์พักพิง';
+    const ageSelect = document.getElementById('evacAgeFilter');
+    const ageFilterText = ageSelect.options[ageSelect.selectedIndex].text;
+    const healthSelect = document.getElementById('evacHealthFilter');
+    const healthFilterText = healthSelect.options[healthSelect.selectedIndex].text;
+
+    const originalChildren = [];
+    Array.from(printArea.children).forEach(child => {
+        originalChildren.push({ el: child, display: child.style.display });
+        child.style.display = 'none';
+    });
+
+    const tempDiv = document.createElement('div');
+    tempDiv.className = "print-page";
+    tempDiv.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #334155; padding-bottom: 10px;">
+            <h2 style="font-size: 18px; font-weight: bold; margin: 0;">รายชื่อผู้เข้าพักพิง (อิงตามตัวกรอง)</h2>
+            <p style="font-size: 12px; margin: 5px 0;">ศูนย์พักพิง: ${shelterName} | เงื่อนไขอายุ: ${ageFilterText} | สุขภาพ: ${healthFilterText}</p>
+            <p style="font-size: 12px; margin: 0; color: #64748b;">ผลการกรอง: จำนวน ${data.length} ราย</p>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead style="background-color: #f1f5f9;">
+                <tr>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center; width: 40px;">ลำดับ</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: left;">ชื่อ-นามสกุล</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">อายุ</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">เพศ</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: left;">สถานะสุขภาพ</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: left;">ที่อยู่</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${data.map((r, i) => `
+                    <tr>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${i + 1}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: bold;">${r[4] || '-'}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${r[5] || '-'}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${r[6] || '-'}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${r[8] || 'ปกติ'}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${r[2] || '-'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+    
+    printArea.appendChild(tempDiv);
+    printArea.classList.remove('hidden');
+
+    setTimeout(() => {
+        window.print();
+        printArea.classList.add('hidden');
+        printArea.removeChild(tempDiv);
+        originalChildren.forEach(item => { item.el.style.display = item.display; });
+    }, 500);
+};
     </script>
 </body>
 </html>
