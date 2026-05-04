@@ -527,14 +527,28 @@
                 <!-- ================= หน้าหลัก (Dashboard - รูปแบบใหม่) ================= -->
 <section id="dashboardPage" class="page-section hidden max-w-7xl mx-auto space-y-6 fade-in pb-10">
     
-    <!-- Header -->
-    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
-        <div>
-             <h1 class="text-2xl font-black text-slate-800">ภาพรวมสถานการณ์ DASHBOARD</h1>
+    <!-- Header (ดีไซน์ใหม่) -->
+    <div class="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-500 p-6 md:p-8 rounded-[2rem] shadow-xl shadow-indigo-500/20 border border-blue-400/30 overflow-hidden flex items-center">
+        
+        <!-- ลายน้ำพื้นหลัง (Decoration) -->
+        <i class="fas fa-chart-pie absolute -right-4 -bottom-8 text-[120px] text-white opacity-10 transform -rotate-12 hover:scale-110 transition-transform duration-700 pointer-events-none"></i>
+        <div class="absolute -top-24 -left-24 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex items-center gap-4 md:gap-5 w-full">
+            <!-- กล่องไอคอน -->
+            <div class="w-14 h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/20 shadow-inner shrink-0">
+                <i class="fas fa-water text-2xl md:text-3xl"></i>
+            </div>
+            
+            <!-- ข้อความหัวข้อ -->
+            <div>
+                 <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">ภาพรวมสถานการณ์</h1>
+                 <p class="text-blue-100 text-xs md:text-sm font-medium mt-1 md:mt-1.5 flex items-center">
+                    <i class="fas fa-chart-line mr-1.5 opacity-80 hidden md:inline-block"></i> สรุปข้อมูลน้ำท่วมและช่วยเหลือแบบ Real-time
+                 </p>
+            </div>
         </div>
-        <div class="hidden md:block bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm">
-            <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
-        </div>
+        
     </div>
 
     <!-- ส่วนที่ 1: แผนที่สถานการณ์ระดับน้ำ (แทนที่กราฟเดิม) -->
@@ -4464,7 +4478,7 @@ async function saveEvacuationData(data) {
             Swal.fire({
                 title: 'บันทึกสำเร็จ',
                 // 🌟 เปลี่ยนข้อความให้เข้ากับประชาชน
-                text: isPublicMode ? 'ศูนย์บัญชาการได้รับรายงานของท่านแล้ว ขอบคุณครับ' : 'อัปเดตรายงานสถานะเรียบร้อยแล้ว',
+                text: isPublicMode ? 'เทศบาลตำบลตันหยงมัสได้รับรายงานของท่านแล้ว ขอบคุณครับ' : 'อัปเดตรายงานสถานะเรียบร้อยแล้ว',
                 icon: 'success',
                 timer: isPublicMode ? 3000 : 1500,
                 showConfirmButton: false
