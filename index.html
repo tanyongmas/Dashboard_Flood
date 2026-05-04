@@ -739,41 +739,76 @@
 
         </div>
     </div>
-    <!-- ส่วนที่ 4: ภาพรวมสถานะการอพยพ -->
-    <div class="pt-2 mb-4">
-        <h3 class="text-lg font-black text-slate-800 mb-4 px-2">
-            <i class="fas fa-running text-orange-500 mr-2"></i>ภาพรวมการอพยพ
+    <!-- ส่วนที่ 4: ภาพรวมสถานะการอพยพ (ดีไซน์ใหม่ 2 การ์ด) -->
+    <div class="pt-2 mb-6">
+        <h3 class="text-lg font-black text-slate-800 mb-4 px-2 flex items-center tracking-tight">
+            <i class="fas fa-running text-orange-500 mr-2"></i> ภาพรวมสถานะการอพยพ
         </h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            
-            <!-- รวมผู้คนอพยพ -->
-            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm transition hover:shadow-md">
-                <i class="fas fa-users absolute -right-2 -bottom-2 text-4xl text-blue-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1 z-10">ผู้อพยพรวม (คน)</p>
-                <p id="dash_sumEvacTotal" class="text-3xl font-black text-blue-700 z-10">0</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <!-- 🔴 การ์ดที่ 1: กลุ่มอพยพ (ต้องการความช่วยเหลือ) -->
+            <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-orange-100 relative overflow-hidden group">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-orange-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50"></div>
+                
+                <div class="relative z-10 flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">ผู้อพยพทั้งหมด</p>
+                        <div class="flex items-baseline gap-2">
+                            <h3 class="text-4xl font-black text-orange-600 leading-none"><span id="dash_sumEvacTotal">0</span></h3>
+                            <span class="text-sm font-bold text-slate-500">คน</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                            <i class="fas fa-home text-orange-400 mr-1"></i> <span id="dash_sumEvacHousehold">0</span> ครัวเรือน
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-orange-200">
+                        <i class="fas fa-person-running"></i>
+                    </div>
+                </div>
+
+                <div class="relative z-10 flex gap-3 mt-4 pt-4 border-t border-orange-100/50">
+                    <div class="flex-1 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/50">
+                        <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i class="fas fa-campground text-blue-500 mr-1"></i> เข้าศูนย์พักพิง</p>
+                        <p class="text-lg font-black text-blue-600"><span id="dash_sumEvacCenter">0</span> <span class="text-[10px] font-bold text-slate-500">คน</span></p>
+                    </div>
+                    <div class="flex-1 bg-purple-50/50 p-2.5 rounded-xl border border-purple-100/50">
+                        <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i class="fas fa-house-user text-purple-500 mr-1"></i> จุดอื่น/บ้านญาติ</p>
+                        <p class="text-lg font-black text-purple-600"><span id="dash_sumEvacOther">0</span> <span class="text-[10px] font-bold text-slate-500">คน</span></p>
+                    </div>
+                </div>
             </div>
-            
-            <!-- รวมครัวเรือน/พื้นที่ -->
-            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm transition hover:shadow-md">
-                <i class="fas fa-home absolute -right-2 -bottom-2 text-4xl text-indigo-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1 z-10">ครัวเรือน</p>
-                <p id="dash_sumEvacHousehold" class="text-3xl font-black text-indigo-700 z-10">0</p>
+
+            <!-- 🟢 การ์ดที่ 2: กลุ่มปลอดภัย (รับมือได้/น้ำไม่ท่วม) -->
+            <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-emerald-100 relative overflow-hidden group flex flex-col h-full">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50"></div>
+                
+                <div class="relative z-10 flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">สถานะปลอดภัย</p>
+                        <div class="flex items-baseline gap-2">
+                            <h3 class="text-4xl font-black text-emerald-600 leading-none"><span id="dash_sumSafeTotal">0</span></h3>
+                            <span class="text-sm font-bold text-slate-500">คน</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                            <i class="fas fa-home text-emerald-400 mr-1"></i> <span id="dash_sumSafeHousehold">0</span> ครัวเรือน
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-emerald-200">
+                        <i class="fas fa-check-circle"></i> 
+                    </div>
+                </div>
+
+                <div class="relative z-10 mt-auto pt-4 border-t border-emerald-100/50">
+                    <div class="w-full bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50 flex items-start gap-2">
+                        <i class="fas fa-info-circle text-emerald-500 mt-0.5 shrink-0"></i>
+                        <div class="w-full">
+                            <p class="text-[11px] text-slate-600 font-medium leading-relaxed m-0 break-words">
+                                รายงานสถานะน้ำไม่ท่วม หรืออาศัยอยู่ชั้นบนได้อย่างปลอดภัย
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <!-- ไปศูนย์พักพิง -->
-            <div class="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm transition hover:shadow-md">
-                <i class="fas fa-campground absolute -right-2 -bottom-2 text-4xl text-orange-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1 z-10">พักพิงที่ศูนย์ (คน)</p>
-                <p id="dash_sumEvacCenter" class="text-3xl font-black text-orange-700 z-10">0</p>
-            </div>
-            
-            <!-- ไปที่อื่นๆ -->
-            <div class="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm transition hover:shadow-md">
-                <i class="fas fa-house-user absolute -right-2 -bottom-2 text-4xl text-purple-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-purple-500 uppercase tracking-wider mb-1 z-10">อพยพที่อื่นๆ (คน)</p>
-                <p id="dash_sumEvacOther" class="text-3xl font-black text-purple-700 z-10">0</p>
-            </div>
-            
         </div>
     </div>
 
@@ -881,39 +916,83 @@
             
             <div class="flex gap-2">
                 
-                <button onclick="openEvacReportModal()" class="w-full md:w-auto justify-center bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-orange-200 transition-all active:scale-95 flex items-center">
-                    <i class="fas fa-bullhorn mr-2"></i> รายงานอพยพ
+                <button onclick="promptSafetyCheck()" class="w-full md:w-auto justify-center bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-orange-200 transition-all active:scale-95 flex items-center">
+                    <i class="fas fa-bullhorn mr-2"></i> รายงานสถานะ
                 </button>
             </div>
         </div>
 
-        <!-- การ์ดสรุปข้อมูล 4 ช่อง -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 shrink-0">
-            <!-- รวมผู้คนอพยพ -->
-            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
-                <i class="fas fa-users absolute -right-2 -bottom-2 text-4xl text-blue-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1 z-10">ผู้อพยพรวม (คน)</p>
-                <p id="sumEvacTotal" class="text-3xl font-black text-blue-700 z-10">0</p>
+       <!-- 🌟 แผงแดชบอร์ดสรุปสถานการณ์อพยพ (ดีไซน์ใหม่) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    
+    <!-- 🔴 การ์ดที่ 1: กลุ่มอพยพ (ต้องการความช่วยเหลือ) -->
+    <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-orange-100 relative overflow-hidden group">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-orange-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50"></div>
+        
+        <div class="relative z-10 flex justify-between items-start mb-4">
+            <div>
+                <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">ผู้อพยพทั้งหมด</p>
+                <div class="flex items-baseline gap-2">
+                    <h3 class="text-4xl font-black text-orange-600 leading-none"><span id="sumEvacTotal">0</span></h3>
+                    <span class="text-sm font-bold text-slate-500">คน</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                    <i class="fas fa-home text-orange-400 mr-1"></i> <span id="sumEvacHousehold">0</span> ครัวเรือน
+                </p>
             </div>
-            <!-- รวมครัวเรือน/พื้นที่ -->
-            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
-                <i class="fas fa-home absolute -right-2 -bottom-2 text-4xl text-indigo-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1 z-10">ครัวเรือน</p>
-                <p id="sumEvacHousehold" class="text-3xl font-black text-indigo-700 z-10">0</p>
-            </div>
-            <!-- ไปศูนย์พักพิง -->
-            <div class="bg-orange-50 border border-orange-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
-                <i class="fas fa-campground absolute -right-2 -bottom-2 text-4xl text-orange-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-orange-500 uppercase tracking-wider mb-1 z-10">พักพิงที่ศูนย์ (คน)</p>
-                <p id="sumEvacCenter" class="text-3xl font-black text-orange-700 z-10">0</p>
-            </div>
-            <!-- ไปที่อื่นๆ -->
-            <div class="bg-purple-50 border border-purple-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-sm">
-                <i class="fas fa-house-user absolute -right-2 -bottom-2 text-4xl text-purple-500/10 transform -rotate-12"></i>
-                <p class="text-[10px] font-bold text-purple-500 uppercase tracking-wider mb-1 z-10">อพยพที่อื่นๆ (คน)</p>
-                <p id="sumEvacOther" class="text-3xl font-black text-purple-700 z-10">0</p>
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-orange-200">
+                <i class="fas fa-person-running"></i>
             </div>
         </div>
+
+        <div class="relative z-10 flex gap-3 mt-4 pt-4 border-t border-orange-100/50">
+            <div class="flex-1 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/50">
+                <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i class="fas fa-campground text-blue-500 mr-1"></i> เข้าศูนย์พักพิง</p>
+                <p class="text-lg font-black text-blue-600"><span id="sumEvacCenter">0</span> <span class="text-[10px] font-bold text-slate-500">คน</span></p>
+            </div>
+            <div class="flex-1 bg-purple-50/50 p-2.5 rounded-xl border border-purple-100/50">
+                <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i class="fas fa-house-user text-purple-500 mr-1"></i> จุดอื่น/บ้านญาติ</p>
+                <p class="text-lg font-black text-purple-600"><span id="sumEvacOther">0</span> <span class="text-[10px] font-bold text-slate-500">คน</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🟢 การ์ดที่ 2: กลุ่มปลอดภัย (รับมือได้/น้ำไม่ท่วม) -->
+    <!-- 🌟 เพิ่ม h-full และ flex-col ให้การ์ดนี้เพื่อให้ความสูงมันยืดเต็มและจัดการพื้นที่ภายในได้ดีขึ้น -->
+    <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-emerald-100 relative overflow-hidden group flex flex-col h-full">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50"></div>
+        
+        <div class="relative z-10 flex justify-between items-start mb-4">
+            <div>
+                <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">สถานะปลอดภัย</p>
+                <div class="flex items-baseline gap-2">
+                    <h3 class="text-4xl font-black text-emerald-600 leading-none"><span id="sumSafeTotal">0</span></h3>
+                    <span class="text-sm font-bold text-slate-500">คน</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                    <i class="fas fa-home text-emerald-400 mr-1"></i> <span id="sumSafeHousehold">0</span> ครัวเรือน
+                </p>
+            </div>
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-emerald-200">
+                <!-- 🌟 แก้ไอคอนเป็น fa-check-circle -->
+                <i class="fas fa-check-circle"></i> 
+            </div>
+        </div>
+
+        <!-- 🌟 ใช้ mt-auto เพื่อดันกล่องข้อความนี้ลงไปชิดด้านล่างเสมอ และปรับ flex ให้ข้อความตัดบรรทัดสวยๆ -->
+        <div class="relative z-10 mt-auto pt-4 border-t border-emerald-100/50">
+            <div class="w-full bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50 flex items-start gap-2">
+                <i class="fas fa-info-circle text-emerald-500 mt-0.5 shrink-0"></i>
+                <div class="w-full">
+                    <p class="text-[11px] text-slate-600 font-medium leading-relaxed m-0 break-words">
+                        รายงานสถานะน้ำไม่ท่วม หรืออาศัยอยู่ชั้นบนได้อย่างปลอดภัย 
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
         
         <!-- พื้นที่แสดงแผนที่ -->
         <div id="evacMap" class="w-full flex-1 min-h-[400px] lg:min-h-0 rounded-2xl z-10 border-2 border-slate-100 bg-slate-50 relative overflow-hidden"></div>
@@ -3335,7 +3414,6 @@ function initEvacMap() {
 window.loadEvacuationMarkers = function() {
     if (!evacMap || !evacMarkerLayer) return;
     
-    // เคลียร์หมุดเก่าก่อนวาดใหม่
     evacMarkerLayer.clearLayers();
     
     if (!store.addressEvac || !store.evacReports) {
@@ -3343,7 +3421,6 @@ window.loadEvacuationMarkers = function() {
         return;
     }
 
-    // 1. สร้าง Map พิกัดจากชีท Address_Evacuation
     const coordsMap = {};
     store.addressEvac.forEach(row => {
         const address = row[0] ? row[0].toString().trim() : '';
@@ -3354,7 +3431,6 @@ window.loadEvacuationMarkers = function() {
         }
     });
 
-    // 2. กรองข้อมูลเฉพาะการรายงานล่าสุดของแต่ละที่อยู่
     const latestReports = {};
     store.evacReports.forEach(report => {
         const address = report[1] ? report[1].toString().trim() : '';
@@ -3364,36 +3440,43 @@ window.loadEvacuationMarkers = function() {
         }
     });
 
-    // --- ตัวแปรสำหรับสรุปข้อมูลการ์ด ---
-    let totalPeople = 0;
-    let totalHouseholds = 0;
+    // --- 🌟 ประกาศตัวแปรแยกสำหรับอพยพและปลอดภัย ---
+    let evacPeople = 0;
+    let evacHouseholds = 0;
     let centerPeople = 0;
     let otherPeople = 0;
+    
+    let safePeople = 0;
+    let safeHouseholds = 0;
 
-    // 3. วนลูปข้อมูลล่าสุดเพื่อวาดหมุดและบวกเลขสรุป
     Object.values(latestReports).forEach(item => {
         const report = item.data;
         const timestamp = new Date(report[0]).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
         const address = report[1].toString().trim();
         const count = parseInt(report[2]) || 0;
-        const destType = report[3]; // 'ศูนย์' หรือ 'ที่อื่น'
+        const destType = report[3]; 
         const destName = report[4];
         const reporter = report[5] || 'ไม่มีข้อมูล';
         const customCoords = report[6] ? report[6].toString().trim() : '';
-        
-        // 🌟 ดึงชื่อผู้อพยพ (คอลัมน์ที่ 8 หรือ index 7)
         const evacName = report[7] ? report[7].toString().trim() : '<span class="text-slate-400 italic font-normal">ไม่ระบุชื่อ</span>';
+        const status = report[8] ? report[8].toString().trim() : 'อพยพ'; 
+        const note = report[9] ? report[9].toString().trim() : '-';
 
-        // --- ส่วนคำนวณข้อมูลสรุป (การ์ด) ---
-        totalHouseholds++; // นับ 1 ที่อยู่ = 1 ครัวเรือนใหญ่ที่อพยพ
-        totalPeople += count;
-        if (destType === 'ศูนย์') {
-            centerPeople += count;
+        // --- 🌟 แยกการคำนวณยอด ---
+        if (status === 'ปลอดภัย') {
+            safeHouseholds++; // นับครัวเรือนปลอดภัย
+            safePeople += count; // นับคนปลอดภัย
         } else {
-            otherPeople += count;
+            evacHouseholds++; // นับครัวเรือนที่อพยพ
+            evacPeople += count; // นับคนอพยพ
+            if (destType === 'ศูนย์') {
+                centerPeople += count;
+            } else {
+                otherPeople += count;
+            }
         }
 
-        // --- ส่วนวาดหมุดบนแผนที่ ---
+        // --- วาดหมุด ---
         let pos = null;
         if (customCoords && customCoords.includes(',')) {
             const parts = customCoords.split(',');
@@ -3403,8 +3486,25 @@ window.loadEvacuationMarkers = function() {
         }
         
         if (pos) {
-            const markerColor = destType === 'ศูนย์' ? '#3b82f6' : '#8b5cf6';
-            const iconClass = destType === 'ศูนย์' ? 'fa-campground' : 'fa-house-user';
+            // 🌟 กำหนดสีและไอคอนตามสถานะ
+            let markerColor = '#8b5cf6'; // สีม่วงสำหรับอพยพไปที่อื่น
+            let iconClass = 'fa-house-user';
+            let bgHeaderColor = 'bg-orange-500'; // สีหัว Popup
+            let statusBadge = '';
+
+            if (status === 'ปลอดภัย') {
+                markerColor = '#10b981'; // 🟢 สีเขียว (ปลอดภัย)
+                iconClass = 'fa-check-circle';
+                bgHeaderColor = 'bg-emerald-500';
+                statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-bold ml-2">ปลอดภัย</span>';
+            } else if (destType === 'ศูนย์') {
+                markerColor = '#3b82f6'; // 🔵 สีน้ำเงิน (อพยพเข้าศูนย์)
+                iconClass = 'fa-campground';
+                bgHeaderColor = 'bg-blue-500';
+            } else {
+                // อพยพไปที่อื่น ใช้สีม่วงที่ตั้งเป็นค่าเริ่มต้นไว้
+                bgHeaderColor = 'bg-purple-500';
+            }
 
             const evacIcon = L.divIcon({
                 className: 'custom-evac-marker bg-transparent border-0',
@@ -3412,7 +3512,7 @@ window.loadEvacuationMarkers = function() {
                     <div class="relative flex flex-col items-center">
                         <div style="color: ${markerColor}; border-color: ${markerColor}" class="bg-white w-8 h-8 rounded-full flex items-center justify-center border-2 shadow-md text-sm z-10 relative">
                             <i class="fas ${iconClass}"></i>
-                            <span class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[8px] font-black min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm leading-none px-1">${count}</span>
+                            <span class="absolute -top-1.5 -right-1.5 ${status === 'ปลอดภัย' ? 'bg-emerald-500' : 'bg-rose-500'} text-white text-[8px] font-black min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm leading-none px-1">${count}</span>
                         </div>
                         <div style="border-top-color: ${markerColor}" class="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent mx-auto -mt-[1px] z-0"></div>
                     </div>
@@ -3424,30 +3524,33 @@ window.loadEvacuationMarkers = function() {
 
             const marker = L.marker([pos.lat, pos.lng], { icon: evacIcon });
             
-            // 🌟 อัปเดต HTML ของ Popup โดยแทรก "ชื่อ-สกุล" ลงไปอย่างสวยงาม
+            // 🌟 ซ่อนบรรทัด "ปลายทาง" ถ้าสถานะคือ "ปลอดภัย"
+            const destHtml = status === 'ปลอดภัย' ? '' : `
+                <p class="text-[11px] text-slate-600 flex items-start">
+                    <span class="font-bold text-slate-500 w-16 shrink-0">ปลายทาง:</span> 
+                    <span><span class="font-bold text-slate-800">${destName}</span> <br><span class="text-[9px] text-slate-400">ประเภท: ${destType}</span></span>
+                </p>
+            `;
+
             const popupHTML = `
                 <div class="w-full font-sans bg-white relative min-w-[200px]">
-                    <div class="bg-orange-500 p-3 flex justify-between items-center text-white relative overflow-hidden">
-                        <i class="fas fa-running absolute -right-2 -bottom-2 text-5xl opacity-20 transform -rotate-12"></i>
+                    <div class="${bgHeaderColor} p-3 flex justify-between items-center text-white relative overflow-hidden">
+                        <i class="fas ${iconClass} absolute -right-2 -bottom-2 text-5xl opacity-20 transform -rotate-12"></i>
                         <span class="text-[10px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/20 z-10 shadow-sm">
-                            <i class="fas fa-users mr-1"></i> ผู้อพยพ ${count} คน
+                            <i class="fas fa-users mr-1"></i> ผู้อพยพ/ผู้รายงาน ${count} คน
                         </span>
                     </div>
                     <div class="p-4">
-                        <!-- ส่วนแสดงที่อยู่เดิม -->
-                        <h4 class="font-black text-slate-800 text-[14px] leading-tight mb-2">${address}</h4>
+                        <h4 class="font-black text-slate-800 text-[14px] leading-tight mb-2 flex items-center">
+                            ${address} ${statusBadge}
+                        </h4>
                         
                         <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner space-y-1.5">
-                            <!-- 🌟 ส่วนแสดงชื่อ-สกุล ที่เพิ่มเข้ามาใหม่ -->
                             <p class="text-[11px] text-slate-600 flex items-start border-b border-slate-200 pb-1.5 mb-1.5">
                                 <span class="font-bold text-slate-500 w-16 shrink-0">ชื่อ-สกุล:</span> 
-                                <span class="font-bold text-blue-600">${evacName}</span>
+                                <span class="font-bold ${status === 'ปลอดภัย' ? 'text-emerald-600' : 'text-blue-600'}">${evacName}</span>
                             </p>
-
-                            <p class="text-[11px] text-slate-600 flex items-start">
-                                <span class="font-bold text-slate-500 w-16 shrink-0">ปลายทาง:</span> 
-                                <span><span class="font-bold text-slate-800">${destName}</span> <br><span class="text-[9px] text-slate-400">ประเภท: ${destType}</span></span>
-                            </p>
+                            ${destHtml}
                             <p class="text-[11px] text-slate-600 flex items-start">
                                 <span class="font-bold text-slate-500 w-16 shrink-0">ผู้รายงาน:</span> 
                                 <span>${reporter}</span>
@@ -3456,6 +3559,12 @@ window.loadEvacuationMarkers = function() {
                                 <span class="font-bold text-slate-500 w-16 shrink-0">เวลา:</span> 
                                 <span>${timestamp}</span>
                             </p>
+                            
+                            <!-- 🌟 แสดงรายละเอียดความช่วยเหลือ/Note -->
+                            <div class="mt-2 pt-2 border-t border-slate-200">
+                                <p class="text-[10px] font-bold text-slate-500 mb-1">รายละเอียด / ความช่วยเหลือ:</p>
+                                <p class="text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200">${note}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3465,12 +3574,17 @@ window.loadEvacuationMarkers = function() {
         }
     });
 
-    // 4. แสดงผลตัวเลขขึ้นการ์ด
-    if(document.getElementById('sumEvacTotal')) document.getElementById('sumEvacTotal').innerText = totalPeople.toLocaleString();
-    if(document.getElementById('sumEvacHousehold')) document.getElementById('sumEvacHousehold').innerText = totalHouseholds.toLocaleString();
+    // --- 🌟 อัปเดตตัวเลขเข้าสู่การ์ดดีไซน์ใหม่ ---
+    if(document.getElementById('sumEvacTotal')) document.getElementById('sumEvacTotal').innerText = evacPeople.toLocaleString();
+    if(document.getElementById('sumEvacHousehold')) document.getElementById('sumEvacHousehold').innerText = evacHouseholds.toLocaleString();
     if(document.getElementById('sumEvacCenter')) document.getElementById('sumEvacCenter').innerText = centerPeople.toLocaleString();
     if(document.getElementById('sumEvacOther')) document.getElementById('sumEvacOther').innerText = otherPeople.toLocaleString();
+    
+    // อัปเดตตัวเลขการ์ดปลอดภัย
+    if(document.getElementById('sumSafeTotal')) document.getElementById('sumSafeTotal').innerText = safePeople.toLocaleString();
+    if(document.getElementById('sumSafeHousehold')) document.getElementById('sumSafeHousehold').innerText = safeHouseholds.toLocaleString();
 };
+
 // ฟังก์ชันรองรับการโหลดหมุด (เพื่อไม่ให้เกิด Error ใน showPage)
 function loadEvacuationMarkers() {
     console.log("ระบบพร้อม: รอการเชื่อมต่อฐานข้อมูลหมุดอพยพ");
@@ -4307,128 +4421,6 @@ window.getEvacLocation = function() {
     }
 };
 
-window.openEvacReportModal = function() {
-    // โหลดรายชื่อที่อยู่เข้าตัวแปร Global
-    window.evacAddressList = (typeof store !== 'undefined' && store.addressEvac) ? store.addressEvac.map(row => row[0]).filter(a => a && a.toString().trim() !== '') : [];
-
-    const shelters = ["ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา", "ศูนย์มัสยิดตันหยงมัส", "ศูนย์โรงเรียนบ้านเขาพระ"];
-    const shelterOptions = shelters.map(s => `<option value="${s}">${s}</option>`).join('');
-
-    Swal.fire({
-        title: '<div class="flex items-center justify-center gap-2 text-orange-600 text-lg font-black"><i class="fas fa-bullhorn"></i> รายงานการอพยพ</div>',
-        html: `
-            <div class="text-left space-y-4 p-2 mt-2" style="overflow: visible;">
-                <!-- 🌟 ส่วนกรอกชื่อ-สกุล (อยู่ใน Swal) -->
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ชื่อ-สกุล (หัวหน้าครอบครัว/ผู้อพยพ)</label>
-                    <input type="text" id="swal_evac_name" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50 transition-all" placeholder="ระบุชื่อ-สกุล..." required>
-                </div>
-
-                <!-- ส่วนที่ 1: ค้นหาที่อยู่ -->
-                <div class="relative">
-                    <label class="text-[11px] font-bold text-slate-500 ml-1">ค้นหาที่อยู่ / ชุมชน</label>
-                    <input type="text" id="swal_evac_addr_search" onkeyup="handleEvacAddressSearch(this.value)" autocomplete="off" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="พิมพ์เพื่อค้นหาที่อยู่เดิม...">
-                    <div id="swal_evac_addr_results" class="absolute z-[99] w-full bg-white border border-slate-200 rounded-xl shadow-2xl hidden max-h-40 overflow-y-auto mt-1"></div>
-                    
-                    <div class="mt-3 flex items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
-                        <input type="checkbox" id="swal_evac_is_other" onchange="toggleEvacOtherAddress(this.checked)" class="w-4 h-4 text-orange-500 border-slate-300 rounded focus:ring-orange-500">
-                        <label for="swal_evac_is_other" class="ml-2 text-xs font-bold text-slate-600">ระบุที่อยู่อื่นๆ (ดึงพิกัดปัจจุบันอัตโนมัติ)</label>
-                    </div>
-                </div>
-
-                <!-- ส่วนที่ 2: ระบุที่อยู่อื่น และพิกัด -->
-                <div id="box_evac_other_addr" class="hidden animate-fade-in bg-slate-100 p-3 rounded-xl border border-slate-200 shadow-inner">
-                    <label class="text-[11px] font-bold text-slate-500 ml-1">พิมพ์ที่อยู่อื่นๆ ที่ไม่ได้อยู่ในระบบ</label>
-                    <input type="text" id="swal_evac_custom_addr" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400 mb-3" placeholder="ระบุบ้านเลขที่/ซอย/จุดสังเกต">
-                    
-                    <label class="text-[11px] font-bold text-slate-500 ml-1">พิกัด GPS (ดึงอัตโนมัติ)</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="swal_evac_coords" readonly class="w-full p-3 border border-slate-200 bg-white text-slate-500 rounded-xl outline-none text-[10px]" placeholder="รอการดึงพิกัด...">
-                        <button type="button" onclick="getEvacLocation()" class="bg-blue-100 text-blue-600 px-4 rounded-xl hover:bg-blue-200 transition shadow-sm active:scale-95">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-[11px] font-bold text-slate-500 ml-1">จำนวนคนอพยพ (คน)</label>
-                    <input type="number" id="swal_evac_count" min="1" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="ระบุจำนวนคน">
-                </div>
-
-                <div>
-                    <label class="text-[11px] font-bold text-slate-500 ml-1">อพยพไปที่ใด?</label>
-                    <div class="flex gap-2 mt-1">
-                        <button onclick="toggleEvacDest('ศูนย์')" id="btn_dest_center" class="flex-1 py-3 rounded-xl border-2 border-orange-400 bg-orange-50 text-orange-600 font-bold text-xs transition-all">ศูนย์พักพิง</button>
-                        <button onclick="toggleEvacDest('ที่อื่น')" id="btn_dest_other" class="flex-1 py-3 rounded-xl border-2 border-transparent bg-slate-50 text-slate-500 font-bold text-xs transition-all">ที่อื่น ๆ</button>
-                    </div>
-                </div>
-                
-                <div id="box_dest_center" class="animate-fade-in">
-                    <label class="text-[11px] font-bold text-slate-500 ml-1">เลือกศูนย์พักพิง</label>
-                    <select id="swal_evac_shelter" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400">
-                        ${shelterOptions}
-                    </select>
-                </div>
-                <div id="box_dest_other" class="hidden animate-fade-in">
-                    <label class="text-[11px] font-bold text-slate-500 ml-1">ระบุสถานที่อพยพ (คร่าวๆ)</label>
-                    <input type="text" id="swal_evac_other_text" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400" placeholder="เช่น บ้านญาติ, ตึกแถวชั้น 2">
-                </div>
-                <input type="hidden" id="swal_evac_type" value="ศูนย์">
-            </div>
-        `,
-        showCancelButton: true,
-        confirmButtonText: 'บันทึกรายงาน',
-        cancelButtonText: 'ยกเลิก',
-        confirmButtonColor: '#f97316',
-        customClass: { popup: 'rounded-[2rem]' },
-        didOpen: () => {
-            const content = Swal.getHtmlContainer();
-            if(content) content.style.overflow = 'visible';
-        },
-        preConfirm: () => {
-            // 🌟 1. ดึงค่าชื่อจากใน Swal
-            const evacName = document.getElementById('swal_evac_name').value.trim();
-            const isOtherAddr = document.getElementById('swal_evac_is_other').checked;
-            let address = document.getElementById('swal_evac_addr_search').value.trim();
-            let coords = '';
-
-            // ตรวจสอบชื่อ
-            if (!evacName) {
-                Swal.showValidationMessage('กรุณาระบุชื่อ-สกุล ผู้อพยพ');
-                return false;
-            }
-
-            // ตรวจสอบที่อยู่
-            if (isOtherAddr) {
-                address = document.getElementById('swal_evac_custom_addr').value.trim();
-                coords = document.getElementById('swal_evac_coords').value;
-                if (!address || !coords || coords.includes('กำลัง') || coords.includes('กรุณา')) {
-                    Swal.showValidationMessage('กรุณาระบุที่อยู่อื่นๆ และตรวจสอบพิกัด GPS');
-                    return false;
-                }
-            } else if (!address) {
-                Swal.showValidationMessage('กรุณาค้นหาและเลือกที่อยู่ หรือติ๊กเพื่อระบุที่อยู่อื่น');
-                return false;
-            }
-
-            const count = document.getElementById('swal_evac_count').value;
-            const type = document.getElementById('swal_evac_type').value;
-            const dest = (type === 'ศูนย์') ? document.getElementById('swal_evac_shelter').value : document.getElementById('swal_evac_other_text').value;
-
-            if (!count || !dest) {
-                Swal.showValidationMessage('กรุณากรอกข้อมูลจำนวนคนและปลายทางให้ครบถ้วน');
-                return false;
-            }
-
-            // 🌟 2. ส่งค่าชื่อออกไปพร้อมกับข้อมูลอื่น
-            return { evacName, address, count, type, dest, coords };
-        }
-    }).then((result) => {
-        if (result.isConfirmed) {
-            saveEvacuationData(result.value);
-        }
-    });
-};
 
 async function saveEvacuationData(data) {
     Swal.fire({
@@ -4441,6 +4433,7 @@ async function saveEvacuationData(data) {
     const nameInput = document.getElementById('evac_name');
     const evacName = data.evacName;
 
+    // 🌟 จัดเตรียมข้อมูลส่งไปหลังบ้าน
     const payload = {
         action: 'saveEvacuation',
         address: data.address,
@@ -4449,10 +4442,12 @@ async function saveEvacuationData(data) {
         dest: data.dest,
         user: currentUser,
         coords: data.coords,
-        evacName: evacName, // ข้อมูลนี้จะมาจาก preConfirm ของ Swal แล้ว
+        evacName: data.evacName,
+        status: data.status,
+        note: data.note // 🌟 เพิ่มบรรทัดนี้ เพื่อส่งรายละเอียดเพิ่มเติมไปหลังบ้าน
     };
 
-    // 🌟 เรดาร์ตรวจจับ: เช็คว่ารอบนี้มีชื่อติดไปไหม!
+    // 🌟 เรดาร์ตรวจจับ: เช็คว่ารอบนี้มีชื่อและสถานะติดไปไหม!
     console.log("🚀 ข้อมูลที่จะส่งไปเซิร์ฟเวอร์:", payload);
 
     try {
@@ -4462,7 +4457,8 @@ async function saveEvacuationData(data) {
         if (result.success) {
             Swal.fire({
                 title: 'บันทึกสำเร็จ',
-                text: 'อัปเดตสถานะการอพยพเรียบร้อยแล้ว',
+                // เปลี่ยนข้อความแจ้งเตือนให้เข้ากับทั้ง 2 สถานะ
+                text: 'อัปเดตรายงานสถานะเรียบร้อยแล้ว', 
                 icon: 'success',
                 timer: 1500,
                 showConfirmButton: false
@@ -4745,19 +4741,30 @@ window.renderAdminDashboard = function() {
         let evacTotalHouseholds = 0;
         let evacCenterPeople = 0;
         let evacOtherPeople = 0;
+        
+        // 🌟 ประกาศตัวแปรเก็บยอดคนปลอดภัย
+        let safeTotalPeople = 0;
+        let safeTotalHouseholds = 0;
 
         // วนลูปบวกเลขจากข้อมูลล่าสุด
         Object.values(latestReports).forEach(item => {
             const report = item.data;
             const count = parseInt(report[2]) || 0;
             const destType = report[3]; // 'ศูนย์' หรือ 'ที่อื่น'
+            const status = report[8] ? report[8].toString().trim() : 'อพยพ'; 
 
-            evacTotalHouseholds++;
-            evacTotalPeople += count;
-            if (destType === 'ศูนย์') {
-                evacCenterPeople += count;
+            // 🌟 แยกคำนวณตามสถานะ
+            if (status === 'ปลอดภัย') {
+                safeTotalHouseholds++;
+                safeTotalPeople += count;
             } else {
-                evacOtherPeople += count;
+                evacTotalHouseholds++;
+                evacTotalPeople += count;
+                if (destType === 'ศูนย์') {
+                    evacCenterPeople += count;
+                } else {
+                    evacOtherPeople += count;
+                }
             }
         });
 
@@ -4766,6 +4773,10 @@ window.renderAdminDashboard = function() {
         if(document.getElementById('dash_sumEvacHousehold')) document.getElementById('dash_sumEvacHousehold').innerText = evacTotalHouseholds.toLocaleString();
         if(document.getElementById('dash_sumEvacCenter')) document.getElementById('dash_sumEvacCenter').innerText = evacCenterPeople.toLocaleString();
         if(document.getElementById('dash_sumEvacOther')) document.getElementById('dash_sumEvacOther').innerText = evacOtherPeople.toLocaleString();
+        
+        // 🌟 อัปเดตตัวเลขการ์ดปลอดภัยหน้า Dashboard
+        if(document.getElementById('dash_sumSafeTotal')) document.getElementById('dash_sumSafeTotal').innerText = safeTotalPeople.toLocaleString();
+        if(document.getElementById('dash_sumSafeHousehold')) document.getElementById('dash_sumSafeHousehold').innerText = safeTotalHouseholds.toLocaleString();
     }
 
     // 3. คำนวณข้อมูลศูนย์พักพิง
@@ -4929,7 +4940,207 @@ window.updateDashWaterMapMarkers = function() {
         }
     });
 };
+//-------------------------------------------//
+//--ฟังก์ชันด่านหน้าสำหรับเลือกสถานะ Safety Check--//
+//-------------------------------------------//
+// ฟังก์ชันด่านหน้าสำหรับเลือกสถานะ Safety Check
+window.promptSafetyCheck = function() {
+    Swal.fire({
+        title: '<div class="text-2xl font-black text-slate-800">รายงานสถานะปัจจุบัน</div>',
+        html: `
+            <p class="text-sm text-slate-500 mb-6">กรุณาเลือกสถานะของคุณ หรือผู้ประสบภัย</p>
+            <div class="space-y-3 px-2">
+                <!-- 🟢 ปุ่มปลอดภัย (เปลี่ยนไอคอนเป็น fa-check-circle) -->
+                <button onclick="Swal.close(); setTimeout(() => openEvacReportModal('ปลอดภัย'), 300)" 
+                        class="w-full flex items-center p-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl hover:bg-emerald-100 hover:border-emerald-400 transition-all active:scale-95 group text-left shadow-sm">
+                    <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-sm mr-4 shrink-0">
+                        <i class="fas fa-check-circle"></i> 
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold text-emerald-700">ปลอดภัย (Safe)</div>
+                        <div class="text-xs text-emerald-600/80 font-medium">น้ำไม่ท่วม / อาศัยอยู่ชั้นบนได้ / ยังรับมือไหว</div>
+                    </div>
+                </button>
+                
+                <!-- 🟠 ปุ่มอพยพ -->
+                <button onclick="Swal.close(); setTimeout(() => openEvacReportModal('อพยพ'), 300)" 
+                        class="w-full flex items-center p-4 bg-orange-50 border-2 border-orange-200 rounded-2xl hover:bg-orange-100 hover:border-orange-400 transition-all active:scale-95 group text-left shadow-sm">
+                    <div class="w-14 h-14 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-sm mr-4 shrink-0">
+                        <i class="fas fa-person-running"></i>
+                    </div>
+                    <div>
+                        <div class="text-lg font-bold text-orange-700">อพยพ (Evacuate)</div>
+                        <div class="text-xs text-orange-600/80 font-medium">ต้องย้ายออก / น้ำท่วมสูง / ต้องการความช่วยเหลือ</div>
+                    </div>
+                </button>
+            </div>
+        `,
+        showConfirmButton: false, 
+        showCancelButton: true,
+        cancelButtonText: 'ยกเลิก',
+        customClass: {
+            popup: 'rounded-[2.5rem] pb-6',
+            cancelButton: 'w-full py-3 mt-4 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 font-bold max-w-[200px] transition-colors',
+        }
+    });
+};
+// 🌟 2. อัปเดตฟังก์ชันฟอร์ม: ให้รับพารามิเตอร์ status
+window.openEvacReportModal = function(status = 'อพยพ') {
+    window.evacAddressList = (typeof store !== 'undefined' && store.addressEvac) ? store.addressEvac.map(row => row[0]).filter(a => a && a.toString().trim() !== '') : [];
 
+    const shelters = ["ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา", "ศูนย์มัสยิดตันหยงมัส", "ศูนย์โรงเรียนบ้านเขาพระ"];
+    const shelterOptions = shelters.map(s => `<option value="${s}">${s}</option>`).join('');
+
+    const isSafe = (status === 'ปลอดภัย');
+    const titleColor = isSafe ? 'text-emerald-600' : 'text-orange-600';
+    // 🌟 เปลี่ยนไอคอนที่หัวข้อตรงนี้เป็น fa-check-circle ด้วยครับ
+    const titleIcon = isSafe ? 'fa-check-circle' : 'fa-bullhorn'; 
+    const titleText = isSafe ? 'รายงานสถานะ: ปลอดภัย' : 'รายงานสถานะ: อพยพ';
+    const btnColor = isSafe ? '#10b981' : '#f97316';
+    
+    const destSectionHtml = isSafe ? '' : `
+        <div id="evac_dest_wrapper">
+            <div>
+                <label class="text-[11px] font-bold text-slate-500 ml-1">อพยพไปที่ใด?</label>
+                <div class="flex gap-2 mt-1">
+                    <button onclick="toggleEvacDest('ศูนย์')" id="btn_dest_center" class="flex-1 py-3 rounded-xl border-2 border-orange-400 bg-orange-50 text-orange-600 font-bold text-xs transition-all">ศูนย์พักพิง</button>
+                    <button onclick="toggleEvacDest('ที่อื่น')" id="btn_dest_other" class="flex-1 py-3 rounded-xl border-2 border-transparent bg-slate-50 text-slate-500 font-bold text-xs transition-all">ที่อื่น ๆ</button>
+                </div>
+            </div>
+            
+            <div id="box_dest_center" class="animate-fade-in mt-3">
+                <label class="text-[11px] font-bold text-slate-500 ml-1">เลือกศูนย์พักพิง</label>
+                <select id="swal_evac_shelter" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400">
+                    ${shelterOptions}
+                </select>
+            </div>
+            <div id="box_dest_other" class="hidden animate-fade-in mt-3">
+                <label class="text-[11px] font-bold text-slate-500 ml-1">ระบุสถานที่อพยพ (คร่าวๆ)</label>
+                <input type="text" id="swal_evac_other_text" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400" placeholder="เช่น บ้านญาติ, ตึกแถวชั้น 2">
+            </div>
+            <input type="hidden" id="swal_evac_type" value="ศูนย์">
+        </div>
+    `;
+
+    Swal.fire({
+        title: `<div class="flex items-center justify-center gap-2 ${titleColor} text-lg font-black"><i class="fas ${titleIcon}"></i> ${titleText}</div>`,
+        html: `
+            <div class="text-left space-y-4 p-2 mt-2" style="overflow: visible;">
+                <input type="hidden" id="swal_evac_status" value="${status}">
+
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ชื่อ-สกุล (หัวหน้าครอบครัว/ผู้อพยพ)</label>
+                    <input type="text" id="swal_evac_name" class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50 transition-all" placeholder="ระบุชื่อ-สกุล..." required>
+                </div>
+
+                <div class="relative">
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">ค้นหาที่อยู่ / ชุมชน</label>
+                    <input type="text" id="swal_evac_addr_search" onkeyup="handleEvacAddressSearch(this.value)" autocomplete="off" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="พิมพ์เพื่อค้นหาที่อยู่เดิม...">
+                    <div id="swal_evac_addr_results" class="absolute z-[99] w-full bg-white border border-slate-200 rounded-xl shadow-2xl hidden max-h-40 overflow-y-auto mt-1"></div>
+                    
+                    <div class="mt-3 flex items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <input type="checkbox" id="swal_evac_is_other" onchange="toggleEvacOtherAddress(this.checked)" class="w-4 h-4 text-orange-500 border-slate-300 rounded focus:ring-orange-500">
+                        <label for="swal_evac_is_other" class="ml-2 text-xs font-bold text-slate-600">ระบุที่อยู่อื่นๆ (ดึงพิกัดปัจจุบันอัตโนมัติ)</label>
+                    </div>
+                </div>
+
+                <div id="box_evac_other_addr" class="hidden animate-fade-in bg-slate-100 p-3 rounded-xl border border-slate-200 shadow-inner">
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">พิมพ์ที่อยู่อื่นๆ ที่ไม่ได้อยู่ในระบบ</label>
+                    <input type="text" id="swal_evac_custom_addr" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-orange-400 mb-3" placeholder="ระบุบ้านเลขที่/ซอย/จุดสังเกต">
+                    
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">พิกัด GPS (ดึงอัตโนมัติ)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="swal_evac_coords" readonly class="w-full p-3 border border-slate-200 bg-white text-slate-500 rounded-xl outline-none text-[10px]" placeholder="รอการดึงพิกัด...">
+                        <button type="button" onclick="getEvacLocation()" class="bg-blue-100 text-blue-600 px-4 rounded-xl hover:bg-blue-200 transition shadow-sm active:scale-95">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">จำนวนคนที่อยู่ด้วยกัน (คน)</label>
+                    <input type="number" id="swal_evac_count" min="1" class="w-full p-3 border border-orange-100 bg-orange-50 rounded-xl outline-none text-sm focus:ring-2 focus:ring-orange-300" placeholder="ระบุจำนวนคน">
+                </div>
+
+                ${destSectionHtml}
+
+                <div class="mt-4">
+                    <label class="text-[11px] font-bold text-slate-500 ml-1">รายละเอียดเพิ่มเติม / ความช่วยเหลือที่ต้องการ</label>
+                    <textarea id="swal_evac_note" rows="2" class="w-full p-3 border border-slate-200 bg-white rounded-xl outline-none text-sm focus:border-amber-400 focus:ring-2 focus:ring-amber-50 placeholder-slate-300" placeholder="เช่น ต้องการน้ำดื่ม, ยารักษาโรค, ต้องการเรือเข้ามารับ..."></textarea>
+                </div>
+                
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึกรายงาน',
+        cancelButtonText: 'ยกเลิก',
+        confirmButtonColor: btnColor,
+        customClass: { popup: 'rounded-[2rem]' },
+        didOpen: () => {
+            const content = Swal.getHtmlContainer();
+            if(content) content.style.overflow = 'visible';
+        },
+        preConfirm: () => {
+            const evacName = document.getElementById('swal_evac_name').value.trim();
+            const isOtherAddr = document.getElementById('swal_evac_is_other').checked;
+            let address = document.getElementById('swal_evac_addr_search').value.trim();
+            let coords = '';
+            const currentStatus = document.getElementById('swal_evac_status').value;
+            const note = document.getElementById('swal_evac_note').value.trim();
+
+            if (!evacName) { Swal.showValidationMessage('กรุณาระบุชื่อ-สกุล'); return false; }
+
+            if (isOtherAddr) {
+                address = document.getElementById('swal_evac_custom_addr').value.trim();
+                coords = document.getElementById('swal_evac_coords').value;
+                if (!address || !coords || coords.includes('กำลัง') || coords.includes('กรุณา')) {
+                    Swal.showValidationMessage('กรุณาระบุที่อยู่อื่นๆ และตรวจสอบพิกัด GPS'); return false;
+                }
+            } else if (!address) {
+                Swal.showValidationMessage('กรุณาค้นหาและเลือกที่อยู่ หรือติ๊กเพื่อระบุที่อยู่อื่น'); return false;
+            }
+
+            const count = document.getElementById('swal_evac_count').value;
+            if (!count) { Swal.showValidationMessage('กรุณาระบุจำนวนคน'); return false; }
+
+            let type = '-';
+            let dest = '-';
+
+            if (currentStatus === 'อพยพ') {
+                type = document.getElementById('swal_evac_type').value;
+                dest = (type === 'ศูนย์') ? document.getElementById('swal_evac_shelter').value : document.getElementById('swal_evac_other_text').value;
+                if (!dest) { Swal.showValidationMessage('กรุณาระบุปลายทางที่อพยพไป'); return false; }
+            }
+
+            return { evacName, address, count, type, dest, coords, status: currentStatus, note };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            saveEvacuationData(result.value);
+        }
+    });
+};
+
+// ฟังก์ชันเปิดฟอร์มรายงาน (อัปเดตจากของเดิมของคุณ)
+function openEvacuationForm(status) {
+    // 1. เก็บค่าสถานะไว้ใน Hidden Input ที่เราจะสร้างไว้ในฟอร์ม
+    document.getElementById('evac_status').value = status;
+    
+    // 2. ปรับหน้าตาฟอร์ม: ถ้า "ปลอดภัย" ไม่ต้องแสดงช่องกรอก "ศูนย์พักพิงปลายทาง"
+    const destWrapper = document.getElementById('evac_dest_wrapper'); 
+    const statusDisplay = document.getElementById('evac_status_display');
+
+    if (status === 'ปลอดภัย') {
+        if(destWrapper) destWrapper.classList.add('hidden'); // ซ่อนจุดหมายปลายทาง
+        if(statusDisplay) statusDisplay.innerHTML = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fas fa-shield-check mr-1"></i> รายงานสถานะ: ปลอดภัย</span>';
+    } else {
+        if(destWrapper) destWrapper.classList.remove('hidden'); // แสดงจุดหมายปลายทาง
+        if(statusDisplay) statusDisplay.innerHTML = '<span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold"><i class="fas fa-person-running mr-1"></i> รายงานสถานะ: อพยพ</span>';
+    }
+
+    // 3. สั่งเปิด Modal ฟอร์มรายงานอพยพของคุณตามปกติ
+    document.getElementById('evacuationModal').classList.remove('hidden');
+}
     </script>
 </body>
 </html>
