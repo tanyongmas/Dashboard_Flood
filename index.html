@@ -2191,7 +2191,7 @@ async function doLogin() {
 }
 
 
-        async function loadData() {
+       async function loadData() {
     try {
         const res = await fetch(API_URL, { 
             method: 'POST', 
@@ -2199,22 +2199,27 @@ async function doLogin() {
         });
         store = await res.json();
         
+        // 🌟 1. จุดสำคัญที่แก้ปัญหา: ถ้าเป็นโหมดประชาชน โหลดข้อมูลเสร็จแล้วให้หยุดทำงานตรงนี้เลย ไม่ต้องวาดตาราง/กราฟ
+        if (window.isPublicMode) return;
+
         // 1. จัดการ Dropdown สำหรับรายงานน้ำ
         if (store.waterPoints) {
             const pOpts = store.waterPoints.map(v => `<option value="${v}">${v}</option>`).join('');
-            document.getElementById('water_loc').innerHTML = pOpts;
+            const waterLocEl = document.getElementById('water_loc');
+            if (waterLocEl) waterLocEl.innerHTML = pOpts;
             
             // กรองเฉพาะพื้นที่ที่มีข้อมูลรายงานน้ำแล้วมาทำเป็น Filter
             const activeWaterAreas = [...new Set(store.waterLevels.map(r => r[1]))].sort();
             const filterHtml = '<option value="all">ทุกพื้นที่ (ที่มีข้อมูล)</option>' + 
                              activeWaterAreas.map(v => `<option value="${v}">${v}</option>`).join('');
-            document.getElementById('chartLocFilter').innerHTML = filterHtml;
-            document.getElementById('cardLocFilter').innerHTML = filterHtml;
             
-            // 🌟 เพิ่มอัปเดตตัวกรองพื้นที่ให้กราฟหน้า Dashboard
-            if(document.getElementById('dashChartLocFilter')) {
-                document.getElementById('dashChartLocFilter').innerHTML = filterHtml;
-            }
+            const chartLocEl = document.getElementById('chartLocFilter');
+            const cardLocEl = document.getElementById('cardLocFilter');
+            const dashChartLocEl = document.getElementById('dashChartLocFilter');
+
+            if (chartLocEl) chartLocEl.innerHTML = filterHtml;
+            if (cardLocEl) cardLocEl.innerHTML = filterHtml;
+            if (dashChartLocEl) dashChartLocEl.innerHTML = filterHtml;
         }
 
         // 2. จัดการ Dropdown ที่อยู่ในหน้าลงทะเบียนใหม่
@@ -2222,7 +2227,8 @@ async function doLogin() {
             const addrOpts = '<option value="" disabled selected>เลือกที่อยู่/ชุมชน</option>' + 
                              store.addresses.map(a => `<option value="${a}">${a}</option>`).join('') +
                              '<option value="other">อื่น ๆ (ระบุเอง)</option>';
-            document.getElementById('regis_address_select').innerHTML = addrOpts;
+            const regisAddrEl = document.getElementById('regis_address_select');
+            if (regisAddrEl) regisAddrEl.innerHTML = addrOpts;
 
             if (typeof initReliefForm === 'function') initReliefForm();
         }
@@ -2261,7 +2267,10 @@ async function doLogin() {
         
     } catch(e) { 
         console.error("Load Data Error", e); 
-        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+        // 🌟 2. ดักไว้อีกชั้น: ถ้าเกิด Error ขึ้นมาในโหมดประชาชน ก็ไม่ต้องโชว์แจ้งเตือนให้ชาวบ้านตกใจครับ
+        if (!window.isPublicMode) {
+            Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+        }
     }
 }
         // --- Relief Functions ---
