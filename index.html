@@ -556,15 +556,15 @@
             </div>
             <div class="flex items-center space-x-2">
                 <div class="w-3 h-3 rounded-full bg-yellow-400 shadow-sm"></div>
-                <span class="text-[10px] font-bold text-slate-500">เฝ้าระวัง (1-50 ซม.)</span>
+                <span class="text-[10px] font-bold text-slate-500">เฝ้าระวัง (1-30 ซม.)</span>
             </div>
             <div class="flex items-center space-x-2">
                 <div class="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
-                <span class="text-[10px] font-bold text-slate-500">เตือนภัย (51-100 ซม.)</span>
+                <span class="text-[10px] font-bold text-slate-500">เตือนภัย (31-80 ซม.)</span>
             </div>
             <div class="flex items-center space-x-2">
                 <div class="w-3 h-3 rounded-full bg-red-600 shadow-sm critical-pulse"></div>
-                <span class="text-[10px] font-bold text-slate-500">วิกฤต (>101 ซม.)</span>
+                <span class="text-[10px] font-bold text-slate-500">วิกฤต (>81 ซม.)</span>
             </div>
         </div>
     </div>
@@ -851,15 +851,15 @@
             </div>
             <div class="flex items-center space-x-2">
                 <div class="w-3 h-3 rounded-full bg-yellow-400 shadow-sm"></div>
-                <span class="text-[10px] font-bold text-slate-500">เฝ้าระวัง (1-50 ซม.)</span>
+                <span class="text-[10px] font-bold text-slate-500">เฝ้าระวัง (1-30 ซม.)</span>
             </div>
             <div class="flex items-center space-x-2">
                 <div class="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
-                <span class="text-[10px] font-bold text-slate-500">เตือนภัย (51-100 ซม.)</span>
+                <span class="text-[10px] font-bold text-slate-500">เตือนภัย (31-80 ซม.)</span>
             </div>
             <div class="flex items-center space-x-2">
                 <div class="w-3 h-3 rounded-full bg-red-600 shadow-sm"></div>
-                <span class="text-[10px] font-bold text-slate-500">วิกฤต (>101 ซม.)</span>
+                <span class="text-[10px] font-bold text-slate-500">วิกฤต (>81 ซม.)</span>
             </div>
         </div>
     </div>
@@ -1446,8 +1446,18 @@
             <button type="button" onclick="closeReliefModal()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times-circle text-xl"></i></button>
         </div>
 
-        <!-- 🌟 ส่วนที่เพิ่มใหม่: ปุ่มสแกนบัตรประชาชนด้วย AI OCR -->
+        <!-- 🌟 ส่วนที่เพิ่มใหม่: ปุ่มสแกนบัตรประชาชนด้วย AI OCR พร้อมตัวเลือก Engine -->
         <div class="mb-5 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col items-center justify-center transition-all">
+            
+            <!-- 🌟 เพิ่ม Dropdown เลือก AI ตรงนี้ -->
+            <div class="w-full flex items-center justify-between bg-white p-2.5 rounded-xl border border-indigo-100 mb-3 shadow-sm">
+                <label class="text-[11px] font-bold text-indigo-800"><i class="fas fa-robot mr-1"></i> เลือกระบบ AI อ่านบัตร:</label>
+                <select id="swal_ocr_engine" class="p-1.5 border border-indigo-200 bg-indigo-50 rounded-lg text-xs font-bold text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-300 transition-all cursor-pointer">
+                    <option value="typhoon" selected>Typhoon OCR (ระบบหลัก)</option>
+                    <option value="akson">Akson OCR (ระบบสำรอง)</option>
+                </select>
+            </div>
+
             <!-- input file ซ่อนไว้ ใช้สำหรับเปิดกล้องถ่ายรูป หรือเลือกไฟล์รูป -->
             <input type="file" id="ocr_id_card" accept="image/*" capture="environment" class="hidden" onchange="processIdCardOCR(event)">
             
@@ -1457,6 +1467,7 @@
             </button>
             <p class="text-[10px] text-indigo-400 mt-2 font-bold"><i class="fas fa-magic mr-1"></i>ดึงชื่อและที่อยู่ตามทะเบียนบ้านอัตโนมัติ</p>
         </div>
+
         <form id="reliefForm" onsubmit="saveReliefData(event)" class="space-y-4">
             
             <div>
@@ -1962,7 +1973,9 @@ function showPage(pageId) {
             if (typeof initDashWaterMap === 'function') initDashWaterMap();
             if (typeof updateDashWaterMapMarkers === 'function') updateDashWaterMapMarkers();
             // สั่งให้แผนที่จัดขนาดตัวเองใหม่หลังจากเปิดหน้า เพื่อป้องกันแผนที่โหลดไม่เต็มกรอบ
-            if (window.dashWaterMap) window.dashWaterMap.invalidateSize();
+            if (window.dashWaterMap && typeof window.dashWaterMap.invalidateSize === 'function') {
+    window.dashWaterMap.invalidateSize();
+}
         }, 300);
     }
     if (pageId === 'userManagement' && userRole === 'admin') loadUsers();
@@ -1978,7 +1991,9 @@ function showPage(pageId) {
         setTimeout(() => {
             if (typeof initWaterMap === 'function') initWaterMap();
             if (typeof updateWaterMapMarkers === 'function') updateWaterMapMarkers();
-            if (window.waterMap) window.waterMap.invalidateSize();
+            if (window.waterMap && typeof window.waterMap.invalidateSize === 'function') {
+    window.waterMap.invalidateSize();
+}
         }, 300);
     }
 
@@ -2784,10 +2799,15 @@ async function processIdCardOCR(event) {
         const base64DataUrl = await compressImage(file, 1200, 1200, 0.7);
         const base64Image = base64DataUrl.split(',')[1]; 
 
-        // 2. ส่งรูปภาพไปให้ Google Apps Script เป็นคนคุยกับ AI ให้
+        // 🌟 1.1 ดึงค่า Engine ที่ผู้ใช้เลือกจาก Dropdown (ถ้าหาไม่เจอให้ค่าเริ่มต้นเป็น typhoon)
+        const engineSelect = document.getElementById('swal_ocr_engine');
+        const selectedEngine = engineSelect ? engineSelect.value : 'typhoon';
+
+        // 2. ส่งรูปภาพและชื่อระบบ AI ไปให้ Google Apps Script 
         const payload = {
             action: 'ocrIdCard',
-            image: base64Image
+            image: base64Image,
+            engine: selectedEngine // 🌟 ส่งค่า engine ('typhoon' หรือ 'akson') ไปให้ Code.gs สลับราง
         };
 
         const response = await fetch(API_URL, { 
@@ -2802,7 +2822,7 @@ async function processIdCardOCR(event) {
         }
 
         // 🌟 เพิ่ม console.log เพื่อให้ดูข้อมูลดิบในหน้าต่าง Developer Tools ได้
-        console.log("ข้อมูลที่ AI ส่งกลับมา:", result.data);
+        console.log(`ข้อมูลที่ AI (${selectedEngine}) ส่งกลับมา:`, result.data);
 
         // 3. นำข้อมูลที่ได้จาก Apps Script มากรอกลงฟอร์ม
         const extractedName = result.data.name || result.data.Name || result.data.ชื่อ || result.data['ชื่อ-นามสกุล'] || ""; 
@@ -3102,13 +3122,13 @@ function getWaterIcon(level) {
     let shadowColor = 'rgba(34, 197, 94, 0.4)';
     let extraClass = ''; // คลาสเสริมสำหรับ Animation
 
-    if (level >= 1 && level <= 50) {
+    if (level >= 1 && level <= 30) {
         color = '#facc15'; // เหลือง
         shadowColor = 'rgba(250, 204, 21, 0.4)';
-    } else if (level >= 51 && level <= 100) {
+    } else if (level >= 31 && level <= 80) {
         color = '#f97316'; // ส้ม
         shadowColor = 'rgba(249, 115, 22, 0.4)';
-    } else if (level >= 101) {
+    } else if (level >= 81) {
         color = '#dc2626'; // แดง (วิกฤต)
         shadowColor = 'rgba(220, 38, 38, 0.5)';
         extraClass = 'critical-pulse'; // ใส่คลาสกระพริบ
@@ -3498,9 +3518,9 @@ function updateWaterMapMarkers() {
 
         // กำหนดสีและข้อความสถานะสำหรับ Popup
         let statusText = 'ปกติ', statusColor = 'bg-green-100 text-green-600';
-        if (level >= 1 && level <= 50) { statusText = 'เฝ้าระวัง'; statusColor = 'bg-yellow-100 text-yellow-700'; }
-        else if (level >= 51 && level <= 100) { statusText = 'เตือนภัย'; statusColor = 'bg-orange-100 text-orange-600'; }
-        else if (level >= 101) { statusText = 'วิกฤต'; statusColor = 'bg-red-100 text-red-600'; }
+        if (level >= 1 && level <= 30) { statusText = 'เฝ้าระวัง'; statusColor = 'bg-yellow-100 text-yellow-700'; }
+        else if (level >= 31 && level <= 80) { statusText = 'เตือนภัย'; statusColor = 'bg-orange-100 text-orange-600'; }
+        else if (level >= 81) { statusText = 'วิกฤต'; statusColor = 'bg-red-100 text-red-600'; }
 
         if (coordinateStr.includes(',')) {
             const [lat, lng] = coordinateStr.split(',').map(v => parseFloat(v.trim()));
@@ -4867,9 +4887,9 @@ window.updateDashWaterMapMarkers = function() {
         const coordinateStr = String(r[5] || '').trim();
 
         let statusText = 'ปกติ', statusColor = 'bg-green-100 text-green-600';
-        if (level >= 1 && level <= 50) { statusText = 'เฝ้าระวัง'; statusColor = 'bg-yellow-100 text-yellow-700'; }
-        else if (level >= 51 && level <= 100) { statusText = 'เตือนภัย'; statusColor = 'bg-orange-100 text-orange-600'; }
-        else if (level >= 101) { statusText = 'วิกฤต'; statusColor = 'bg-red-100 text-red-600'; }
+        if (level >= 1 && level <= 30) { statusText = 'เฝ้าระวัง'; statusColor = 'bg-yellow-100 text-yellow-700'; }
+        else if (level >= 31 && level <= 80) { statusText = 'เตือนภัย'; statusColor = 'bg-orange-100 text-orange-600'; }
+        else if (level >= 81) { statusText = 'วิกฤต'; statusColor = 'bg-red-100 text-red-600'; }
 
         if (coordinateStr.includes(',')) {
             const [lat, lng] = coordinateStr.split(',').map(v => parseFloat(v.trim()));
