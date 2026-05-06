@@ -550,7 +550,56 @@
         </div>
         
     </div>
+ <!-- 📢 ระบบส่งแจ้งเตือนภัยแบบ Outline Premium -->
+<div class="bg-white/90 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl mb-8 border border-white/40 animate-fade-in relative overflow-hidden">
+    <!-- ตกแต่งพื้นหลังด้วยแสงสีเขียวจางๆ -->
+    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-green-500/5 rounded-full blur-3xl"></div>
 
+    <!-- ส่วนหัวข้อ: ไอคอน Gradient และข้อความ -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg rotate-3 shrink-0">
+                <i class="fab fa-line text-2xl"></i>
+            </div>
+            <div class="text-left">
+                <h3 class="text-lg font-black text-slate-800 tracking-tight leading-none">LINE Messaging Broadcast</h3>
+                <p class="text-[10px] text-slate-500 font-medium mt-1">ส่งประกาศแจ้งเตือนภัยไปยังกลุ่มประชาชน</p>
+            </div>
+        </div>
+        
+        <div class="hidden md:flex items-center gap-2 bg-slate-100/50 px-3 py-1 rounded-full border border-slate-200 backdrop-blur-sm">
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+            <span class="text-[9px] font-bold text-slate-600 uppercase tracking-widest">API Connected</span>
+        </div>
+    </div>
+
+    <!-- กลุ่มปุ่มแบบ Outline พร้อมเอฟเฟกต์ Glow -->
+    <div class="grid grid-cols-3 gap-4 relative z-10">
+        <!-- ปุ่มปกติ (Outline เขียว) -->
+        <button onclick="sendMessagingAPI('normal')" 
+            class="group flex flex-col items-center justify-center gap-2 py-3 border-2 border-green-500 text-green-600 rounded-2xl transition-all duration-300 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] active:scale-95 bg-transparent overflow-hidden relative">
+            <div class="absolute inset-0 bg-green-500/5 group-hover:bg-transparent transition-colors"></div>
+            <i class="fas fa-check-circle text-xl group-hover:scale-110 transition-transform"></i>
+            <span class="text-[11px] font-black uppercase tracking-tighter relative z-10">ปกติ</span>
+        </button>
+
+        <!-- ปุ่มเฝ้าระวัง (Outline ส้ม) -->
+        <button onclick="sendMessagingAPI('warning')" 
+            class="group flex flex-col items-center justify-center gap-2 py-3 border-2 border-amber-500 text-amber-600 rounded-2xl transition-all duration-300 hover:bg-amber-500 hover:text-white hover:shadow-[0_0_15px_rgba(245,158,11,0.3)] active:scale-95 bg-transparent overflow-hidden relative">
+            <div class="absolute inset-0 bg-amber-500/5 group-hover:bg-transparent transition-colors"></div>
+            <i class="fas fa-exclamation-triangle text-xl group-hover:rotate-12 transition-transform"></i>
+            <span class="text-[11px] font-black uppercase tracking-tighter relative z-10">เฝ้าระวัง</span>
+        </button>
+
+        <!-- ปุ่มวิกฤต (Outline แดง) -->
+        <button onclick="sendMessagingAPI('danger')" 
+            class="group flex flex-col items-center justify-center gap-2 py-3 border-2 border-red-600 text-red-600 rounded-2xl transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-95 bg-transparent overflow-hidden relative">
+            <div class="absolute inset-0 bg-red-600/5 group-hover:bg-transparent transition-colors"></div>
+            <i class="fas fa-bullhorn text-xl animate-pulse group-hover:animate-none group-hover:scale-110 transition-transform"></i>
+            <span class="text-[11px] font-black uppercase tracking-tighter relative z-10">วิกฤต</span>
+        </button>
+    </div>
+</div>
     <!-- ส่วนที่ 1: แผนที่สถานการณ์ระดับน้ำ (แทนที่กราฟเดิม) -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden mb-6">
         <div class="p-4 border-b border-slate-50 flex justify-between items-center">
@@ -5290,6 +5339,91 @@ async function loadRIDWaterLevel() {
     } catch (e) {
         console.error("🚨 Connection Error:", e);
         if(levelEl) levelEl.innerText = "Error";
+    }
+}
+//-------------------------------------------//
+//----------Messaging API logic--------------//
+//-------------------------------------------//
+async function sendMessagingAPI(type) {
+    const config = {
+        normal: { 
+            title: 'สถานะ: ปกติ', 
+            text: 'ยืนยันแจ้งสถานการณ์ปกติ?', 
+            // 💡 ห่อไอคอนด้วย div วงกลม ขนาด w-16 h-16 (เล็กลงและพอดี)
+            iconHtml: '<div class="w-16 h-16 bg-green-50 border-2 border-green-200 text-green-500 rounded-full flex items-center justify-center shadow-sm mx-auto"><i class="fas fa-check-circle text-3xl"></i></div>', 
+            color: '#22c55e' 
+        },
+        warning: { 
+            title: 'สถานะ: เฝ้าระวัง', 
+            text: 'ยืนยันแจ้งเตือนเฝ้าระวังภัย?', 
+            iconHtml: '<div class="w-16 h-16 bg-amber-50 border-2 border-amber-200 text-amber-500 rounded-full flex items-center justify-center shadow-sm mx-auto"><i class="fas fa-exclamation-triangle text-3xl"></i></div>', 
+            color: '#f59e0b' 
+        },
+        danger: { 
+            title: 'สถานะ: วิกฤต', 
+            text: 'ยืนยันประกาศภาวะวิกฤต?', 
+            iconHtml: '<div class="w-16 h-16 bg-red-50 border-2 border-red-200 text-red-500 rounded-full flex items-center justify-center shadow-sm mx-auto"><i class="fas fa-bullhorn text-3xl animate-pulse"></i></div>', 
+            color: '#ef4444' 
+        }
+    };
+
+    const setup = config[type];
+
+    const result = await Swal.fire({
+        title: setup.title,
+        text: setup.text,
+        iconHtml: setup.iconHtml, 
+        showCancelButton: true,
+        confirmButtonColor: setup.color,
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'ยืนยันส่ง',
+        cancelButtonText: 'ยกเลิก',
+        reverseButtons: true,
+        borderRadius: '1.25rem',
+        width: '300px',
+        customClass: {
+            // 💡 เคลียร์ค่าเริ่มต้นของ SweetAlert เพื่อให้วงกลมของเราแสดงผลได้สมบูรณ์
+            icon: 'border-none w-auto h-auto m-0 mt-5 bg-transparent', 
+            title: 'text-lg font-black text-slate-800 mt-2',
+            htmlContainer: 'text-xs text-slate-500 font-medium'
+        }
+    });
+
+    if (result.isConfirmed) {
+        Swal.fire({
+            title: 'กำลังส่ง...',
+            allowOutsideClick: false,
+            width: '250px',
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            const res = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'broadcastLine', alertType: type })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success', 
+                    title: 'สำเร็จ',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    width: '250px',
+                    borderRadius: '1.25rem'
+                });
+            } else {
+                throw new Error(data.error);
+            }
+        } catch (e) {
+            Swal.fire({
+                icon: 'error',
+                title: 'ล้มเหลว',
+                text: e.message,
+                width: '300px'
+            });
+        }
     }
 }
     </script>
