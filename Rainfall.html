@@ -18,14 +18,10 @@
     .delay-100 { animation-delay: 100ms; }
     .delay-200 { animation-delay: 200ms; }
     .delay-300 { animation-delay: 300ms; }
-    
-    /* สไตล์สำหรับ Scrollbar ทั่วไป */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* คลาสพิเศษสำหรับซ่อนแถบเลื่อนบนมือถือเวลาปัดซ้าย-ขวา */
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -66,7 +62,6 @@
           <div id="api-status-dot" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_8px_rgba(250,204,21,0.4)]"></div>
           <span id="api-status-text" class="text-xs font-bold text-slate-600 uppercase tracking-wider">กำลังเชื่อมต่อ...</span>
         </div>
-        <span id="current-year-display" class="hidden"></span>
       </div>
     </header>
 
@@ -86,76 +81,138 @@
     <div id="data-container" class="hidden">
       
       <!-- ============================================== -->
-      <!-- SECTION 1: เดือนล่าสุด -->
+      <!-- SECTION 1: เดือนปัจจุบัน (Current Month) -->
       <!-- ============================================== -->
       <div class="mb-4 flex items-center gap-3 animate-fade-up">
-        <div class="bg-cyan-100 text-cyan-600 p-1.5 rounded-lg">
+        <div class="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
         </div>
-        <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide" id="daily-section-title">สถานการณ์น้ำฝน (เดือนล่าสุด)</h2>
+        <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide" id="daily-title-now">สถานการณ์ฝนประจำเดือน (เดือนปัจจุบัน)</h2>
       </div>
 
-      <!-- Container การ์ดที่ปัดได้ในมือถือ (Swipeable Container) -->
       <div class="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up">
         
-        <!-- Card: ฝนสะสมเดือนล่าสุด -->
-        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-cyan-400 hover:shadow-md transition-all duration-300 relative overflow-hidden">
-          <div class="flex justify-between items-start mb-4 relative z-10">
-            <p class="text-slate-500 font-semibold text-sm">ปริมาณฝนสะสม</p>
-            <div class="bg-cyan-50 p-2 rounded-xl text-cyan-500">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+        <!-- Card: ฝนสะสม -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-blue-500">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ปริมาณฝนสะสม (เดือนนี้)</p>
+            <div class="bg-blue-50 p-2 rounded-xl text-blue-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
             </div>
           </div>
-          <div class="flex items-baseline gap-2 mb-2 relative z-10">
-            <span class="text-3xl md:text-4xl font-black text-cyan-600" id="current-month-sum">0.0</span>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-blue-600" id="sum-now">0.0</span>
             <span class="text-slate-400 font-medium text-sm">มม.</span>
           </div>
         </div>
 
-        <!-- Card: วันที่ตกหนักสุด -->
-        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-sky-400 hover:shadow-md transition-all duration-300 delay-100">
+        <!-- Card: ตกหนักสุด -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-sky-500">
           <div class="flex justify-between items-start mb-4">
             <p class="text-slate-500 font-semibold text-sm">ฝนตกหนักสุด (ใน 1 วัน)</p>
             <div class="bg-sky-50 p-2 rounded-xl text-sky-500">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             </div>
           </div>
           <div class="flex items-baseline gap-2 mb-2">
-            <span class="text-3xl md:text-4xl font-black text-sky-600" id="max-daily-rain">0.0</span>
+            <span class="text-3xl md:text-4xl font-black text-sky-600" id="max-rain-now">0.0</span>
             <span class="text-slate-400 font-medium text-sm">มม.</span>
           </div>
-          <p class="text-xs font-medium text-slate-500" id="max-daily-date">วันที่: -</p>
+          <p class="text-xs font-medium text-slate-500" id="max-date-now">วันที่: -</p>
         </div>
 
-        <!-- Card: จำนวนวันที่ตก -->
-        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-teal-400 hover:shadow-md transition-all duration-300 delay-200">
+        <!-- Card: จำนวนวัน -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-indigo-400">
           <div class="flex justify-between items-start mb-4">
             <p class="text-slate-500 font-semibold text-sm">จำนวนวันที่ฝนตก</p>
-            <div class="bg-teal-50 p-2 rounded-xl text-teal-500">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            <div class="bg-indigo-50 p-2 rounded-xl text-indigo-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             </div>
           </div>
           <div class="flex items-baseline gap-2 mb-2">
-            <span class="text-3xl md:text-4xl font-black text-teal-600" id="rain-days-count">0</span>
+            <span class="text-3xl md:text-4xl font-black text-indigo-600" id="days-count-now">0</span>
             <span class="text-slate-400 font-medium text-sm">วัน</span>
           </div>
         </div>
       </div>
 
-      <!-- Chart: กราฟรายวัน -->
-      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 md:mb-12 animate-fade-up delay-300 overflow-hidden">
+      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 md:mb-12 animate-fade-up delay-300">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-1.5 h-5 bg-blue-500 rounded-full"></div>
+          <h3 class="text-sm md:text-base font-bold text-slate-700">กราฟปริมาณฝนรายวัน (เดือนปัจจุบัน)</h3>
+        </div>
+        <div id="chart-now" class="w-full h-[250px] md:h-[280px]"></div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SECTION 2: เดือนล่าสุด (Previous Month) -->
+      <!-- ============================================== -->
+      <div class="mb-4 flex items-center gap-3 animate-fade-up">
+        <div class="bg-cyan-100 text-cyan-600 p-1.5 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        </div>
+        <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide" id="daily-title-prev">สถานการณ์ฝนประจำเดือน (เดือนล่าสุด)</h2>
+      </div>
+
+      <div class="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up">
+        
+        <!-- Card: ฝนสะสม -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-cyan-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ปริมาณฝนสะสม</p>
+            <div class="bg-cyan-50 p-2 rounded-xl text-cyan-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-cyan-600" id="sum-prev">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+        </div>
+
+        <!-- Card: ตกหนักสุด -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-teal-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ฝนตกหนักสุด (ใน 1 วัน)</p>
+            <div class="bg-teal-50 p-2 rounded-xl text-teal-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-teal-600" id="max-rain-prev">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+          <p class="text-xs font-medium text-slate-500" id="max-date-prev">วันที่: -</p>
+        </div>
+
+        <!-- Card: จำนวนวัน -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-emerald-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">จำนวนวันที่ฝนตก</p>
+            <div class="bg-emerald-50 p-2 rounded-xl text-emerald-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-emerald-600" id="days-count-prev">0</span>
+            <span class="text-slate-400 font-medium text-sm">วัน</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 md:mb-12 animate-fade-up delay-300">
         <div class="flex items-center gap-2 mb-4">
           <div class="w-1.5 h-5 bg-cyan-400 rounded-full"></div>
-          <h3 class="text-sm md:text-base font-bold text-slate-700">กราฟปริมาณฝนรายวัน</h3>
+          <h3 class="text-sm md:text-base font-bold text-slate-700">กราฟปริมาณฝนรายวัน (เดือนล่าสุด)</h3>
         </div>
-        <div id="daily-chart" class="w-full h-[250px] md:h-[280px]"></div>
+        <div id="chart-prev" class="w-full h-[250px] md:h-[280px]"></div>
       </div>
 
       <!-- เส้นคั่น Section -->
       <div class="w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-8 animate-fade-up delay-300"></div>
 
       <!-- ============================================== -->
-      <!-- SECTION 2: ภาพรวมรายปี -->
+      <!-- SECTION 3: ภาพรวมรายปี -->
       <!-- ============================================== -->
       <div class="mb-4 flex items-center gap-3 animate-fade-up delay-300">
         <div class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg">
@@ -164,9 +221,7 @@
         <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide">ภาพรวมรายปี (สถิติรายเดือน)</h2>
       </div>
 
-      <!-- Container การ์ดปัดได้ -->
       <div class="flex md:grid md:grid-cols-2 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up delay-300">
-        
         <!-- สะสมรวมปีนี้ -->
         <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-indigo-400">
           <div class="flex justify-between items-start mb-4">
@@ -195,9 +250,8 @@
         </div>
       </div>
 
-      <!-- Charts -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 md:mb-12 animate-fade-up delay-300">
-        <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 ">
           <div class="flex items-center gap-2 mb-4">
             <div class="w-1.5 h-5 bg-indigo-400 rounded-full"></div>
             <h3 class="text-sm md:text-base font-bold text-slate-700" id="monthly-chart-title">เปรียบเทียบรายเดือน</h3>
@@ -205,7 +259,7 @@
           <div id="monthly-chart" class="w-full h-[250px] md:h-[300px]"></div>
         </div>
 
-        <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 ">
           <div class="flex items-center gap-2 mb-4">
             <div class="w-1.5 h-5 bg-blue-400 rounded-full"></div>
             <h3 class="text-sm md:text-base font-bold text-slate-700">แนวโน้มปริมาณฝน (ปีปัจจุบัน)</h3>
@@ -218,7 +272,7 @@
       <div class="w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-8 animate-fade-up delay-300"></div>
 
       <!-- ============================================== -->
-      <!-- SECTION 3: Historical (5 Years) -->
+      <!-- SECTION 4: Historical (5 Years) -->
       <!-- ============================================== -->
       <div class="mb-4 flex items-center gap-3 animate-fade-up delay-300">
         <div class="bg-amber-100 text-amber-600 p-1.5 rounded-lg">
@@ -227,9 +281,7 @@
         <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide">สถิติย้อนหลัง 5 ปี</h2>
       </div>
 
-      <!-- Container การ์ดปัดได้ -->
       <div class="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up delay-300">
-        
         <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between">
           <div>
             <p class="text-slate-500 text-[11px] md:text-xs font-semibold uppercase tracking-wider mb-1">ค่าเฉลี่ย 5 ปี</p>
@@ -261,8 +313,7 @@
         </div>
       </div>
 
-      <!-- 5-Year Chart -->
-      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 animate-fade-up delay-300 overflow-hidden">
+      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 animate-fade-up delay-300 ">
         <div class="flex items-center gap-2 mb-4 md:mb-6">
           <div class="w-1.5 h-5 bg-amber-400 rounded-full"></div>
           <h3 class="text-sm md:text-base font-bold text-slate-700">ปริมาณฝนสะสมรายปี (5 ปีล่าสุด)</h3>
@@ -303,13 +354,41 @@
       }
     }
 
+    // ฟังก์ชันคำนวณและแกะข้อมูลรายวัน (ใช้ซ้ำได้ทั้ง 2 เดือน)
+    function processDailyData(dataArr) {
+      let sum = 0, maxRain = 0, maxDate = "-", daysCount = 0;
+      let categories = [], series = [];
+      let monthName = "";
+
+      if (dataArr && dataArr.length > 0) {
+        let firstDate = new Date(dataArr[0].rainfall_datetime);
+        monthName = firstDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+
+        dataArr.forEach(item => {
+           let val = item.rainfall_value !== null ? parseFloat(item.rainfall_value) : 0;
+           let dateStr = item.rainfall_datetime;
+           
+           sum += val;
+           if(val > 0) daysCount++;
+           if(val > maxRain) {
+               maxRain = val;
+               let dObj = new Date(dateStr);
+               maxDate = dObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+           }
+           categories.push(new Date(dateStr).getDate());
+           series.push(val);
+        });
+      }
+      return { sum, maxRain, maxDate, daysCount, categories, series, monthName };
+    }
+
     function processData(response) {
       document.getElementById('loading').classList.add('hidden');
       
-      if(!response.dataCurrent || !response.history || !response.dailyData) {
+      if(!response.dataCurrent || !response.dailyDataCurrent || !response.dailyDataPrev) {
          setApiStatus('error'); 
          document.getElementById('error-message').classList.remove('hidden');
-         document.getElementById('error-detail').innerText = "โปรดอัปเดตระบบหลังบ้าน (GAS) เพื่อดึงข้อมูลรายวันแบบใหม่";
+         document.getElementById('error-detail').innerText = "โปรดอัปเดตระบบหลังบ้าน (GAS) เป็นเวอร์ชันล่าสุด";
          return;
       }
 
@@ -317,49 +396,29 @@
       document.getElementById('data-container').classList.remove('hidden');
 
       // ==========================================
-      // ประมวลผล Section 1: ข้อมูลรายวันเดือนก่อนหน้า
+      // SECTION 1: เดือนปัจจุบัน
       // ==========================================
-      let dailyDataArr = response.dailyData.data || [];
-      let currentMonthSum = 0;
-      let maxDailyRain = 0;
-      let maxDailyDate = "-";
-      let rainDaysCount = 0;
-      let dailyCategories = [];
-      let dailySeries = [];
-
-      if (dailyDataArr.length > 0) {
-        let firstDate = new Date(dailyDataArr[0].rainfall_datetime);
-        let monthName = firstDate.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
-        document.getElementById('daily-section-title').innerText = `สถานการณ์น้ำฝน (${monthName})`;
-
-        dailyDataArr.forEach(item => {
-           let val = item.rainfall_value !== null ? parseFloat(item.rainfall_value) : 0;
-           let dateStr = item.rainfall_datetime; 
-           
-           currentMonthSum += val;
-           if(val > 0) rainDaysCount++;
-           if(val > maxDailyRain) {
-               maxDailyRain = val;
-               let dObj = new Date(dateStr);
-               maxDailyDate = dObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-           }
-           
-           dailyCategories.push(new Date(dateStr).getDate()); 
-           dailySeries.push(val);
-        });
-      } else {
-        document.getElementById('daily-section-title').innerText = `สถานการณ์น้ำฝน (เดือนก่อนหน้า ไม่มีข้อมูล)`;
-      }
-
-      document.getElementById('current-month-sum').innerText = currentMonthSum.toFixed(1);
-      document.getElementById('max-daily-rain').innerText = maxDailyRain.toFixed(1);
-      document.getElementById('max-daily-date').innerText = maxDailyDate !== "-" ? `วันที่: ${maxDailyDate}` : "ไม่มีฝนตกเลย";
-      document.getElementById('rain-days-count').innerText = rainDaysCount;
-
-      renderDailyChart(dailyCategories, dailySeries);
+      let currMonthlyData = processDailyData(response.dailyDataCurrent.data);
+      if (currMonthlyData.monthName) document.getElementById('daily-title-now').innerText = `สถานการณ์ฝนประจำเดือน (${currMonthlyData.monthName})`;
+      document.getElementById('sum-now').innerText = currMonthlyData.sum.toFixed(1);
+      document.getElementById('max-rain-now').innerText = currMonthlyData.maxRain.toFixed(1);
+      document.getElementById('max-date-now').innerText = currMonthlyData.maxDate !== "-" ? `วันที่: ${currMonthlyData.maxDate}` : "ไม่มีฝนตกเลย";
+      document.getElementById('days-count-now').innerText = currMonthlyData.daysCount;
+      renderDailyChart("#chart-now", currMonthlyData.categories, currMonthlyData.series, "#3b82f6"); // Blue
 
       // ==========================================
-      // ประมวลผล Section 2 & 3: รายปี และ 5 ปี
+      // SECTION 2: เดือนล่าสุด (ก่อนหน้า)
+      // ==========================================
+      let prevMonthlyData = processDailyData(response.dailyDataPrev.data);
+      if (prevMonthlyData.monthName) document.getElementById('daily-title-prev').innerText = `สถานการณ์ฝนประจำเดือน (${prevMonthlyData.monthName} - เดือนล่าสุด)`;
+      document.getElementById('sum-prev').innerText = prevMonthlyData.sum.toFixed(1);
+      document.getElementById('max-rain-prev').innerText = prevMonthlyData.maxRain.toFixed(1);
+      document.getElementById('max-date-prev').innerText = prevMonthlyData.maxDate !== "-" ? `วันที่: ${prevMonthlyData.maxDate}` : "ไม่มีฝนตกเลย";
+      document.getElementById('days-count-prev').innerText = prevMonthlyData.daysCount;
+      renderDailyChart("#chart-prev", prevMonthlyData.categories, prevMonthlyData.series, "#06b6d4"); // Cyan
+
+      // ==========================================
+      // SECTION 3 & 4: รายปี และ 5 ปี
       // ==========================================
       let currentYear = response.currentYear;
       let prevYear = response.prevYear;
@@ -373,10 +432,7 @@
 
       rawCurrent.forEach((item, index) => {
         let val = parseFloat(item.rainfall);
-        if (!isNaN(val) && item.rainfall !== null) {
-          totalRainCurrent += val;
-          monthlyCurrent[index] = val;
-        }
+        if (!isNaN(val) && item.rainfall !== null) { totalRainCurrent += val; monthlyCurrent[index] = val; }
         let labelDate = new Date(item.date_time.replace(' ', 'T'));
         chartCategories.push(labelDate.toLocaleDateString('th-TH', {month: 'short'}));
       });
@@ -385,18 +441,13 @@
       rawPrev.forEach((item, index) => {
         let val = parseFloat(item.rainfall);
         if (!isNaN(val)) {
-          totalRainPrev += val;
-          monthlyPrev[index] = val;
-          if (rawCurrent[index] && rawCurrent[index].rainfall === null) {
-            rainRemainingInPrevYear += val;
-          }
+          totalRainPrev += val; monthlyPrev[index] = val;
+          if (rawCurrent[index] && rawCurrent[index].rainfall === null) rainRemainingInPrevYear += val;
         }
       });
 
       document.getElementById('total-rain-current').innerText = totalRainCurrent.toLocaleString('en-US', {minimumFractionDigits: 1});
-      
-      let forecast = totalRainCurrent + rainRemainingInPrevYear;
-      document.getElementById('forecast-rain').innerText = forecast.toLocaleString('en-US', {minimumFractionDigits: 1});
+      document.getElementById('forecast-rain').innerText = (totalRainCurrent + rainRemainingInPrevYear).toLocaleString('en-US', {minimumFractionDigits: 1});
 
       let compareEl = document.getElementById('compare-text');
       if (totalRainPrev > 0) {
@@ -439,8 +490,7 @@
       });
 
       if (countCompletedYears > 0) {
-        let avgRain = sum5Years / countCompletedYears;
-        document.getElementById('avg-5yr').innerText = avgRain.toLocaleString('en-US', {maximumFractionDigits: 1});
+        document.getElementById('avg-5yr').innerText = (sum5Years / countCompletedYears).toLocaleString('en-US', {maximumFractionDigits: 1});
         document.getElementById('max-5yr-rain').innerText = maxRain.toLocaleString('en-US', {maximumFractionDigits: 1});
         document.getElementById('max-5yr-year').innerText = `ปี ${maxYearLabel}`;
         document.getElementById('min-5yr-rain').innerText = minRain.toLocaleString('en-US', {maximumFractionDigits: 1});
@@ -452,22 +502,28 @@
     }
 
     // ==========================================
-    // CHART CONFIGS
+    // CHART CONFIGS (อัปเดตแก้ปัญหาขอบล้น)
     // ==========================================
-    function renderDailyChart(categories, seriesData) {
-      new ApexCharts(document.querySelector("#daily-chart"), {
+    function renderDailyChart(selectorId, categories, seriesData, colorHex) {
+      new ApexCharts(document.querySelector(selectorId), {
         series: [{ name: 'ปริมาณฝน', data: seriesData }],
-        chart: { type: 'bar', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false } },
-        colors: ['#38bdf8'], // Sky Blue
+        chart: { 
+            type: 'bar', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false },
+            parentHeightOffset: 0 // ป้องกันกราฟดันทะลุขอบล่าง
+        },
+        colors: [colorHex], 
         plotOptions: { bar: { borderRadius: 3, columnWidth: '70%' } },
         dataLabels: { enabled: false },
         xaxis: { 
             categories: categories, 
             axisBorder: { show: false }, axisTicks: { show: false },
-            labels: { style: { colors: '#94a3b8' } }
+            labels: { style: { colors: '#94a3b8' }, offsetY: 2 } // ขยับข้อความลงมาเล็กน้อย
         },
         yaxis: { labels: { style: { colors: '#94a3b8' } } },
-        grid: { borderColor: '#f1f5f9', strokeDashArray: 3 },
+        grid: { 
+            borderColor: '#f1f5f9', strokeDashArray: 3,
+            padding: { top: 10, right: 10, bottom: 15, left: 10 } // เพิ่มพื้นที่ว่างรอบกราฟ
+        },
         tooltip: { theme: 'light', y: { formatter: v => `${v} มม.` } }
       }).render();
     }
@@ -475,27 +531,33 @@
     function renderYearlyCharts(categories, currentData, prevData, currYear, prevYear) {
       new ApexCharts(document.querySelector("#monthly-chart"), {
         series: [{ name: `ปี ${prevYear}`, data: prevData }, { name: `ปี ${currYear}`, data: currentData }],
-        chart: { type: 'bar', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false } },
-        colors: ['#e2e8f0', '#818cf8'], // Indigo Soft
+        chart: { 
+            type: 'bar', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false },
+            parentHeightOffset: 0 
+        },
+        colors: ['#e2e8f0', '#818cf8'], 
         plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
         dataLabels: { enabled: false },
-        xaxis: { categories: categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#94a3b8' } } },
+        xaxis: { categories: categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#94a3b8' }, offsetY: 2 } },
         yaxis: { labels: { style: { colors: '#94a3b8' } } },
-        grid: { borderColor: '#f1f5f9', strokeDashArray: 3 },
+        grid: { borderColor: '#f1f5f9', strokeDashArray: 3, padding: { top: 10, right: 10, bottom: 15, left: 10 } },
         legend: { position: 'top', horizontalAlign: 'right', markers: { radius: 10 } },
         tooltip: { theme: 'light' }
       }).render();
 
       new ApexCharts(document.querySelector("#trend-chart"), {
         series: [{ name: 'ปริมาณฝน', data: currentData.filter((v, i) => i < 4) }], 
-        chart: { type: 'area', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false } },
+        chart: { 
+            type: 'area', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false },
+            parentHeightOffset: 0 
+        },
         colors: ['#60a5fa'], 
         fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 100] } },
         dataLabels: { enabled: false },
         stroke: { curve: 'smooth', width: 3 },
-        xaxis: { categories: categories.slice(0, 4), axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#94a3b8' } } },
+        xaxis: { categories: categories.slice(0, 4), axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#94a3b8' }, offsetY: 2 } },
         yaxis: { labels: { style: { colors: '#94a3b8' } } },
-        grid: { borderColor: '#f1f5f9', strokeDashArray: 3 },
+        grid: { borderColor: '#f1f5f9', strokeDashArray: 3, padding: { top: 10, right: 10, bottom: 15, left: 10 } },
         markers: { size: 4, strokeColors: '#fff', strokeWidth: 2, hover: { size: 6 } },
         tooltip: { theme: 'light' }
       }).render();
@@ -504,21 +566,16 @@
     function renderHistoryChart(categories, seriesData, currentYear) {
       new ApexCharts(document.querySelector("#history-chart"), {
         series: [{ name: 'ยอดรวมน้ำฝน', data: seriesData }],
-        chart: { type: 'bar', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false } },
-        colors: [function({ value, seriesIndex, dataPointIndex, w }) {
-            if (categories[dataPointIndex] == currentYear) return '#fbbf24'; // Amber
-            return '#cbd5e1'; 
-        }],
-        plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
-        dataLabels: { 
-            enabled: true, 
-            formatter: function (val) { return val; },
-            offsetY: -20,
-            style: { fontSize: '12px', colors: ["#64748b"], fontWeight: 600 }
+        chart: { 
+            type: 'bar', height: '100%', fontFamily: 'Sarabun', toolbar: { show: false },
+            parentHeightOffset: 0 
         },
-        xaxis: { categories: categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#64748b', fontSize: '13px', fontWeight: 500 } } },
+        colors: [function({ dataPointIndex }) { return categories[dataPointIndex] == currentYear ? '#fbbf24' : '#cbd5e1'; }],
+        plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+        dataLabels: { enabled: true, formatter: val => val, offsetY: -20, style: { fontSize: '12px', colors: ["#64748b"], fontWeight: 600 } },
+        xaxis: { categories: categories, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#64748b', fontSize: '13px', fontWeight: 500 }, offsetY: 2 } },
         yaxis: { show: false },
-        grid: { show: false },
+        grid: { show: false, padding: { top: 10, right: 10, bottom: 15, left: 10 } }, // ซ่อนเส้นตาราง แต่ยังคงรักษา Padding ไว้
         tooltip: { theme: 'light', y: { formatter: v => `${v} มม.` } }
       }).render();
     }
