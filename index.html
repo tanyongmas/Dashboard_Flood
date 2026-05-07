@@ -632,6 +632,36 @@
         </div>
     </div>
 </div>
+    <!-- ใช้แท็ก <a> เพื่อให้ทั้งกล่องสามารถกดคลิกไปยังหน้า Rainfall.html ได้ -->
+<a href="Rainfall.html" class="block w-full bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all duration-300 group relative overflow-hidden mb-6 cursor-pointer">
+    
+    <!-- แถบสีตกแต่งด้านซ้าย (โทนสีฟ้า-คราม บ่งบอกถึงฝน) -->
+    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-sky-400 to-indigo-500"></div>
+
+    <!-- เอฟเฟกต์วงกลมตกแต่งด้านขวา (จะขยายขึ้นเมื่อเอาเมาส์ชี้) -->
+    <div class="absolute -right-4 -top-4 w-20 h-20 bg-sky-50 rounded-full group-hover:scale-[2] transition-transform duration-700 opacity-50 z-0"></div>
+
+    <div class="flex items-center justify-between relative z-10">
+        <div class="flex items-center gap-3 pl-2 md:gap-4">
+            <!-- 🌟 ไอคอนปริมาณน้ำฝน -->
+            <div class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-sky-400 to-indigo-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md">
+                <i class="fas fa-cloud-showers-heavy"></i>
+            </div>
+            
+            <!-- ข้อความปุ่ม -->
+            <div>
+                <p class="text-[9px] md:text-[10px] font-bold text-sky-500 uppercase tracking-wide">Weather & Rainfall</p>
+                <h3 class="text-sm md:text-base font-black text-slate-700 leading-tight group-hover:text-indigo-600 transition-colors">ตรวจสอบปริมาณน้ำฝน</h3>
+                <p class="text-[10px] text-slate-400 mt-0.5"><i class="fas fa-chart-bar mr-1"></i> คลิกเพื่อดูข้อมูลฝนตกสะสม</p>
+            </div>
+        </div>
+
+        <!-- ➡️ ไอคอนลูกศรชี้ไปหน้าถัดไป (สื่อให้รู้ว่าเป็นปุ่มกดได้) -->
+        <div class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors shrink-0 shadow-inner border border-slate-100 group-hover:border-indigo-200">
+            <i class="fas fa-chevron-right text-xs"></i>
+        </div>
+    </div>
+</a>
     <!-- ส่วนที่ 1: แผนที่สถานการณ์ระดับน้ำ (แทนที่กราฟเดิม) -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden mb-6">
         <div class="p-4 border-b border-slate-50 flex justify-between items-center">
