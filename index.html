@@ -600,6 +600,38 @@
         </button>
     </div>
 </div>
+<!-- 💧 การ์ดระดับน้ำกรมชลประทาน (แบบมินิมอล สำหรับหน้าภาพรวม) -->
+<div id="rid_card_mini" class="bg-emerald-50/40 rounded-2xl p-4 md:p-5 shadow-sm border border-emerald-100 flex items-center justify-between relative overflow-hidden transition-all hover:shadow-md mb-6">
+    <!-- แถบสีตกแต่งด้านซ้าย -->
+    <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-500"></div>
+
+    <div class="flex items-center gap-3 pl-2 md:gap-4">
+        <!-- 🌟 ไอคอน (ปรับให้เด่นขึ้นด้วย Gradient, เงา และขนาดที่ใหญ่ขึ้น) -->
+        <div id="rid_icon_bg_mini" class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-400 to-green-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md">
+            <i class="fas fa-water"></i>
+        </div>
+        <!-- ข้อมูลสถานี -->
+        <div>
+            <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wide">สถานี X.73 กรมชลประทาน</p>
+            <h3 class="text-sm md:text-base font-black text-slate-700 leading-tight">ระดับน้ำคลองตันหยงมัส</h3>
+            <p class="text-[9px] text-slate-400 mt-1 flex items-center gap-1">
+                <i class="fas fa-sync-alt"></i> <span id="rid_update_time_mini">กำลังเชื่อมต่อ...</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- ตัวเลขระดับน้ำ -->
+    <div class="text-right">
+        <div class="flex items-baseline justify-end gap-1">
+            <span id="rid_water_level_mini" class="text-2xl md:text-3xl font-black text-emerald-600 tracking-tight">--.--</span>
+            <span class="text-[10px] md:text-xs font-bold text-slate-400">ม.รทก.</span>
+        </div>
+        <div class="mt-0.5 flex items-center justify-end gap-1.5">
+            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500" id="rid_status_dot_mini"></div>
+            <p id="rid_water_status_mini" class="text-[10px] md:text-xs font-bold text-emerald-600">รอข้อมูล</p>
+        </div>
+    </div>
+</div>
     <!-- ส่วนที่ 1: แผนที่สถานการณ์ระดับน้ำ (แทนที่กราฟเดิม) -->
     <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden mb-6">
         <div class="p-4 border-b border-slate-50 flex justify-between items-center">
@@ -910,8 +942,8 @@
     
     <div class="flex items-center gap-4 mb-4 md:mb-0 relative z-10 w-full md:w-auto">
         <div class="w-14 h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl md:text-3xl border border-white/30 shadow-inner shrink-0">
-            <i class="fas fa-tint drop-shadow-md"></i>
-        </div>
+    <i class="fas fa-water drop-shadow-md"></i> <!-- 🌊 เปลี่ยนตรงนี้ -->
+</div>
         <div>
             <p class="text-[10px] md:text-xs font-bold text-cyan-100 uppercase tracking-wider mb-0.5">สถานีวัดน้ำ กรมชลประทาน (X.73)</p>
             <h3 class="text-xl md:text-2xl font-black tracking-tight drop-shadow-sm">คลองตันหยงมัส</h3>
@@ -996,7 +1028,8 @@
           
 <!-- หน้าสถานะการอพยพ -->
 <section id="evacuationPage" class="content-page hidden animate-fade-in">
-    <div class="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-blue-50 mb-8 max-w-7xl mx-auto flex flex-col h-auto lg:h-[calc(100vh-120px)]">
+    <!-- 🌟 แก้ไข 1: เปลี่ยนจาก lg:h-[...] เป็น lg:min-h-[...] เพื่อให้กล่องยืดตามความสูงเนื้อหาได้ -->
+    <div class="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-blue-50 mb-8 max-w-7xl mx-auto flex flex-col h-auto lg:min-h-[calc(100vh-120px)]">
         
         <!-- Header แผนที่และปุ่ม -->
         <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4 border-b border-slate-50 pb-3">
@@ -1055,7 +1088,6 @@
     </div>
 
     <!-- 🟢 การ์ดที่ 2: กลุ่มปลอดภัย (รับมือได้/น้ำไม่ท่วม) -->
-    <!-- 🌟 เพิ่ม h-full และ flex-col ให้การ์ดนี้เพื่อให้ความสูงมันยืดเต็มและจัดการพื้นที่ภายในได้ดีขึ้น -->
     <div class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-emerald-100 relative overflow-hidden group flex flex-col h-full">
         <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50"></div>
         
@@ -1071,12 +1103,10 @@
                 </p>
             </div>
             <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-emerald-200">
-                <!-- 🌟 แก้ไอคอนเป็น fa-check-circle -->
                 <i class="fas fa-check-circle"></i> 
             </div>
         </div>
 
-        <!-- 🌟 ใช้ mt-auto เพื่อดันกล่องข้อความนี้ลงไปชิดด้านล่างเสมอ และปรับ flex ให้ข้อความตัดบรรทัดสวยๆ -->
         <div class="relative z-10 mt-auto pt-4 border-t border-emerald-100/50">
             <div class="w-full bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50 flex items-start gap-2">
                 <i class="fas fa-info-circle text-emerald-500 mt-0.5 shrink-0"></i>
@@ -1091,8 +1121,8 @@
 
 </div>
         
-        <!-- พื้นที่แสดงแผนที่ -->
-        <div id="evacMap" class="w-full flex-1 min-h-[400px] lg:min-h-0 rounded-2xl z-10 border-2 border-slate-100 bg-slate-50 relative overflow-hidden"></div>
+        <!-- 🌟 แก้ไข 2: นำ !h- ออก แล้วใช้ lg:h-[700px] พร้อมเติม shrink-0 เพื่อป้องกันไม่ให้แผนที่โดนบีบ -->
+        <div id="evacMap" class="w-full h-[400px] md:h-[500px] lg:h-[600px] shrink-0 rounded-2xl z-10 border-2 border-slate-100 bg-slate-50 relative overflow-hidden"></div>
         
     </div>
 </section>
@@ -3388,7 +3418,7 @@ let evacMarkerLayer; // สำหรับเก็บ Layer หมุด (Marke
 function initEvacMap() {
     if (evacMap) return;
 
-    evacMap = L.map('evacMap').setView([6.29445, 101.72362], 14);
+    evacMap = L.map('evacMap').setView([6.29445, 101.72362], 15);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
@@ -5074,7 +5104,7 @@ window.promptSafetyCheck = function() {
                     </div>
                     <div>
                         <div class="text-lg font-bold text-orange-700">อพยพ (Evacuate)</div>
-                        <div class="text-xs text-orange-600/80 font-medium">ต้องย้ายออก / น้ำท่วมสูง / ต้องการความช่วยเหลือ</div>
+                        <div class="text-xs text-orange-600/80 font-medium">ย้ายออก / น้ำท่วมสูง / ต้องการความช่วยเหลือ</div>
                     </div>
                 </button>
             </div>
@@ -5275,13 +5305,22 @@ window.showQRCode = function() {
 //-------------------------------------------//
 
 async function loadRIDWaterLevel() {
+    // 📌 Element สำหรับการ์ดขนาดใหญ่
     const levelEl = document.getElementById('rid_water_level');
     const statusEl = document.getElementById('rid_water_status');
     const timeEl = document.getElementById('rid_update_time');
     const dotEl = document.getElementById('rid_status_dot');
     const cardEl = document.getElementById('rid_card');
     
-    if (!levelEl) return;
+    // 📌 Element สำหรับการ์ดแบบ Mini
+    const levelMiniEl = document.getElementById('rid_water_level_mini');
+    const statusMiniEl = document.getElementById('rid_water_status_mini');
+    const timeMiniEl = document.getElementById('rid_update_time_mini');
+    const dotMiniEl = document.getElementById('rid_status_dot_mini');
+    const cardMiniEl = document.getElementById('rid_card_mini');
+    const iconMiniBg = document.getElementById('rid_icon_bg_mini'); // 🌟 เพิ่มตัวแปรสำหรับคุมสีไอคอน
+
+    if (!levelEl && !levelMiniEl) return;
 
     try {
         const res = await fetch(API_URL, {
@@ -5294,51 +5333,100 @@ async function loadRIDWaterLevel() {
         const result = await res.json();
 
         if (result.success && result.data) {
-            levelEl.innerText = result.data.level;
-            timeEl.innerText = result.data.time;
+            if (levelEl) levelEl.innerText = result.data.level;
+            if (timeEl) timeEl.innerText = result.data.time;
+            
+            if (levelMiniEl) levelMiniEl.innerText = result.data.level;
+            if (timeMiniEl) timeMiniEl.innerText = result.data.time;
             
             const levelNum = parseFloat(result.data.level);
             
-            // 🚩 1. ระดับวิกฤต (> 14.90)
+            // 🚩 1. ระดับวิกฤต (> 14.90) - สีแดง
             if (levelNum > 14.90) { 
-                statusEl.innerText = 'ระดับน้ำวิกฤต';
-                statusEl.className = 'text-xs md:text-sm font-bold text-white drop-shadow-sm';
-                dotEl.className = 'w-2 h-2 rounded-full bg-white animate-ping';
-                
-                if (cardEl) {
-                    // ใช้สีแดง Gradient + เอฟเฟกต์กระพริบ + ขอบสีแดงสว่าง
-                    cardEl.className = 'bg-gradient-to-br from-red-500 to-red-700 rounded-[2rem] p-6 shadow-xl shadow-red-500/50 mb-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between animate-pulse transition-all duration-700 border-2 border-red-300';
+                // --- อัปเดตการ์ดใหญ่ ---
+                if (statusEl) {
+                    statusEl.innerText = 'ระดับน้ำวิกฤต';
+                    statusEl.className = 'text-xs md:text-sm font-bold text-white drop-shadow-sm';
                 }
+                if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-white animate-ping';
+                if (cardEl) cardEl.className = 'bg-gradient-to-br from-red-500 to-red-700 rounded-[2rem] p-6 shadow-xl shadow-red-500/50 mb-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between animate-pulse transition-all duration-700 border-2 border-red-300';
 
-            // 🚩 2. ระดับเฝ้าระวัง (> 13.50)
-            } else if (levelNum > 13.50) { // แก้ไขจาก 13.00 เป็น 13.50
-                statusEl.innerText = 'เฝ้าระวังระดับน้ำ';
-                statusEl.className = 'text-xs md:text-sm font-bold text-yellow-100';
-                dotEl.className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
-                
-                if (cardEl) {
-                    // ใช้สีส้ม Amber Gradient
-                    cardEl.className = 'bg-gradient-to-br from-orange-400 to-amber-600 rounded-[2rem] p-6 shadow-lg shadow-orange-500/30 mb-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between transition-all duration-700';
+                // --- อัปเดตการ์ด Mini ---
+                if (statusMiniEl) {
+                    statusMiniEl.innerText = 'ระดับน้ำวิกฤต';
+                    statusMiniEl.className = 'text-[10px] md:text-xs font-bold text-red-500';
                 }
+                if (dotMiniEl) dotMiniEl.className = 'w-1.5 h-1.5 rounded-full bg-red-500 animate-ping';
+                if (levelMiniEl) levelMiniEl.className = 'text-2xl md:text-3xl font-black text-red-600 tracking-tight';
+                if (cardMiniEl) {
+                    cardMiniEl.className = 'bg-red-50/80 rounded-2xl p-4 md:p-5 shadow-sm border border-red-200 flex items-center justify-between relative overflow-hidden transition-all hover:shadow-md mb-6';
+                    const sidebar = cardMiniEl.querySelector('.absolute.left-0');
+                    if (sidebar) sidebar.className = 'absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-red-400 to-red-600';
+                }
+                // 🔴 เปลี่ยนสีไอคอนเล็กเป็นสีแดง
+                if (iconMiniBg) iconMiniBg.className = 'w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-red-500 to-red-600 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-lg shadow-red-500/40 animate-pulse';
 
-            // 🚩 3. ระดับน้ำปกติ
+            // 🚩 2. ระดับเฝ้าระวัง (> 13.50) - สีส้ม
+            } else if (levelNum > 13.50) { 
+                // --- อัปเดตการ์ดใหญ่ ---
+                if (statusEl) {
+                    statusEl.innerText = 'เฝ้าระวังระดับน้ำ';
+                    statusEl.className = 'text-xs md:text-sm font-bold text-yellow-100';
+                }
+                if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-yellow-400 animate-pulse';
+                if (cardEl) cardEl.className = 'bg-gradient-to-br from-orange-400 to-amber-600 rounded-[2rem] p-6 shadow-lg shadow-orange-500/30 mb-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between transition-all duration-700';
+
+                // --- อัปเดตการ์ด Mini ---
+                if (statusMiniEl) {
+                    statusMiniEl.innerText = 'เฝ้าระวังระดับน้ำ';
+                    statusMiniEl.className = 'text-[10px] md:text-xs font-bold text-amber-500';
+                }
+                if (dotMiniEl) dotMiniEl.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse';
+                if (levelMiniEl) levelMiniEl.className = 'text-2xl md:text-3xl font-black text-amber-600 tracking-tight';
+                if (cardMiniEl) {
+                    cardMiniEl.className = 'bg-amber-50/50 rounded-2xl p-4 md:p-5 shadow-sm border border-amber-200 flex items-center justify-between relative overflow-hidden transition-all hover:shadow-md mb-6';
+                    const sidebar = cardMiniEl.querySelector('.absolute.left-0');
+                    if (sidebar) sidebar.className = 'absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 to-orange-500';
+                }
+                // 🟠 เปลี่ยนสีไอคอนเล็กเป็นสีส้ม
+                if (iconMiniBg) iconMiniBg.className = 'w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md';
+
+            // 🟢 3. ระดับน้ำปกติ - สีเขียว
             } else {
-                statusEl.innerText = 'ระดับน้ำปกติ';
-                statusEl.className = 'text-xs md:text-sm font-bold text-cyan-50';
-                dotEl.className = 'w-2 h-2 rounded-full bg-green-400 shadow-lg';
-                
-                if (cardEl) {
-                    // สีฟ้า Cyan-Blue ดั้งเดิม
-                    cardEl.className = 'bg-gradient-to-br from-cyan-500 to-blue-600 rounded-[2rem] p-6 shadow-lg shadow-blue-500/20 mb-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between transition-all duration-700';
+                // --- อัปเดตการ์ดใหญ่ ---
+                if (statusEl) {
+                    statusEl.innerText = 'ระดับน้ำปกติ';
+                    statusEl.className = 'text-xs md:text-sm font-bold text-emerald-50';
                 }
+                if (dotEl) dotEl.className = 'w-2 h-2 rounded-full bg-green-300 shadow-lg';
+                if (cardEl) {
+                    cardEl.className = 'bg-gradient-to-br from-emerald-500 to-green-600 rounded-[2rem] p-6 shadow-lg shadow-green-500/30 mb-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between transition-all duration-700';
+                }
+
+                // --- อัปเดตการ์ด Mini ---
+                if (statusMiniEl) {
+                    statusMiniEl.innerText = 'ระดับน้ำปกติ';
+                    statusMiniEl.className = 'text-[10px] md:text-xs font-bold text-emerald-600';
+                }
+                if (dotMiniEl) dotMiniEl.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+                if (levelMiniEl) levelMiniEl.className = 'text-2xl md:text-3xl font-black text-emerald-600 tracking-tight'; 
+                if (cardMiniEl) {
+                    cardMiniEl.className = 'bg-emerald-50/40 rounded-2xl p-4 md:p-5 shadow-sm border border-emerald-100 flex items-center justify-between relative overflow-hidden transition-all hover:shadow-md mb-6';
+                    const sidebar = cardMiniEl.querySelector('.absolute.left-0');
+                    if (sidebar) sidebar.className = 'absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-500';
+                }
+                // 🟢 เปลี่ยนสีไอคอนเล็กเป็นสีเขียว
+                if (iconMiniBg) iconMiniBg.className = 'w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-400 to-green-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md';
             }
         } else {
             console.error("❌ Error:", result.error);
-            statusEl.innerText = "ข้อมูลไม่ถูกต้อง";
+            if (statusEl) statusEl.innerText = "ข้อมูลไม่ถูกต้อง";
+            if (statusMiniEl) statusMiniEl.innerText = "ข้อมูลไม่ถูกต้อง";
         }
     } catch (e) {
         console.error("🚨 Connection Error:", e);
         if(levelEl) levelEl.innerText = "Error";
+        if(levelMiniEl) levelMiniEl.innerText = "Error";
     }
 }
 //-------------------------------------------//
