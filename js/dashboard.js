@@ -652,28 +652,45 @@ window.currentFilteredData = [];
         // ส่วนจัดการ Modal แจกถุงยังชีพ
         // ==========================================
 
+        // ฟังก์ชันดึงประวัติที่อยู่จากชีท Address_Evacuation และประวัติถุงยังชีพ
+        function getReliefAddressList() {
+            const evacAddrs = (typeof store !== 'undefined' && store.addressEvac && Array.isArray(store.addressEvac))
+                ? store.addressEvac.map(row => row[0] ? row[0].toString().trim() : '').filter(a => a !== '')
+                : ((typeof store !== 'undefined' && store.addresses && Array.isArray(store.addresses)) ? store.addresses : []);
+
+            const reliefAddrs = (typeof store !== 'undefined' && store.reliefData && Array.isArray(store.reliefData))
+                ? store.reliefData.map(r => r[4] ? r[4].toString().trim() : '').filter(a => a !== '')
+                : [];
+
+            return [...new Set([...evacAddrs, ...reliefAddrs])].filter(a => a !== '').sort();
+        }
+
         // 1. ระบบ AutoComplete สำหรับที่อยู่
         window.handleReliefAddressSearch = function (val) {
             const resultBox = document.getElementById('rel_address_results');
             if (!resultBox) return;
 
-            if (val.length < 1) {
+            if (!val || val.trim().length < 1) {
                 resultBox.classList.add('hidden');
                 return;
             }
 
-            // กรองจากประวัติการแจกถุงยังชีพ
-            const filtered = window.reliefAddressList.filter(a => a.toLowerCase().includes(val.toLowerCase())).slice(0, 10);
+            if (!window.reliefAddressList || window.reliefAddressList.length === 0) {
+                window.reliefAddressList = getReliefAddressList();
+            }
+
+            const searchVal = val.toLowerCase().trim();
+            const filtered = window.reliefAddressList.filter(a => a.toLowerCase().includes(searchVal)).slice(0, 15);
 
             if (filtered.length > 0) {
                 let html = '';
                 filtered.forEach(addr => {
-                    html += `<div onclick='selectReliefAddress(${JSON.stringify(addr)})' class="p-3 hover:bg-amber-100 cursor-pointer border-b border-slate-100 text-sm text-slate-700 transition-colors">${addr}</div>`;
+                    html += `<div onclick='selectReliefAddress(${JSON.stringify(addr)})' class="p-3 hover:bg-amber-100 cursor-pointer border-b border-slate-100 text-sm text-slate-700 transition-colors flex items-center justify-between"><span class="font-medium">${addr}</span><i class="fas fa-chevron-right text-[10px] text-amber-400"></i></div>`;
                 });
                 resultBox.innerHTML = html;
                 resultBox.classList.remove('hidden');
             } else {
-                resultBox.innerHTML = '<div class="p-3 text-xs text-amber-600 font-bold bg-amber-50">ไม่พบในประวัติ (ระบบจะบันทึกเป็นที่อยู่ใหม่ให้ทันที)</div>';
+                resultBox.innerHTML = '<div class="p-3 text-xs text-amber-600 font-bold bg-amber-50 flex items-center"><i class="fas fa-info-circle mr-2"></i>ไม่พบที่อยู่นี้ในระบบ (สามารถพิมพ์ต่อเพื่อระบุเป็นที่อยู่ใหม่ได้)</div>';
                 resultBox.classList.remove('hidden');
             }
         };
@@ -683,8 +700,12 @@ window.currentFilteredData = [];
             document.getElementById('rel_address_search').value = addr;
             document.getElementById('rel_address_results').classList.add('hidden');
 
-            // อัปเดตช่องทะเบียนบ้านด้วย ถ้าติ๊ก Checkbox ไว้ (สมมติว่า Checkbox ส่ง event onchange มาเรียก copyAddress)
-            // ตรงนี้ระบบจะรอให้ผู้ใช้ติ๊กเอง หรือถ้าติ๊กค้างไว้แล้วให้กดติ๊กใหม่
+            const sameAddrCheckbox = document.getElementById('rel_same_addr');
+            if (sameAddrCheckbox && sameAddrCheckbox.checked) {
+                if (typeof copyAddress === 'function') {
+                    copyAddress(true);
+                }
+            }
         };
 
         /// 2. ฟังก์ชันเปิด/ปิด Modal (อัปเดตให้โหลดประวัติที่อยู่และเคลียร์ฟอร์มทุกครั้งที่เปิด)
@@ -710,13 +731,9 @@ window.currentFilteredData = [];
 
 
             // ==========================================
-            // ส่วนเดิม: โหลดข้อมูลประวัติที่อยู่สำหรับ AutoComplete
+            // ส่วนเดิม: โหลดข้อมูลประวัติที่อยู่สำหรับ AutoComplete จากชีท Address_Evacuation และประวัติแจกถุงยังชีพ
             // ==========================================
-            window.reliefAddressList = [];
-            if (store.reliefData) {
-                const allAddresses = store.reliefData.map(r => r[4] ? r[4].toString().trim() : '').filter(a => a !== '');
-                window.reliefAddressList = [...new Set(allAddresses)];
-            }
+            window.reliefAddressList = getReliefAddressList();
 
             // สั่งเปิด Modal
             document.getElementById('reliefModal').classList.remove('hidden');
