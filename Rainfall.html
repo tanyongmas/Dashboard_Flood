@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard ข้อมูลปริมาณน้ำฝน สถานีทต.ตันหยงมัส</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/rainfall.css">
+</head>
+<body class="p-3 md:p-8 flex justify-center min-h-screen">
+
+  <div class="w-full max-w-6xl">
+    
+    <!-- ============================================== -->
+    <!-- HEADER SECTION -->
+    <!-- ============================================== -->
+    <header class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative animate-fade-up">
+      <div class="flex flex-col md:flex-row items-start md:items-center gap-5">
+        <div class="bg-blue-50 p-4 rounded-2xl text-blue-600 shadow-sm flex-shrink-0 hidden md:block">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+          </svg>
+        </div>
+        <div class="flex flex-col justify-center">
+          <h1 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight mb-2 flex items-center gap-2">
+            <span class="bg-blue-50 p-1.5 rounded-lg text-blue-600 shadow-sm block md:hidden">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+            </span>
+            ข้อมูลปริมาณน้ำฝน สถานีทต.ตันหยงมัส
+          </h1>
+          <p class="text-slate-600 text-sm font-medium flex items-center gap-1.5 mb-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            เทศบาลตำบลตันหยงมัส อ.ระแงะ จ.นราธิวาส
+          </p>
+          <p class="text-slate-400 text-xs font-medium flex items-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+            อ้างอิงเว็บไซต์ Thaiwater (คลังข้อมูลน้ำแห่งชาติ)
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center w-full md:w-auto mt-2 md:mt-0">
+        <div id="api-status-badge" class="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-full border border-slate-200 transition-colors duration-300 w-full md:w-auto justify-center">
+          <div id="api-status-dot" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-[0_0_8px_rgba(250,204,21,0.4)]"></div>
+          <span id="api-status-text" class="text-xs font-bold text-slate-600 uppercase tracking-wider">กำลังเชื่อมต่อ...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Loading / Error -->
+    <div id="loading" class="flex flex-col items-center justify-center py-24 bg-white rounded-3xl shadow-sm border border-slate-100">
+      <div class="w-10 h-10 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+      <p class="text-slate-500 font-medium">กำลังโหลดข้อมูลระบบ...</p>
+    </div>
+    <div id="error-message" class="hidden flex flex-col items-center justify-center py-24 bg-white rounded-3xl shadow-sm border border-red-100">
+      <p class="text-red-600 font-bold text-lg mb-1">เกิดข้อผิดพลาดในการเชื่อมต่อ</p>
+      <p id="error-detail" class="text-slate-500 text-sm">กรุณาลองใหม่อีกครั้ง</p>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MAIN CONTENT -->
+    <!-- ============================================== -->
+    <div id="data-container" class="hidden">
+      
+      <!-- ============================================== -->
+      <!-- SECTION: กรองข้อมูลปริมาณฝน (Rainfall Filter) -->
+      <!-- ============================================== -->
+      <section class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 mb-6 md:mb-8 animate-fade-up">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="bg-indigo-50 text-indigo-600 p-3 rounded-2xl shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-lg md:text-xl font-extrabold text-slate-800 tracking-tight">กรองข้อมูลปริมาณน้ำฝน</h2>
+              <p class="text-slate-500 text-xs font-medium mt-0.5" id="available-range-text">สืบค้นข้อมูลน้ำฝนรายวันแบบกำหนดเอง</p>
+            </div>
+          </div>
+          
+          <!-- Mode Tabs -->
+          <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 self-start md:self-auto flex-wrap gap-1">
+            <button onclick="setFilterMode('daily')" id="btn-mode-daily" class="px-3 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-sm">
+              รายวัน
+            </button>
+            <button onclick="setFilterMode('3day')" id="btn-mode-3day" class="px-3 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-800">
+              ราย 3 วัน
+            </button>
+            <button onclick="setFilterMode('7day')" id="btn-mode-7day" class="px-3 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-800">
+              ราย 7 วัน
+            </button>
+            <button onclick="setFilterMode('monthly')" id="btn-mode-monthly" class="px-3 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-200 text-slate-600 hover:text-slate-800">
+              รายเดือน
+            </button>
+          </div>
+        </div>
+
+        <!-- Inputs Form -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-6">
+          <!-- Single Date Input -->
+          <div id="container-input-single" class="flex flex-col gap-1.5 col-span-1 md:col-span-2">
+            <label id="label-date-picker" for="input-date-single" class="text-xs font-bold text-slate-500 uppercase tracking-wider">เลือกวันที่</label>
+            <input type="date" id="input-date-single" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+          </div>
+
+          <!-- Filter Buttons -->
+          <div class="col-span-1 flex gap-2">
+            <button onclick="executeFilter()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm py-3 px-3 rounded-xl shadow-md shadow-indigo-100 hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              ค้นหาข้อมูล
+            </button>
+            <button onclick="clearFilter()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-sm py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5" title="ล้างตัวกรอง">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              ล้าง
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Output / Results -->
+        <div id="filter-results" class="hidden border-t border-slate-100 pt-6">
+          <!-- Result Header -->
+          <h3 class="text-sm font-bold text-slate-500 mb-4 flex items-center gap-2">
+            <span class="inline-block w-2 h-2 bg-indigo-500 rounded-full"></span>
+            ผลการกรองข้อมูล: <span id="text-filter-period" class="text-slate-800 font-extrabold"></span>
+          </h3>
+
+          <!-- View: รายวัน (Daily View) -->
+          <div id="view-filter-single" class="hidden">
+            <div class="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <span class="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-1">ปริมาณน้ำฝนรายวัน</span>
+                <div class="flex items-baseline gap-2">
+                  <span id="text-single-value" class="text-4xl md:text-5xl font-black text-indigo-600">0.0</span>
+                  <span class="text-slate-400 font-semibold text-sm">มิลลิเมตร (มม.)</span>
+                </div>
+              </div>
+              <div class="flex flex-col md:items-end gap-1.5">
+                <span id="badge-single-status" class="px-4 py-1.5 rounded-full text-xs font-extrabold border shadow-sm self-start md:self-auto"></span>
+                <p id="text-single-desc" class="text-xs text-slate-500 font-medium"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- View: ราย 3 วัน / ราย 7 วัน (Range/Cumulative View) -->
+          <div id="view-filter-range" class="hidden">
+            <!-- Stats Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <!-- Card: สะสม -->
+              <div class="bg-indigo-50/40 rounded-2xl p-5 border border-indigo-100/50 border-l-4 border-l-indigo-600">
+                <p id="text-range-card1-title" class="text-slate-500 font-semibold text-xs mb-3">ปริมาณฝนสะสม</p>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="text-range-sum" class="text-2xl md:text-3xl font-black text-indigo-700">0.0</span>
+                  <span id="text-range-card1-unit" class="text-slate-400 font-semibold text-xs">มม.</span>
+                </div>
+              </div>
+              <!-- Card: ตกหนักสุด -->
+              <div class="bg-indigo-50/40 rounded-2xl p-5 border border-indigo-100/50 border-l-4 border-l-sky-500">
+                <p id="text-range-card2-title" class="text-slate-500 font-semibold text-xs mb-3">ฝนตกหนักสุด (1 วัน)</p>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="text-range-max" class="text-2xl md:text-3xl font-black text-sky-600">0.0</span>
+                  <span id="text-range-card2-unit" class="text-slate-400 font-semibold text-xs">มม.</span>
+                </div>
+                <p id="text-range-max-date" class="text-[10px] font-bold text-slate-500 mt-1">วันที่: -</p>
+              </div>
+              <!-- Card: จำนวนวันฝนตก -->
+              <div class="bg-indigo-50/40 rounded-2xl p-5 border border-indigo-100/50 border-l-4 border-l-teal-500">
+                <p id="text-range-card3-title" class="text-slate-500 font-semibold text-xs mb-3">จำนวนวันที่ฝนตก</p>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="text-range-days" class="text-2xl md:text-3xl font-black text-teal-600">0</span>
+                  <span id="text-range-card3-unit" class="text-slate-400 font-semibold text-xs">วัน</span>
+                </div>
+              </div>
+              <!-- Card: เฉลี่ย -->
+              <div class="bg-indigo-50/40 rounded-2xl p-5 border border-indigo-100/50 border-l-4 border-l-slate-400">
+                <p id="text-range-card4-title" class="text-slate-500 font-semibold text-xs mb-3">ค่าเฉลี่ยฝนตกต่อวัน</p>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="text-range-avg" class="text-2xl md:text-3xl font-black text-slate-700">0.0</span>
+                  <span id="text-range-card4-unit" class="text-slate-400 font-semibold text-xs">มม.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
+                <h4 id="text-range-chart-title" class="text-xs font-bold text-slate-700">กราฟปริมาณฝนรายวันในช่วงเวลาที่เลือก</h4>
+              </div>
+              <div id="chart-filter" class="w-full h-[220px] md:h-[260px]"></div>
+            </div>
+          </div>
+
+          <!-- View: รายเดือน (Monthly View) -->
+          <div id="view-filter-monthly" class="hidden">
+            <!-- Stats Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <!-- Card: ปริมาณฝนรวมรายเดือน -->
+              <div class="bg-indigo-50/40 rounded-2xl p-5 border border-indigo-100/50 border-l-4 border-l-indigo-600">
+                <p class="text-slate-500 font-semibold text-xs mb-3">ปริมาณฝนรวมประจำเดือน</p>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="text-monthly-sum" class="text-2xl md:text-3xl font-black text-indigo-700">0.0</span>
+                  <span class="text-slate-400 font-semibold text-xs">มม.</span>
+                </div>
+              </div>
+              <!-- Card: เปรียบเทียบกับปีก่อนหน้า -->
+              <div class="bg-indigo-50/40 rounded-2xl p-5 border border-indigo-100/50 border-l-4 border-l-sky-500">
+                <p class="text-slate-500 font-semibold text-xs mb-3">เปรียบเทียบกับเดือนเดียวกันปีก่อนหน้า</p>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="text-monthly-compare" class="text-sm md:text-base font-bold text-slate-700">-</span>
+                </div>
+              </div>
+              <!-- Card: เฉลี่ยรายเดือนของปีนั้น -->
+              <div class="bg-indigo-50/40 rounded-2xl p-5 border border-indigo-100/50 border-l-4 border-l-teal-500">
+                <p class="text-slate-500 font-semibold text-xs mb-3">ค่าเฉลี่ยฝนรายเดือนของปีนี้</p>
+                <div class="flex items-baseline gap-1.5">
+                  <span id="text-monthly-year-avg" class="text-2xl md:text-3xl font-black text-teal-600">0.0</span>
+                  <span class="text-slate-400 font-semibold text-xs">มม./เดือน</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+              <div class="flex items-center gap-2 mb-3">
+                <div class="w-1.5 h-4 bg-indigo-500 rounded-full"></div>
+                <h4 id="text-monthly-chart-title" class="text-xs font-bold text-slate-700">กราฟปริมาณฝนสะสมรายเดือนของปีนี้</h4>
+              </div>
+              <div id="chart-filter-monthly" class="w-full h-[220px] md:h-[260px]"></div>
+            </div>
+          </div>
+
+          <!-- View: Warning / Recommendations -->
+          <div id="view-filter-warning" class="hidden">
+            <div class="bg-amber-50 rounded-2xl p-6 border border-amber-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div class="flex items-start gap-4">
+                <div class="bg-amber-100 text-amber-600 p-3 rounded-xl flex-shrink-0 mt-0.5 animate-pulse">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h4 id="warning-title" class="font-extrabold text-slate-800 text-sm md:text-base">ไม่พบข้อมูลรายวันสำหรับช่วงเวลาที่เลือก</h4>
+                  <p id="warning-desc" class="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
+                    ระบบไม่พบข้อมูลรายวันในวันที่เลือก คุณสามารถเลือกดูข้อมูลปริมาณฝนสะสมในช่วงอื่น ๆ ที่มีอยู่ได้ดังนี้:
+                  </p>
+                </div>
+              </div>
+              <div id="warning-actions" class="flex flex-wrap gap-2 w-full md:w-auto">
+                <!-- Dynamic switch buttons injected here -->
+              </div>
+            </div>
+          </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- SECTION 1: เดือนปัจจุบัน (Current Month) -->
+      <!-- ============================================== -->
+      <div class="mb-4 flex items-center gap-3 animate-fade-up">
+        <div class="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        </div>
+        <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide" id="daily-title-now">สถานการณ์ฝนประจำเดือน (เดือนปัจจุบัน)</h2>
+      </div>
+
+      <div class="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up">
+        
+        <!-- Card: ฝนสะสม -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-blue-500">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ปริมาณฝนสะสม (เดือนนี้)</p>
+            <div class="bg-blue-50 p-2 rounded-xl text-blue-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-blue-600" id="sum-now">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+        </div>
+
+        <!-- Card: ตกหนักสุด -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-sky-500">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ฝนตกหนักสุด (ใน 1 วัน)</p>
+            <div class="bg-sky-50 p-2 rounded-xl text-sky-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-sky-600" id="max-rain-now">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+          <p class="text-xs font-medium text-slate-500" id="max-date-now">วันที่: -</p>
+        </div>
+
+        <!-- Card: จำนวนวัน -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-indigo-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">จำนวนวันที่ฝนตก</p>
+            <div class="bg-indigo-50 p-2 rounded-xl text-indigo-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-indigo-600" id="days-count-now">0</span>
+            <span class="text-slate-400 font-medium text-sm">วัน</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 md:mb-12 animate-fade-up delay-300">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-1.5 h-5 bg-blue-500 rounded-full"></div>
+          <h3 class="text-sm md:text-base font-bold text-slate-700">กราฟปริมาณฝนรายวัน (เดือนปัจจุบัน)</h3>
+        </div>
+        <div id="chart-now" class="w-full h-[250px] md:h-[280px]"></div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SECTION 2: เดือนล่าสุด (Previous Month) -->
+      <!-- ============================================== -->
+      <div class="mb-4 flex items-center gap-3 animate-fade-up">
+        <div class="bg-cyan-100 text-cyan-600 p-1.5 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        </div>
+        <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide" id="daily-title-prev">สถานการณ์ฝนประจำเดือน (เดือนล่าสุด)</h2>
+      </div>
+
+      <div class="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up">
+        
+        <!-- Card: ฝนสะสม -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-cyan-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ปริมาณฝนสะสม</p>
+            <div class="bg-cyan-50 p-2 rounded-xl text-cyan-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-cyan-600" id="sum-prev">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+        </div>
+
+        <!-- Card: ตกหนักสุด -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-teal-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ฝนตกหนักสุด (ใน 1 วัน)</p>
+            <div class="bg-teal-50 p-2 rounded-xl text-teal-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-teal-600" id="max-rain-prev">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+          <p class="text-xs font-medium text-slate-500" id="max-date-prev">วันที่: -</p>
+        </div>
+
+        <!-- Card: จำนวนวัน -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-emerald-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">จำนวนวันที่ฝนตก</p>
+            <div class="bg-emerald-50 p-2 rounded-xl text-emerald-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-emerald-600" id="days-count-prev">0</span>
+            <span class="text-slate-400 font-medium text-sm">วัน</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 md:mb-12 animate-fade-up delay-300">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-1.5 h-5 bg-cyan-400 rounded-full"></div>
+          <h3 class="text-sm md:text-base font-bold text-slate-700">กราฟปริมาณฝนรายวัน (เดือนล่าสุด)</h3>
+        </div>
+        <div id="chart-prev" class="w-full h-[250px] md:h-[280px]"></div>
+      </div>
+
+      <!-- เส้นคั่น Section -->
+      <div class="w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-8 animate-fade-up delay-300"></div>
+
+      <!-- ============================================== -->
+      <!-- SECTION 3: ภาพรวมรายปี -->
+      <!-- ============================================== -->
+      <div class="mb-4 flex items-center gap-3 animate-fade-up delay-300">
+        <div class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+        </div>
+        <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide">ภาพรวมรายปี (สถิติรายเดือน)</h2>
+      </div>
+
+      <div class="flex md:grid md:grid-cols-2 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up delay-300">
+        <!-- สะสมรวมปีนี้ -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-indigo-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">ฝนสะสมรวมปีนี้</p>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-indigo-700" id="total-rain-current">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+          <div id="compare-text" class="text-xs font-medium">-</div>
+        </div>
+
+        <!-- คาดการณ์ -->
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 md:p-6 shadow-sm border border-slate-100 border-l-4 border-l-emerald-400">
+          <div class="flex justify-between items-start mb-4">
+            <p class="text-slate-500 font-semibold text-sm">คาดการณ์สิ้นปี</p>
+          </div>
+          <div class="flex items-baseline gap-2 mb-2">
+            <span class="text-3xl md:text-4xl font-black text-emerald-600" id="forecast-rain">0.0</span>
+            <span class="text-slate-400 font-medium text-sm">มม.</span>
+          </div>
+          <p class="text-xs font-medium text-slate-400 mt-2 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            ประเมินจากสถิติปีก่อน
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 md:mb-12 animate-fade-up delay-300">
+        <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 ">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-1.5 h-5 bg-indigo-400 rounded-full"></div>
+            <h3 class="text-sm md:text-base font-bold text-slate-700" id="monthly-chart-title">เปรียบเทียบรายเดือน</h3>
+          </div>
+          <div id="monthly-chart" class="w-full h-[250px] md:h-[300px]"></div>
+        </div>
+
+        <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 ">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-1.5 h-5 bg-blue-400 rounded-full"></div>
+            <h3 class="text-sm md:text-base font-bold text-slate-700">แนวโน้มปริมาณฝน (ปีปัจจุบัน)</h3>
+          </div>
+          <div id="trend-chart" class="w-full h-[250px] md:h-[300px]"></div>
+        </div>
+      </div>
+
+      <!-- เส้นคั่น Section -->
+      <div class="w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-8 animate-fade-up delay-300"></div>
+
+      <!-- ============================================== -->
+      <!-- SECTION 4: Historical (5 Years) -->
+      <!-- ============================================== -->
+      <div class="mb-4 flex items-center gap-3 animate-fade-up delay-300">
+        <div class="bg-amber-100 text-amber-600 p-1.5 rounded-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <h2 class="text-lg md:text-xl font-bold text-slate-800 tracking-wide">สถิติย้อนหลัง 5 ปี</h2>
+      </div>
+
+      <div class="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible hide-scrollbar snap-x snap-mandatory gap-4 md:gap-6 pb-4 md:pb-0 mb-4 md:mb-8 animate-fade-up delay-300">
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 text-[11px] md:text-xs font-semibold uppercase tracking-wider mb-1">ค่าเฉลี่ย 5 ปี</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl md:text-3xl font-black text-amber-600" id="avg-5yr">0.0</span>
+              <span class="text-slate-400 text-[10px] md:text-xs">มม.</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 text-[11px] md:text-xs font-semibold uppercase tracking-wider mb-1">ฝนตก มากที่สุด</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl md:text-3xl font-black text-teal-600" id="max-5yr-rain">0.0</span>
+              <span class="text-slate-500 text-[10px] md:text-xs bg-slate-100 px-2 py-0.5 rounded-md font-medium" id="max-5yr-year">ปี -</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="w-[85%] md:w-auto flex-shrink-0 snap-center bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-slate-500 text-[11px] md:text-xs font-semibold uppercase tracking-wider mb-1">ฝนตก น้อยที่สุด</p>
+            <div class="flex items-baseline gap-2">
+              <span class="text-2xl md:text-3xl font-black text-rose-500" id="min-5yr-rain">0.0</span>
+              <span class="text-slate-500 text-[10px] md:text-xs bg-slate-100 px-2 py-0.5 rounded-md font-medium" id="min-5yr-year">ปี -</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-100 animate-fade-up delay-300 ">
+        <div class="flex items-center gap-2 mb-4 md:mb-6">
+          <div class="w-1.5 h-5 bg-amber-400 rounded-full"></div>
+          <h3 class="text-sm md:text-base font-bold text-slate-700">ปริมาณฝนสะสมรายปี (5 ปีล่าสุด)</h3>
+        </div>
+        <div id="history-chart" class="w-full h-[250px] md:h-[300px]"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/rainfall.js"></script>
+</body>
+</html>

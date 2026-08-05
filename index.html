@@ -1,0 +1,2699 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบรายงานสถานการณ์น้ำท่วม ทต.ตันหยงมัส</title>
+
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/logo.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/logo.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@0.4.14/dist/leaflet.draw.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://unpkg.com/leaflet-draw@0.4.14/dist/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body class="text-slate-700">
+
+    <div id="loginPage">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center mx-4">
+            <img src="assets/logo.png" class="w-24 mx-auto mb-4">
+            <h1 class="text-2xl font-bold text-blue-900 mb-2">รายงานสถานการณ์น้ำท่วม<br>เทศบาลตำบลตันหยงมัส</h1>
+            <p class="text-sm text-slate-500 mb-8">กรุณากรอกชื่อผู้ใช้เพื่อเข้าใช้งานระบบ</p>
+            <input type="text" id="username" placeholder="ระบุชื่อผู้ใช้งาน"
+                class="w-full p-4 border border-blue-100 rounded-2xl mb-4 text-center font-bold outline-none focus:ring-2 focus:ring-blue-400 bg-blue-50">
+            <button onclick="doLogin()" id="loginBtn"
+                class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all active:scale-95 shadow-lg">เข้าสู่ระบบ</button>
+        </div>
+    </div>
+
+    <div id="mainApp" class="hidden flex min-h-screen">
+
+        <aside id="sidebar"
+            class="sidebar-desktop sidebar-expanded bg-white shadow-md flex-shrink-0 flex flex-col border-r border-blue-50 transition-all duration-300 sticky top-0 h-screen no-print">
+            <div class="p-4 text-center border-b border-blue-50 relative">
+                <img src="assets/logo.png" class="w-16 mx-auto">
+                <h1 class="logo-text text-[14px] font-bold text-blue-800 mt-2 uppercase">
+                    ระบบรายงาน<br>สถานการณ์น้ำท่วม<br>เทศบาลตำบลตันหยงมัส</h1>
+            </div>
+
+            <!-- ส่วนรายการเมนู Desktop -->
+            <nav class="mt-4 flex-1 overflow-y-auto custom-scrollbar">
+                <!-- 🌟 เมนูหน้าหลัก (Dashboard) ซ่อนไว้สำหรับ Admin เท่านั้น 🌟 -->
+                <button onclick="showPage('dashboard')"
+                    class="nav-btn admin-only hidden w-full text-left px-6 py-4 flex items-center text-sm text-indigo-600 hover:bg-indigo-50 font-bold"
+                    data-page="dashboard">
+                    <i class="fas fa-home w-6 text-center text-lg"></i>
+                    <span class="nav-text ml-3">หน้าหลัก (ภาพรวม)</span>
+                </button>
+
+                <!-- เมนูเดิม -->
+                <button onclick="showPage('water')"
+                    class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50 active-menu"
+                    data-page="water">
+                    <i class="fas fa-tint w-6 text-center"></i> <span class="nav-text ml-3">สถานการณ์ระดับน้ำ</span>
+                </button>
+                <button onclick="showPage('addWater')"
+                    class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50"
+                    data-page="addWater">
+                    <i class="fas fa-plus-circle w-6 text-center"></i> <span class="nav-text ml-3">รายงานระดับน้ำ</span>
+                </button>
+                <button onclick="showPage('shelter')"
+                    class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50"
+                    data-page="shelter">
+                    <i class="fas fa-hotel w-6 text-center"></i> <span class="nav-text ml-3">ศูนย์พักพิง</span>
+                </button>
+                <button onclick="showPage('regis')"
+                    class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50"
+                    data-page="regis">
+                    <i class="fas fa-user-plus w-6 text-center"></i> <span class="nav-text ml-3">ลงทะเบียนใหม่</span>
+                </button>
+                <button onclick="showPage('relief')"
+                    class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50"
+                    data-page="relief">
+                    <i class="fa-solid fa-box-archive w-6 text-center"></i> <span
+                        class="nav-text ml-3">ข้อมูลผู้รับถุงยังชีพ</span>
+                </button>
+                <button onclick="showPage('evacuation')"
+                    class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50"
+                    data-page="evacuation">
+                    <i class="fas fa-map-marked-alt w-6 text-center"></i> <span class="nav-text ml-3">รายงานสถานะ</span>
+                </button>
+                <button onclick="showPage('looker')"
+                    class="nav-btn w-full text-left px-6 py-4 flex items-center text-sm text-slate-500 hover:bg-blue-50"
+                    data-page="looker">
+                    <i class="fas fa-chart-pie w-6 text-center"></i> <span
+                        class="nav-text ml-3">รายงานข้อมูลน้ำท่วม</span>
+                </button>
+            </nav>
+
+            <!-- ส่วนล่างของเมนู (จัดการระบบ และ โปรไฟล์) -->
+            <div class="p-4 border-t border-blue-50">
+                <!-- ปุ่มจัดการระบบ (Admin เท่านั้น) -->
+                <button id="adminMenuBtn" onclick="showPage('userManagement')"
+                    class="hidden w-full items-center justify-center p-3 mb-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white transition-all shadow-md active:scale-95"
+                    data-page="userManagement">
+                    <i class="fas fa-users-cog"></i>
+                    <span class="nav-text ml-2 text-xs font-bold uppercase tracking-wider">จัดการผู้ใช้งาน</span>
+                </button>
+
+                <div class="mt-auto border-t border-slate-100 p-4">
+                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <div
+                                class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <p id="displayUserName" class="text-[11px] font-black text-slate-700 truncate">Guest</p>
+                                <p id="displayUserRole"
+                                    class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Staff</p>
+                            </div>
+                        </div>
+
+                        <button onclick="handleLogout()"
+                            class="text-slate-300 hover:text-rose-500 transition-colors p-1" title="ออกจากระบบ">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ปุ่มย่อเมนู -->
+                <button onclick="toggleSidebar()"
+                    class="w-full flex items-center justify-center p-2 rounded-xl hover:bg-blue-50 text-slate-400 transition-all">
+                    <i id="sideIcon" class="fas fa-chevron-left"></i>
+                    <span class="nav-text ml-2 text-xs font-bold uppercase tracking-wider">ย่อเมนู</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- ================= เมนูสำหรับมือถือ (Bottom Navigation) ================= -->
+        <div
+            class="bottom-nav-mobile lg:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-between items-center px-2 z-50 h-[65px]">
+
+            <!-- ฝั่งซ้าย (2 ปุ่ม) -->
+            <div class="flex flex-1 justify-around items-center h-full pt-1">
+                <button onclick="showPage('water')"
+                    class="mobile-nav-btn flex flex-col items-center text-slate-400 w-full" data-page="water">
+                    <i class="fas fa-tint text-[20px] mb-1"></i>
+                    <span class="text-[9px] font-bold">สถานการณ์ระดับน้ำ</span>
+                </button>
+                <button onclick="showPage('shelter')"
+                    class="mobile-nav-btn flex flex-col items-center text-slate-400 w-full" data-page="shelter">
+                    <i class="fas fa-hotel text-[20px] mb-1"></i>
+                    <span class="text-[9px] font-bold">ศูนย์พักพิง</span>
+                </button>
+            </div>
+
+            <!-- 🌟 ปุ่มหน้าหลักตรงกลาง (ลอยเด่นขึ้นมา) แสดงเฉพาะ Admin -->
+            <div class="admin-only hidden relative w-[75px] h-full flex justify-center shrink-0">
+                <button onclick="showPage('dashboard')"
+                    class="mobile-nav-btn absolute -top-5 flex flex-col items-center group" data-page="dashboard">
+                    <div
+                        class="w-[56px] h-[56px] bg-gradient-to-br from-indigo-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-300 border-[3px] border-white text-white transition-transform group-active:scale-95">
+                        <i class="fas fa-home text-2xl mb-0.5"></i>
+                    </div>
+                    <span class="text-[10px] mt-1.5 font-black text-blue-600 drop-shadow-sm">หน้าหลัก</span>
+                </button>
+            </div>
+
+            <!-- ฝั่งขวา (2 ปุ่ม) -->
+            <div class="flex flex-1 justify-around items-center h-full pt-1">
+                <button onclick="showPage('evacuation')"
+                    class="mobile-nav-btn flex flex-col items-center text-slate-400 w-full" data-page="evacuation">
+                    <i class="fas fa-map-marked-alt text-[20px] mb-1"></i>
+                    <span class="text-[9px] font-bold">รายงานสถานะ</span>
+                </button>
+                <button onclick="showPage('relief')"
+                    class="mobile-nav-btn flex flex-col items-center text-slate-400 w-full" data-page="relief">
+                    <i class="fas fa-box-open text-[20px] mb-1"></i>
+                    <span class="text-[9px] font-bold">ถุงยังชีพ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Popup More Menu (Mobile) -->
+        <div id="moreMenuMobile" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden transition-all"
+            onclick="toggleMoreMenu()">
+            <div class="absolute top-20 right-4 w-64 bg-white rounded-3xl p-4 space-y-2 shadow-2xl"
+                onclick="event.stopPropagation()">
+                <h4 class="text-xs font-black text-slate-400 mb-2 border-b pb-2 uppercase tracking-wider">เมนูเพิ่มเติม
+                </h4>
+
+                <!-- รายงานข้อมูลน้ำท่วม -->
+                <button onclick="showPage('looker'); toggleMoreMenu();"
+                    class="w-full flex items-center space-x-4 p-3 hover:bg-blue-50 rounded-2xl text-slate-700 transition-colors">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"><i
+                            class="fas fa-chart-pie"></i></div>
+                    <span class="font-bold text-sm">รายงานสรุปข้อมูล</span>
+                </button>
+
+                <!-- จัดการผู้ใช้ (Admin Only) -->
+                <button onclick="showPage('userManagement'); toggleMoreMenu();"
+                    class="admin-only hidden w-full flex items-center space-x-4 p-3 hover:bg-slate-100 rounded-2xl text-slate-700 transition-colors">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center"><i
+                            class="fas fa-users-cog"></i></div>
+                    <span class="font-bold text-sm">จัดการผู้ใช้งานระบบ</span>
+                </button>
+
+                <div class="border-t border-slate-100 my-2 pt-2"></div>
+
+                <!-- ปุ่มออกจากระบบ -->
+                <button onclick="handleLogout()"
+                    class="w-full flex items-center space-x-4 p-3 hover:bg-rose-50 rounded-2xl text-rose-600 transition-colors">
+                    <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center"><i
+                            class="fas fa-sign-out-alt"></i></div>
+                    <span class="font-bold text-sm">ออกจากระบบ</span>
+                </button>
+            </div>
+        </div>
+
+        <main class="flex-1 flex flex-col min-w-0 main-content-area">
+            <header
+                class="bg-white border-b border-blue-50 p-4 px-6 md:px-8 flex justify-between items-center sticky top-0 z-20 shadow-sm">
+                <h2 id="pageTitle" class="font-bold text-blue-900 uppercase text-sm md:text-base tracking-wide">
+                    สถานการณ์ระดับน้ำปัจจุบัน</h2>
+
+                <div class="flex items-center gap-2">
+                    <!-- เลือกปี/เดือน -->
+                    <div class="flex items-center gap-1.5 no-print mr-1 md:mr-2">
+                        <select id="periodSelector" onchange="changePeriod(this.value)"
+                            class="text-xs bg-blue-50 text-blue-950 font-bold px-3 py-2 rounded-xl border border-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer">
+                            <option value="">กำลังโหลดช่วงเวลา...</option>
+                        </select>
+                        <button id="btnCreatePeriod" onclick="openCreatePeriodModal()"
+                            class="admin-only hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-2.5 py-2 rounded-xl font-bold transition shadow-sm active:scale-95 flex items-center justify-center shrink-0"
+                            title="สร้างช่วงเวลาใหม่">
+                            <i class="fas fa-plus text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- เวลาอัปเดตล่าสุด -->
+                    <div
+                        class="text-[10px] text-blue-500 bg-blue-50 px-2 py-2 rounded-full font-bold no-print hidden sm:inline-block">
+                        <i class="far fa-clock"></i> <span id="lastUpdate">-</span>
+                    </div>
+
+                    <!-- ปุ่มรีเฟรชข้อมูล -->
+                    <button onclick="loadData()"
+                        class="bg-blue-600 text-white w-8 h-8 rounded-lg hover:bg-blue-700 transition shadow-md active:scale-90 flex items-center justify-center shrink-0">
+                        <i class="fas fa-sync-alt text-[10px]"></i>
+                    </button>
+
+                    <!-- 🌟 ปุ่มเมนูเพิ่มเติม (แสดงเฉพาะบนมือถือ) -->
+                    <button onclick="toggleMoreMenu()"
+                        class="lg:hidden bg-slate-100 text-slate-600 w-8 h-8 rounded-lg hover:bg-slate-200 transition shadow-sm active:scale-90 flex items-center justify-center ml-1 shrink-0">
+                        <i class="fas fa-bars text-sm"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="p-4 md:p-8 max-w-7xl mx-auto w-full content-area">
+                <!-- ================= หน้าหลัก (Dashboard - รูปแบบใหม่) ================= -->
+                <section id="dashboardPage" class="page-section hidden max-w-7xl mx-auto space-y-6 fade-in pb-10">
+
+                    <!-- 🌟 Skeleton Loading Placeholder (แสดงระหว่างรอโหลดข้อมูล) -->
+                    <div id="dashboardSkeleton" class="space-y-6 animate-fade-in">
+                        <!-- Header Skeleton -->
+                        <div
+                            class="h-28 rounded-[2rem] skeleton-shimmer border border-slate-200/60 w-full flex items-center p-6 gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-300/60 shrink-0"></div>
+                            <div class="space-y-2 flex-1">
+                                <div class="h-6 bg-slate-300/80 rounded-lg w-1/3"></div>
+                                <div class="h-4 bg-slate-300/50 rounded-lg w-1/2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Mini Water Card Skeleton -->
+                        <div
+                            class="h-24 rounded-2xl skeleton-shimmer border border-slate-200/60 w-full p-5 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-300/70"></div>
+                                <div class="space-y-2">
+                                    <div class="h-4 bg-slate-300/80 rounded w-28"></div>
+                                    <div class="h-3 bg-slate-300/50 rounded w-20"></div>
+                                </div>
+                            </div>
+                            <div class="h-8 bg-slate-300/70 rounded-xl w-24"></div>
+                        </div>
+
+                        <!-- Metric Stat Cards Grid Skeleton -->
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div
+                                class="h-32 rounded-2xl skeleton-shimmer border border-slate-200/60 p-5 flex flex-col justify-between">
+                                <div class="h-4 bg-slate-300/70 rounded w-1/2"></div>
+                                <div class="h-8 bg-slate-300/90 rounded w-3/4"></div>
+                            </div>
+                            <div
+                                class="h-32 rounded-2xl skeleton-shimmer border border-slate-200/60 p-5 flex flex-col justify-between">
+                                <div class="h-4 bg-slate-300/70 rounded w-1/2"></div>
+                                <div class="h-8 bg-slate-300/90 rounded w-3/4"></div>
+                            </div>
+                            <div
+                                class="h-32 rounded-2xl skeleton-shimmer border border-slate-200/60 p-5 flex flex-col justify-between">
+                                <div class="h-4 bg-slate-300/70 rounded w-1/2"></div>
+                                <div class="h-8 bg-slate-300/90 rounded w-3/4"></div>
+                            </div>
+                            <div
+                                class="h-32 rounded-2xl skeleton-shimmer border border-slate-200/60 p-5 flex flex-col justify-between">
+                                <div class="h-4 bg-slate-300/70 rounded w-1/2"></div>
+                                <div class="h-8 bg-slate-300/90 rounded w-3/4"></div>
+                            </div>
+                        </div>
+
+                        <!-- Map & Chart Skeleton -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div
+                                class="h-96 rounded-3xl skeleton-shimmer border border-slate-200/60 p-6 flex flex-col justify-between">
+                                <div class="h-6 bg-slate-300/70 rounded w-1/3"></div>
+                                <div class="h-64 bg-slate-300/50 rounded-2xl w-full"></div>
+                            </div>
+                            <div
+                                class="h-96 rounded-3xl skeleton-shimmer border border-slate-200/60 p-6 flex flex-col justify-between">
+                                <div class="h-6 bg-slate-300/70 rounded w-1/3"></div>
+                                <div class="h-64 bg-slate-300/50 rounded-2xl w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🌟 เนื้อหาหลักของหน้าแดชบอร์ด (จะถูกซ่อนระหว่างรอโหลด) -->
+                    <div id="dashboardActualContent" class="space-y-6 hidden animate-fade-in">
+
+                        <!-- Header (ดีไซน์ใหม่ โทนสีฟ้าเข้ม) -->
+                        <div
+                            class="relative bg-gradient-to-r from-blue-600 via-blue-500 to-sky-500 p-6 md:p-8 rounded-[2rem] shadow-xl shadow-blue-500/30 border border-blue-400/50 overflow-hidden flex items-center">
+
+                            <!-- ลายน้ำพื้นหลัง (Decoration) -->
+                            <i
+                                class="fas fa-chart-pie absolute -right-4 -bottom-8 text-[120px] text-white opacity-15 transform -rotate-12 hover:scale-110 transition-transform duration-700 pointer-events-none"></i>
+                            <div
+                                class="absolute -top-24 -left-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none">
+                            </div>
+
+                            <div class="relative z-10 flex items-center gap-4 md:gap-5 w-full">
+                                <!-- กล่องไอคอน -->
+                                <div
+                                    class="w-14 h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/30 shadow-inner shrink-0">
+                                    <i class="fas fa-water text-2xl md:text-3xl drop-shadow-sm"></i>
+                                </div>
+
+                                <!-- ข้อความหัวข้อ -->
+                                <div>
+                                    <h1
+                                        class="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">
+                                        ภาพรวมสถานการณ์</h1>
+                                    <p
+                                        class="text-blue-50 text-xs md:text-sm font-medium mt-1 md:mt-1.5 flex items-center drop-shadow-sm">
+                                        <i class="fas fa-chart-line mr-1.5 opacity-90 hidden md:inline-block"></i>
+                                        สรุปข้อมูลน้ำท่วมและช่วยเหลือแบบ Real-time
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
+                        <!-- 📢 ระบบส่งแจ้งเตือนภัยแบบ Outline Premium -->
+                        <div
+                            class="bg-white/90 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl mb-8 border border-white/40 animate-fade-in relative overflow-hidden">
+                            <!-- ตกแต่งพื้นหลังด้วยแสงสีเขียวจางๆ -->
+                            <div
+                                class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-green-500/5 rounded-full blur-3xl">
+                            </div>
+
+                            <!-- ส่วนหัวข้อ: ไอคอน Gradient และข้อความ -->
+                            <div
+                                class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="w-12 h-12 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg rotate-3 shrink-0">
+                                        <i class="fab fa-line text-2xl"></i>
+                                    </div>
+                                    <div class="text-left">
+                                        <h3 class="text-lg font-black text-slate-800 tracking-tight leading-none">LINE
+                                            Messaging Broadcast</h3>
+                                        <p class="text-[10px] text-slate-500 font-medium mt-1">
+                                            ส่งประกาศแจ้งเตือนภัยไปยังกลุ่มประชาชน</p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="hidden md:flex items-center gap-2 bg-slate-100/50 px-3 py-1 rounded-full border border-slate-200 backdrop-blur-sm">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                    <span class="text-[9px] font-bold text-slate-600 uppercase tracking-widest">API
+                                        Connected</span>
+                                </div>
+                            </div>
+
+                            <!-- กลุ่มปุ่มแบบ Outline พร้อมเอฟเฟกต์ Glow -->
+                            <div class="grid grid-cols-3 gap-4 relative z-10">
+                                <!-- ปุ่มปกติ (Outline เขียว) -->
+                                <button onclick="sendMessagingAPI('normal')"
+                                    class="group flex flex-col items-center justify-center gap-2 py-3 border-2 border-green-500 text-green-600 rounded-2xl transition-all duration-300 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] active:scale-95 bg-transparent overflow-hidden relative">
+                                    <div
+                                        class="absolute inset-0 bg-green-500/5 group-hover:bg-transparent transition-colors">
+                                    </div>
+                                    <i
+                                        class="fas fa-check-circle text-xl group-hover:scale-110 transition-transform"></i>
+                                    <span
+                                        class="text-[11px] font-black uppercase tracking-tighter relative z-10">ปกติ</span>
+                                </button>
+
+                                <!-- ปุ่มเฝ้าระวัง (Outline ส้ม) -->
+                                <button onclick="sendMessagingAPI('warning')"
+                                    class="group flex flex-col items-center justify-center gap-2 py-3 border-2 border-amber-500 text-amber-600 rounded-2xl transition-all duration-300 hover:bg-amber-500 hover:text-white hover:shadow-[0_0_15px_rgba(245,158,11,0.3)] active:scale-95 bg-transparent overflow-hidden relative">
+                                    <div
+                                        class="absolute inset-0 bg-amber-500/5 group-hover:bg-transparent transition-colors">
+                                    </div>
+                                    <i
+                                        class="fas fa-exclamation-triangle text-xl group-hover:rotate-12 transition-transform"></i>
+                                    <span
+                                        class="text-[11px] font-black uppercase tracking-tighter relative z-10">เฝ้าระวัง</span>
+                                </button>
+
+                                <!-- ปุ่มวิกฤต (Outline แดง) -->
+                                <button onclick="sendMessagingAPI('danger')"
+                                    class="group flex flex-col items-center justify-center gap-2 py-3 border-2 border-red-600 text-red-600 rounded-2xl transition-all duration-300 hover:bg-red-600 hover:text-white hover:shadow-[0_0_20px_rgba(220,38,38,0.4)] active:scale-95 bg-transparent overflow-hidden relative">
+                                    <div
+                                        class="absolute inset-0 bg-red-600/5 group-hover:bg-transparent transition-colors">
+                                    </div>
+                                    <i
+                                        class="fas fa-bullhorn text-xl animate-pulse group-hover:animate-none group-hover:scale-110 transition-transform"></i>
+                                    <span
+                                        class="text-[11px] font-black uppercase tracking-tighter relative z-10">วิกฤต</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-0.05 md:gap-0.5 mb-6">
+
+                            <div id="rid_card_mini"
+                                class="h-[120px] w-full flex items-center justify-between bg-emerald-50/40 rounded-2xl p-4 md:p-5 shadow-sm border border-emerald-100 relative overflow-hidden transition-all hover:shadow-md">
+
+                                <div
+                                    class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-500">
+                                </div>
+
+                                <div class="flex items-center gap-3 pl-2 md:gap-4 relative z-10 w-full min-w-0">
+                                    <div id="rid_icon_bg_mini"
+                                        class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-400 to-green-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md">
+                                        <i class="fas fa-water"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pr-2">
+                                        <p
+                                            class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wide truncate">
+                                            สถานี X.73 กรมชลประทาน</p>
+                                        <h3
+                                            class="text-sm md:text-base font-black text-slate-700 leading-tight truncate">
+                                            ระดับน้ำคลองตันหยงมัส</h3>
+                                        <p class="text-[9px] text-slate-400 mt-1 flex items-center gap-1 truncate">
+                                            <i class="fas fa-sync-alt"></i> <span
+                                                id="rid_update_time_mini">กำลังเชื่อมต่อ...</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="text-right relative z-10 shrink-0">
+                                    <div class="flex items-baseline justify-end gap-1">
+                                        <span id="rid_water_level_mini"
+                                            class="text-2xl md:text-3xl font-black text-emerald-600 tracking-tight">--.--</span>
+                                        <span class="text-[10px] md:text-xs font-bold text-slate-400">ม.รทก.</span>
+                                    </div>
+                                    <div class="mt-0.5 flex items-center justify-end gap-1.5">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500" id="rid_status_dot_mini">
+                                        </div>
+                                        <p id="rid_water_status_mini"
+                                            class="text-[10px] md:text-xs font-bold text-emerald-600">
+                                            รอข้อมูล</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="Rainfall.html"
+                                class="h-[100px] w-full flex items-center justify-between bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all duration-300 group relative overflow-hidden cursor-pointer">
+
+                                <div
+                                    class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-sky-400 to-indigo-500">
+                                </div>
+
+                                <div
+                                    class="absolute -right-4 -top-4 w-20 h-20 bg-sky-50 rounded-full group-hover:scale-[2] transition-transform duration-700 opacity-50 z-0">
+                                </div>
+
+                                <div class="flex items-center gap-3 pl-2 md:gap-4 relative z-10 w-full min-w-0">
+                                    <div
+                                        class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-sky-400 to-indigo-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md">
+                                        <i class="fas fa-cloud-showers-heavy"></i>
+                                    </div>
+
+                                    <div class="min-w-0 flex-1 pr-2">
+                                        <p
+                                            class="text-[9px] md:text-[10px] font-bold text-sky-500 uppercase tracking-wide truncate">
+                                            Weather & Rainfall</p>
+                                        <h3
+                                            class="text-sm md:text-base font-black text-slate-700 leading-tight group-hover:text-indigo-600 transition-colors truncate">
+                                            ตรวจสอบปริมาณน้ำฝน</h3>
+                                        <p class="text-[10px] text-slate-400 mt-0.5 truncate"><i
+                                                class="fas fa-chart-bar mr-1"></i>
+                                            คลิกเพื่อดูข้อมูลฝนตกสะสม</p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors shrink-0 shadow-inner border border-slate-100 group-hover:border-indigo-200 relative z-10">
+                                    <i class="fas fa-chevron-right text-xs"></i>
+                                </div>
+                            </a>
+
+                        </div>
+
+                        <!-- 🌤️ ส่วนที่ 1.5: พยากรณ์อากาศล่วงหน้า 7 วัน & TMD Widget (ดีไซน์พรีเมียม สไตล์กลาสมอร์ฟิซึม) -->
+                        <div
+                            class="bg-white/95 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl mb-6 border border-slate-100/80 overflow-hidden relative">
+                            <div
+                                class="absolute -top-24 -right-24 w-48 h-48 bg-sky-400/5 rounded-full blur-3xl pointer-events-none">
+                            </div>
+                            <div
+                                class="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/5 rounded-full blur-3xl pointer-events-none">
+                            </div>
+
+                            <div class="flex items-center gap-4 mb-6 relative z-10">
+                                <div
+                                    class="w-12 h-12 bg-gradient-to-tr from-sky-400 via-blue-500 to-indigo-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-blue-500/20 rotate-1 shrink-0">
+                                    <i class="fa-solid fa-cloud-sun-rain"></i>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="text-lg font-black text-slate-800 tracking-tight leading-none">
+                                        พยากรณ์อากาศล่วงหน้า 7 วัน</h3>
+                                    <p class="text-[10px] text-slate-500 font-medium mt-1">ตำบลตันหยงมัส อำเภอระแงะ
+                                        จังหวัดนราธิวาส</p>
+                                </div>
+                            </div>
+
+                            <div id="weather-api-view" class="transition-all duration-300 relative z-10">
+                                <div id="weather-loading" class="flex flex-col items-center justify-center py-12">
+                                    <div
+                                        class="w-8 h-8 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mb-3">
+                                    </div>
+                                    <p class="text-xs text-slate-500 font-medium">กำลังโหลดข้อมูลสภาพอากาศ...</p>
+                                </div>
+
+                                <div id="weather-forecast-list"
+                                    class="hidden w-full flex gap-3 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🗺️ ส่วนที่ 1: แผนที่ One Map (รวมสถานการณ์ภัยพิบัติทุกมิติ) -->
+                        <div id="dashOneMapCard"
+                            class="bg-white rounded-[2rem] shadow-xl border border-slate-100/80 overflow-hidden mb-8 transition-all duration-300">
+                            <!-- ส่วนหัว One Map พร้อมปุ่มสลับแผนที่ดาวเทียม / OSM และปุ่มขยายเต็มจอ -->
+                            <div
+                                class="p-4 md:p-5 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-400/30 flex items-center justify-center text-blue-400 text-lg shadow-inner shrink-0">
+                                        <i class="fas fa-layer-group"></i>
+                                    </div>
+                                    <div>
+                                        <h3
+                                            class="text-base font-black tracking-tight text-white flex items-center gap-2">
+                                            One Map - แผนที่รวมสถานการณ์ภัยพิบัติ
+                                            <span
+                                                class="text-[9px] bg-blue-500/20 text-blue-300 border border-blue-400/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Live
+                                                System</span>
+                                        </h3>
+
+                                    </div>
+                                </div>
+
+                                <!-- ปุ่มสลับฐานแผนที่ (Basemap Selector) + ปุ่มขยายเต็มจอ (Fullscreen) -->
+                                <div class="flex items-center gap-2 flex-wrap self-start lg:self-auto shrink-0">
+                                    <div
+                                        class="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 shadow-inner shrink-0">
+                                        <button type="button" onclick="toggleDashBaseMap('osm')" id="btnBasemapOsm"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600 text-white shadow-sm">
+                                            <i class="fas fa-map"></i> แผนที่ปกติ (OSM)
+                                        </button>
+                                        <button type="button" onclick="toggleDashBaseMap('sat')" id="btnBasemapSat"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-700/60">
+                                            <i class="fas fa-globe-asia"></i> ดาวเทียม (Satellite)
+                                        </button>
+                                    </div>
+
+                                    <button type="button" onclick="toggleDashOneMapFullscreen()"
+                                        id="btnOneMapFullscreen"
+                                        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-blue-600/80 hover:bg-blue-600 text-white border border-blue-400/30 shadow-md shrink-0 active:scale-95">
+                                        <i class="fas fa-expand"></i> ขยายเต็มจอ
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- แถบเลือกสลับเปิด/ปิด เลเยอร์ข้อมูล (Layer Control Filter Bar) -->
+                            <div
+                                class="p-3 bg-slate-50 border-b border-slate-200/80 flex gap-2 overflow-x-auto no-scrollbar items-center">
+                                <span
+                                    class="text-[11px] font-black text-slate-500 uppercase tracking-wider shrink-0 mr-1 flex items-center">
+                                    <i class="fas fa-filter text-blue-500 mr-1.5"></i> แสดงเลเยอร์:
+                                </span>
+
+                                <!-- เลเยอร์ 1: ระดับน้ำ -->
+                                <button type="button" onclick="toggleDashLayer('water')" id="btnLayerWater"
+                                    class="dash-layer-btn active-dash-layer bg-sky-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <i class="fas fa-tint"></i> ระดับน้ำ
+                                </button>
+
+                                <!-- เลเยอร์ 2: ศูนย์พักพิง -->
+                                <button type="button" onclick="toggleDashLayer('shelter')" id="btnLayerShelter"
+                                    class="dash-layer-btn active-dash-layer bg-pink-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <i class="fas fa-campground"></i> ศูนย์พักพิง
+                                </button>
+
+                                <!-- เลเยอร์ 3: ถุงยังชีพ -->
+                                <button type="button" onclick="toggleDashLayer('relief')" id="btnLayerRelief"
+                                    class="dash-layer-btn active-dash-layer bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <i class="fas fa-box-open"></i> ผู้รับถุงยังชีพ
+                                </button>
+
+                                <!-- เลเยอร์ 4: รายงานสถานะอพยพ -->
+                                <button type="button" onclick="toggleDashLayer('evac')" id="btnLayerEvac"
+                                    class="dash-layer-btn active-dash-layer bg-purple-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <i class="fas fa-person-running"></i> รายงานสถานะอพยพ
+                                </button>
+
+                                <!-- เลเยอร์ 5: ข้อมูลอาคาร/บ้านเรือนน้ำท่วม -->
+                                <button type="button" onclick="toggleDashLayer('flood')" id="btnLayerFlood"
+                                    class="dash-layer-btn active-dash-layer bg-rose-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <i class="fas fa-house-crack"></i> อาคารน้ำท่วม
+                                </button>
+
+                                <!-- เลเยอร์ 6: ขอบเขตพื้นที่น้ำท่วมที่วาดไว้ -->
+                                <button type="button" onclick="toggleDashLayer('polygon')" id="btnLayerPolygon"
+                                    class="dash-layer-btn active-dash-layer bg-red-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                                    <i class="fas fa-draw-polygon"></i> พื้นที่น้ำท่วม (Polygons)
+                                </button>
+                            </div>
+
+                            <!-- พื้นที่แสดงแผนที่ One Map -->
+                            <div id="dashOneMap" class="w-full h-[450px] md:h-[550px] z-10 relative bg-slate-100"></div>
+
+                            <!-- แถบอธิบายสัญลักษณ์ (Legend Bar) -->
+                            <div
+                                class="p-3 md:p-4 bg-slate-50 flex flex-wrap gap-x-6 gap-y-2 justify-center items-center border-t border-slate-200/80 text-[11px] font-bold text-slate-600">
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-sky-500 shadow-sm"></span>
+                                    <span>จุดวัดระดับน้ำ </span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-pink-500 shadow-sm"></span>
+                                    <span>ศูนย์พักพิง</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-red-400 shadow-sm"></span>
+                                    <span>อาคารน้ำท่วม</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></span>
+                                    <span>กลุ่มเปราะบาง</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-amber-400 shadow-sm"></span>
+                                    <span>ผู้สูงอายุ/ผู้พิการ</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-amber-500 shadow-sm"></span>
+                                    <span>ผู้รับถุงยังชีพ</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-600 shadow-sm"></span>
+                                    <span>สถานะปลอดภัย</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-purple-600 shadow-sm"></span>
+                                    <span>สถานะอพยพ</span>
+                                </div>
+                                <div class="flex items-center space-x-1.5">
+                                    <span class="w-4 h-2.5 rounded bg-red-500/40 border border-red-600"></span>
+                                    <span>ขอบเขตพื้นที่น้ำท่วม</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ส่วนที่ 2: ภาพรวมศูนย์พักพิง (ดีไซน์เดียวกับหน้าศูนย์พักพิง) -->
+                        <div class="pt-4">
+                            <h3 class="text-lg font-black text-slate-800 mb-4 px-2">
+                                <i class="fas fa-campground text-emerald-500 mr-2"></i>ภาพรวมศูนย์พักพิง (ทุกพื้นที่)
+                            </h3>
+
+                            <!-- แถวที่ 1: การ์ดสถิติ (จากหน้าศูนย์พักพิง) -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+
+                                <!-- 1. การ์ดจำนวนผู้เข้าพักพิง (ใหญ่) -->
+                                <div
+                                    class="col-span-2 md:col-span-2 row-span-2 bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] shadow-md p-6 flex flex-col justify-between relative overflow-hidden">
+                                    <i
+                                        class="fas fa-users absolute -right-6 -bottom-6 text-[9rem] text-white/10 transform -rotate-12"></i>
+                                    <div>
+                                        <h4 class="text-white/80 font-bold text-[11px] uppercase tracking-wider mb-1">
+                                            จำนวนผู้เข้าพักพิงทั้งหมด</h4>
+                                    </div>
+                                    <div class="mt-4 flex items-end gap-3 z-10">
+                                        <span id="dash_statTotalPeople"
+                                            class="text-6xl md:text-7xl font-black text-white leading-none tracking-tighter">0</span>
+                                        <span class="text-white/80 font-bold mb-2">คน</span>
+                                    </div>
+
+                                    <!-- หลอดความจุศูนย์พักพิง -->
+                                    <div class="mt-8 z-10">
+                                        <div class="flex justify-between text-[10px] text-white/80 font-bold mb-1.5">
+                                            <span>ความจุรวมทุกศูนย์</span>
+                                            <span id="dash_statCapacityText">0 / 0</span>
+                                        </div>
+                                        <div
+                                            class="w-full bg-black/20 rounded-full h-2.5 overflow-hidden border border-white/10">
+                                            <div id="dash_statCapacityBar"
+                                                class="bg-green-400 h-full rounded-full transition-all duration-1000"
+                                                style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. การ์ดจำนวนครัวเรือน -->
+                                <div
+                                    class="col-span-1 md:col-span-1 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-center transition hover:shadow-md">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div
+                                            class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-inner">
+                                            <i class="fas fa-house-user"></i>
+                                        </div>
+                                        <span
+                                            class="text-[10px] font-black text-slate-400 uppercase tracking-wide">ครัวเรือน</span>
+                                    </div>
+                                    <div class="flex items-end gap-1 mt-1">
+                                        <p id="dash_statTotalHouseholds"
+                                            class="text-3xl font-black text-slate-700 leading-none">0</p>
+                                        <span class="text-[9px] text-slate-400 font-bold mb-0.5">ครอบครัว</span>
+                                    </div>
+                                </div>
+
+                                <!-- 3. การ์ดผู้ป่วย/ผู้พิการ -->
+                                <div
+                                    class="col-span-1 md:col-span-1 bg-white rounded-[2rem] shadow-sm border border-rose-50 p-5 flex flex-col justify-center transition hover:shadow-md">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <div
+                                            class="w-8 h-8 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center shadow-inner">
+                                            <i class="fas fa-wheelchair"></i>
+                                        </div>
+                                        <span
+                                            class="text-[10px] font-black text-rose-400 uppercase tracking-wide">ป่วย/พิการ</span>
+                                    </div>
+                                    <div class="flex items-end gap-1 mt-1">
+                                        <p id="dash_statSick" class="text-3xl font-black text-rose-600 leading-none">0
+                                        </p>
+                                        <span class="text-[9px] text-rose-400 font-bold mb-0.5">คน</span>
+                                    </div>
+                                </div>
+
+                                <!-- 4. การ์ดกลุ่มเปราะบาง -->
+                                <div
+                                    class="col-span-2 md:col-span-2 bg-white rounded-[2rem] shadow-sm border border-amber-50 p-5 flex items-center justify-between transition hover:shadow-md">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-500 flex items-center justify-center text-xl shadow-inner">
+                                            <i class="fas fa-baby"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-[11px] font-black text-amber-600 uppercase tracking-wide">
+                                                กลุ่มเปราะบาง</h4>
+                                            <p class="text-[9px] text-slate-400 font-bold mt-0.5">(เด็กทารก, ผู้สูงอายุ)
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-end gap-1">
+                                        <p id="dash_statVulnerable"
+                                            class="text-4xl font-black text-amber-500 leading-none">
+                                            0</p>
+                                        <span class="text-[11px] text-amber-400 font-bold mb-1">คน</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- แถวที่ 2: กราฟสัดส่วนเพศ และ อายุ -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+                                <!-- สัดส่วนเพศ -->
+                                <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-blue-50 flex flex-col">
+                                    <h4
+                                        class="text-[11px] font-bold text-pink-600 mb-3 uppercase tracking-tight border-l-4 border-pink-500 pl-2">
+                                        สัดส่วนเพศ</h4>
+                                    <div class="flex items-center justify-between flex-1">
+                                        <div class="h-[120px] w-1/2 relative">
+                                            <canvas id="dash_chartGender"></canvas>
+                                        </div>
+                                        <div class="w-1/2 pl-4 space-y-3">
+                                            <div class="flex justify-between items-end border-b border-slate-50 pb-2">
+                                                <span class="text-xs font-bold text-slate-500"><i
+                                                        class="fas fa-male text-blue-400 w-4"></i> ชาย</span>
+                                                <span id="dash_numMale"
+                                                    class="text-xl font-black text-blue-500">0</span>
+                                            </div>
+                                            <div class="flex justify-between items-end border-b border-slate-50 pb-2">
+                                                <span class="text-xs font-bold text-slate-500"><i
+                                                        class="fas fa-female text-pink-400 w-4"></i> หญิง</span>
+                                                <span id="dash_numFemale"
+                                                    class="text-xl font-black text-pink-500">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ช่วงอายุ -->
+                                <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-blue-50 flex flex-col">
+                                    <h4
+                                        class="text-[11px] font-bold text-emerald-600 mb-3 uppercase tracking-tight border-l-4 border-emerald-500 pl-2">
+                                        ช่วงอายุ</h4>
+                                    <div class="flex items-center justify-between flex-1">
+                                        <div class="h-[120px] w-[45%] relative">
+                                            <canvas id="dash_chartAge"></canvas>
+                                        </div>
+                                        <div class="w-[55%] pl-4 grid grid-cols-2 gap-2">
+                                            <div
+                                                class="bg-emerald-50 rounded-xl p-2 text-center border border-emerald-100">
+                                                <p
+                                                    class="text-[9px] text-emerald-600 font-bold uppercase tracking-wide">
+                                                    0-7
+                                                    ปี</p>
+                                                <p id="dash_numAgeInfant"
+                                                    class="text-lg font-black text-emerald-600 leading-tight">0</p>
+                                            </div>
+                                            <div class="bg-blue-50 rounded-xl p-2 text-center border border-blue-100">
+                                                <p class="text-[9px] text-blue-600 font-bold uppercase tracking-wide">
+                                                    8-15
+                                                    ปี</p>
+                                                <p id="dash_numAgeChild"
+                                                    class="text-lg font-black text-blue-600 leading-tight">0</p>
+                                            </div>
+                                            <div class="bg-amber-50 rounded-xl p-2 text-center border border-amber-100">
+                                                <p class="text-[9px] text-amber-600 font-bold uppercase tracking-wide">
+                                                    16-59
+                                                    ปี</p>
+                                                <p id="dash_numAgeAdult"
+                                                    class="text-lg font-black text-amber-600 leading-tight">0</p>
+                                            </div>
+                                            <div class="bg-rose-50 rounded-xl p-2 text-center border border-rose-100">
+                                                <p class="text-[9px] text-rose-600 font-bold uppercase tracking-wide">
+                                                    60+ ปี
+                                                </p>
+                                                <p id="dash_numAgeElderly"
+                                                    class="text-lg font-black text-rose-600 leading-tight">0</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ส่วนที่ 3: ภาพรวมถุงยังชีพ -->
+                        <div class="pt-4 mb-6">
+                            <h3 class="text-lg font-black text-slate-800 mb-4 px-2">
+                                <i class="fas fa-box-open text-amber-500 mr-2"></i>ภาพรวมการแจกจ่ายถุงยังชีพ
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                <!-- การ์ดที่ 1: จำนวนที่แจกแล้ว -->
+                                <div
+                                    class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 flex items-center gap-5 relative overflow-hidden transition hover:shadow-md">
+                                    <i
+                                        class="fas fa-hand-holding-heart absolute -right-4 -bottom-4 text-7xl text-amber-50 opacity-50 transform -rotate-12"></i>
+                                    <div
+                                        class="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-500 text-white rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-amber-200 z-10 shrink-0">
+                                        <i class="fas fa-boxes-stacked"></i>
+                                    </div>
+                                    <div class="z-10">
+                                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                            แจกถุงยังชีพแล้ว</p>
+                                        <div class="flex items-baseline gap-2">
+                                            <p id="dash_totalReliefCount"
+                                                class="text-5xl font-black text-slate-800 leading-none">0</p>
+                                            <p class="text-sm font-bold text-slate-400">ชุด</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- การ์ดที่ 2: สถานะคลังสต๊อก -->
+                                <div
+                                    class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-6 relative overflow-hidden transition hover:shadow-md flex flex-col justify-center">
+                                    <i
+                                        class="fas fa-warehouse absolute -right-4 -bottom-4 text-7xl text-blue-50 opacity-50 transform -rotate-12"></i>
+                                    <div class="flex justify-between items-center mb-4 z-10 relative">
+                                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                            สถานะคลังถุงยังชีพ (ชุด)</p>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-3 z-10 relative">
+                                        <div
+                                            class="bg-blue-50/50 rounded-2xl p-3 border border-blue-100 flex flex-col justify-center text-center">
+                                            <p
+                                                class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">
+                                                รับเข้า</p>
+                                            <p id="dash_stockInCount" class="text-2xl font-black text-blue-700">0</p>
+                                        </div>
+                                        <div
+                                            class="bg-rose-50/50 rounded-2xl p-3 border border-rose-100 flex flex-col justify-center text-center">
+                                            <p
+                                                class="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1">
+                                                จ่ายออก</p>
+                                            <p id="dash_stockOutCount" class="text-2xl font-black text-rose-700">0</p>
+                                        </div>
+                                        <div
+                                            class="bg-emerald-50 rounded-2xl p-3 border border-emerald-200 shadow-sm flex flex-col justify-center text-center transform scale-105">
+                                            <p
+                                                class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                                                คงเหลือ</p>
+                                            <p id="dash_stockRemainCount" class="text-3xl font-black text-emerald-600">0
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                        <!-- ส่วนที่ 4: ภาพรวมสถานะการอพยพ (ดีไซน์ใหม่ 2 การ์ด) -->
+                        <div class="pt-2 mb-6">
+                            <h3 class="text-lg font-black text-slate-800 mb-4 px-2 flex items-center tracking-tight">
+                                <i class="fas fa-running text-orange-500 mr-2"></i> ภาพรวมสถานะการอพยพ/ปลอดภัย
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <!-- 🔴 การ์ดที่ 1: กลุ่มอพยพ (ต้องการความช่วยเหลือ) -->
+                                <div
+                                    class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-orange-100 relative overflow-hidden group">
+                                    <div
+                                        class="absolute -right-6 -top-6 w-24 h-24 bg-orange-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50">
+                                    </div>
+
+                                    <div class="relative z-10 flex justify-between items-start mb-4">
+                                        <div>
+                                            <p
+                                                class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                                                ผู้อพยพทั้งหมด</p>
+                                            <div class="flex items-baseline gap-2">
+                                                <h3 class="text-4xl font-black text-orange-600 leading-none"><span
+                                                        id="dash_sumEvacTotal">0</span></h3>
+                                                <span class="text-sm font-bold text-slate-500">คน</span>
+                                            </div>
+                                            <p
+                                                class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                                                <i class="fas fa-home text-orange-400 mr-1"></i> <span
+                                                    id="dash_sumEvacHousehold">0</span> ครัวเรือน
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-orange-200">
+                                            <i class="fas fa-person-running"></i>
+                                        </div>
+                                    </div>
+
+                                    <div class="relative z-10 flex gap-3 mt-4 pt-4 border-t border-orange-100/50">
+                                        <div class="flex-1 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/50">
+                                            <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i
+                                                    class="fas fa-campground text-blue-500 mr-1"></i> เข้าศูนย์พักพิง
+                                            </p>
+                                            <p class="text-lg font-black text-blue-600"><span
+                                                    id="dash_sumEvacCenter">0</span> <span
+                                                    class="text-[10px] font-bold text-slate-500">คน</span></p>
+                                        </div>
+                                        <div
+                                            class="flex-1 bg-purple-50/50 p-2.5 rounded-xl border border-purple-100/50">
+                                            <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i
+                                                    class="fas fa-house-user text-purple-500 mr-1"></i> จุดอื่น/บ้านญาติ
+                                            </p>
+                                            <p class="text-lg font-black text-purple-600"><span
+                                                    id="dash_sumEvacOther">0</span> <span
+                                                    class="text-[10px] font-bold text-slate-500">คน</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 🟢 การ์ดที่ 2: กลุ่มปลอดภัย (รับมือได้/น้ำไม่ท่วม) -->
+                                <div
+                                    class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-emerald-100 relative overflow-hidden group flex flex-col h-full">
+                                    <div
+                                        class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50">
+                                    </div>
+
+                                    <div class="relative z-10 flex justify-between items-start mb-4">
+                                        <div>
+                                            <p
+                                                class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                                                สถานะปลอดภัย</p>
+                                            <div class="flex items-baseline gap-2">
+                                                <h3 class="text-4xl font-black text-emerald-600 leading-none"><span
+                                                        id="dash_sumSafeTotal">0</span></h3>
+                                                <span class="text-sm font-bold text-slate-500">คน</span>
+                                            </div>
+                                            <p
+                                                class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                                                <i class="fas fa-home text-emerald-400 mr-1"></i> <span
+                                                    id="dash_sumSafeHousehold">0</span> ครัวเรือน
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-emerald-200">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                    </div>
+
+                                    <div class="relative z-10 mt-auto pt-4 border-t border-emerald-100/50">
+                                        <div
+                                            class="w-full bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50 flex items-start gap-2">
+                                            <i class="fas fa-info-circle text-emerald-500 mt-0.5 shrink-0"></i>
+                                            <div class="w-full">
+                                                <p
+                                                    class="text-[11px] text-slate-600 font-medium leading-relaxed m-0 break-words">
+                                                    รายงานสถานะน้ำไม่ท่วม หรืออาศัยอยู่ชั้นบนได้อย่างปลอดภัย
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- End #dashboardActualContent -->
+
+                </section>
+                <section id="waterPage" class="content-page">
+                    <!-- ปุ่มรายงานระดับน้ำ (Quick Action Card สำหรับมือถือ) -->
+                    <div class="lg:hidden mb-6 px-1 animate-fade-in">
+                        <button onclick="showPage('addWater')"
+                            class="w-full bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-[2rem] shadow-md shadow-blue-200 flex items-center justify-between transition-transform active:scale-95 border border-blue-400/30 relative overflow-hidden group">
+
+                            <!-- ลายน้ำพื้นหลัง (Decoration) -->
+                            <i
+                                class="fas fa-water absolute -right-2 -bottom-6 text-7xl text-white/10 transform -rotate-12 pointer-events-none group-active:scale-110 transition-transform"></i>
+
+                            <div class="flex items-center gap-4 relative z-10">
+                                <!-- กล่องไอคอน -->
+                                <div
+                                    class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-white shadow-inner shrink-0">
+                                    <i class="fas fa-plus-circle text-2xl"></i>
+                                </div>
+
+                                <!-- ข้อความ -->
+                                <div class="text-left">
+                                    <h3 class="text-white font-black text-base md:text-lg leading-tight tracking-wide">
+                                        รายงานระดับน้ำ</h3>
+                                    <p class="text-blue-100 text-[10px] font-bold mt-0.5">เพิ่มข้อมูลสถานการณ์จุดวัดน้ำ
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- ปุ่มลูกศร -->
+                            <div
+                                class="w-8 h-8 bg-white text-blue-600 rounded-full flex items-center justify-center shadow-sm relative z-10 shrink-0">
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </div>
+                        </button>
+                    </div>
+                    <!-- 🌟 วางการ์ดระดับน้ำกรมชลประทานตรงนี้ 🌟 -->
+                    <div id="rid_card"
+                        class="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-[2rem] p-6 shadow-lg shadow-blue-500/20 mb-8 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between animate-fade-in group transition-all duration-700">
+                        <i
+                            class="fas fa-water absolute -right-4 -bottom-4 text-8xl opacity-10 group-hover:scale-110 transition-transform duration-700"></i>
+
+                        <div class="flex items-center gap-4 mb-4 md:mb-0 relative z-10 w-full md:w-auto">
+                            <div
+                                class="w-14 h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-2xl md:text-3xl border border-white/30 shadow-inner shrink-0">
+                                <i class="fas fa-water drop-shadow-md"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <p
+                                        class="text-[10px] md:text-xs font-bold text-cyan-100 uppercase tracking-wider mb-0.5">
+                                        สถานีวัดน้ำ กรมชลประทาน (X.73)</p>
+                                    <span id="rid_data_source"
+                                        class="text-[8px] md:text-[9px] bg-white/20 text-cyan-100 px-2 py-0.5 rounded-full inline-block backdrop-blur-sm border border-white/20 font-bold">กำลังตรวจสอบ...</span>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-black tracking-tight drop-shadow-sm">คลองตันหยงมัส
+                                </h3>
+                                <p
+                                    class="text-[9px] md:text-[10px] bg-black/20 px-2 py-1 rounded-full inline-block mt-1.5 backdrop-blur-sm border border-white/10">
+                                    <i class="fas fa-sync-alt mr-1"></i> อัปเดต: <span
+                                        id="rid_update_time">กำลังเชื่อมต่อข้อมูล...</span>
+                                </p>
+                                <p id="rid_bank_info" class="hidden text-[9px] md:text-[10px] text-cyan-100/80 mt-1">
+                                    <i class="fas fa-ruler-vertical mr-1"></i>กำลังคำนวณ...
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="text-left md:text-right relative z-10 w-full md:w-auto bg-white/10 md:bg-transparent p-4 md:p-0 rounded-2xl md:rounded-none border md:border-0 border-white/20">
+                            <div class="flex items-baseline justify-start md:justify-end gap-1.5 drop-shadow-md">
+                                <span id="rid_water_level"
+                                    class="text-4xl md:text-5xl font-black tracking-tighter">--.--</span>
+                                <span class="text-sm md:text-lg font-bold text-cyan-100">ม.รทก.</span>
+                                <span id="rid_trend_indicator"
+                                    class="hidden text-[9px] text-slate-300 font-bold ml-1"></span>
+                            </div>
+                            <div class="mt-1 flex items-center md:justify-end gap-1.5">
+                                <div class="w-2 h-2 rounded-full bg-slate-300 animate-pulse" id="rid_status_dot"></div>
+                                <p id="rid_water_status" class="text-xs md:text-sm font-bold text-cyan-50">รอการประมวลผล
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-blue-50 mb-8">
+
+                        <div class="flex flex-wrap gap-4 items-end mb-6 no-print">
+                            <div class="w-full md:flex-1 min-w-[150px]">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ตัวกรองพื้นที่
+                                    (เฉพาะที่มีข้อมูล)</label>
+                                <select id="chartLocFilter" onchange="updateWaterChart()"
+                                    class="w-full p-2.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs outline-none focus:ring-1 focus:ring-blue-300"></select>
+                            </div>
+                            <div class="w-full md:flex-1 min-w-[250px]">
+                                <label
+                                    class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ช่วงเวลา</label>
+                                <div class="flex gap-2">
+                                    <input type="date" id="startDate" onchange="updateWaterChart()"
+                                        class="p-2.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs flex-1 outline-none">
+                                    <input type="date" id="endDate" onchange="updateWaterChart()"
+                                        class="p-2.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs flex-1 outline-none">
+                                </div>
+                            </div>
+                            <div class="flex gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto">
+                                <button onclick="setDateFilter('today')"
+                                    class="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg hover:bg-white transition">วันนี้</button>
+                                <button onclick="setDateFilter('yesterday')"
+                                    class="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg hover:bg-white transition">เมื่อวาน</button>
+                                <button onclick="setDateFilter('week')"
+                                    class="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg hover:bg-white transition">7
+                                    วัน</button>
+                            </div>
+                        </div>
+                        <div class="h-[250px] md:h-[350px]"><canvas id="waterChart"></canvas></div>
+                    </div>
+
+                    <div class="mb-4 flex justify-between items-center px-1">
+                        <h3 class="font-bold text-blue-900 text-sm md:text-base">รายการล่าสุดของแต่ละพื้นที่</h3>
+                        <select id="cardLocFilter" onchange="renderWaterCards()"
+                            class="p-2 bg-white border border-blue-100 rounded-xl text-[10px] shadow-sm font-bold no-print outline-none"></select>
+                    </div>
+                    <div id="waterList" class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6"></div>
+                    <div class="px-4 mt-10 mb-10">
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="p-4 border-b border-slate-50 flex justify-between items-center">
+                                <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider">
+                                    <i class="fas fa-map-marked-alt mr-2 text-blue-500"></i> แผนที่จุดวัดระดับน้ำ
+                                </h3>
+                                <span class="text-[10px] text-slate-400 font-bold">Real-time</span>
+                            </div>
+
+                            <div id="waterMap" class="w-full h-[400px] md:h-[500px] z-10"></div>
+
+                            <div class="p-4 bg-slate-50 flex flex-wrap gap-4 justify-center border-t border-slate-100">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+                                    <span class="text-[10px] font-bold text-slate-500">ปกติ (0 ซม.)</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-yellow-400 shadow-sm"></div>
+                                    <span class="text-[10px] font-bold text-slate-500">เฝ้าระวัง (1-30 ซม.)</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
+                                    <span class="text-[10px] font-bold text-slate-500">เตือนภัย (31-80 ซม.)</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-600 shadow-sm"></div>
+                                    <span class="text-[10px] font-bold text-slate-500">วิกฤต (>81 ซม.)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- หน้าสถานะการอพยพ -->
+                <section id="evacuationPage" class="content-page hidden animate-fade-in">
+                    <!-- 🌟 แก้ไข 1: เปลี่ยนจาก lg:h-[...] เป็น lg:min-h-[...] เพื่อให้กล่องยืดตามความสูงเนื้อหาได้ -->
+                    <div
+                        class="bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-blue-50 mb-8 max-w-7xl mx-auto flex flex-col h-auto lg:min-h-[calc(100vh-120px)]">
+
+                        <!-- Header แผนที่และปุ่ม -->
+                        <div
+                            class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4 border-b border-slate-50 pb-3">
+                            <div>
+                                <h3 class="text-lg font-black text-slate-800 flex items-center tracking-tight">
+                                    <i class="fas fa-map-marked-alt mr-2 text-blue-500"></i>
+                                    แผนที่รายงานสถานะปลอดภัย/อพยพ
+                                </h3>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Evacuation & Area Mapping
+                                </p>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <!-- 🌟 เพิ่มปุ่ม QR Code ตรงนี้ -->
+                                <button onclick="showQRCode()"
+                                    class="w-full md:w-auto justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95 flex items-center border border-indigo-100">
+                                    <i class="fas fa-qrcode mr-2 text-sm"></i> QR Code รับแจ้ง
+                                </button>
+
+                                <button onclick="promptSafetyCheck()"
+                                    class="w-full md:w-auto justify-center bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-orange-200 transition-all active:scale-95 flex items-center">
+                                    <i class="fas fa-bullhorn mr-2"></i> รายงานสถานะ
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 🌟 แผงแดชบอร์ดสรุปสถานการณ์อพยพ (ดีไซน์ใหม่) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+                            <!-- 🔴 การ์ดที่ 1: กลุ่มอพยพ (ต้องการความช่วยเหลือ) -->
+                            <div
+                                class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-orange-100 relative overflow-hidden group">
+                                <div
+                                    class="absolute -right-6 -top-6 w-24 h-24 bg-orange-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50">
+                                </div>
+
+                                <div class="relative z-10 flex justify-between items-start mb-4">
+                                    <div>
+                                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                                            ผู้อพยพทั้งหมด</p>
+                                        <div class="flex items-baseline gap-2">
+                                            <h3 class="text-4xl font-black text-orange-600 leading-none"><span
+                                                    id="sumEvacTotal">0</span></h3>
+                                            <span class="text-sm font-bold text-slate-500">คน</span>
+                                        </div>
+                                        <p
+                                            class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                                            <i class="fas fa-home text-orange-400 mr-1"></i> <span
+                                                id="sumEvacHousehold">0</span> ครัวเรือน
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-rose-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-orange-200">
+                                        <i class="fas fa-person-running"></i>
+                                    </div>
+                                </div>
+
+                                <div class="relative z-10 flex gap-3 mt-4 pt-4 border-t border-orange-100/50">
+                                    <div class="flex-1 bg-blue-50/50 p-2.5 rounded-xl border border-blue-100/50">
+                                        <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i
+                                                class="fas fa-campground text-blue-500 mr-1"></i> เข้าศูนย์พักพิง</p>
+                                        <p class="text-lg font-black text-blue-600"><span id="sumEvacCenter">0</span>
+                                            <span class="text-[10px] font-bold text-slate-500">คน</span>
+                                        </p>
+                                    </div>
+                                    <div class="flex-1 bg-purple-50/50 p-2.5 rounded-xl border border-purple-100/50">
+                                        <p class="text-[10px] text-slate-500 font-bold mb-0.5"><i
+                                                class="fas fa-house-user text-purple-500 mr-1"></i> จุดอื่น/บ้านญาติ</p>
+                                        <p class="text-lg font-black text-purple-600"><span id="sumEvacOther">0</span>
+                                            <span class="text-[10px] font-bold text-slate-500">คน</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 🟢 การ์ดที่ 2: กลุ่มปลอดภัย (รับมือได้/น้ำไม่ท่วม) -->
+                            <div
+                                class="bg-white rounded-[1.5rem] p-5 shadow-sm border border-emerald-100 relative overflow-hidden group flex flex-col h-full">
+                                <div
+                                    class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-[2] transition-transform duration-700 ease-in-out opacity-50">
+                                </div>
+
+                                <div class="relative z-10 flex justify-between items-start mb-4">
+                                    <div>
+                                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-1">
+                                            สถานะปลอดภัย</p>
+                                        <div class="flex items-baseline gap-2">
+                                            <h3 class="text-4xl font-black text-emerald-600 leading-none"><span
+                                                    id="sumSafeTotal">0</span></h3>
+                                            <span class="text-sm font-bold text-slate-500">คน</span>
+                                        </div>
+                                        <p
+                                            class="text-xs text-slate-500 mt-2 font-medium bg-slate-50 inline-block px-2 py-1 rounded-lg border border-slate-100">
+                                            <i class="fas fa-home text-emerald-400 mr-1"></i> <span
+                                                id="sumSafeHousehold">0</span> ครัวเรือน
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center text-2xl shadow-lg shadow-emerald-200">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                </div>
+
+                                <div class="relative z-10 mt-auto pt-4 border-t border-emerald-100/50">
+                                    <div
+                                        class="w-full bg-emerald-50/50 p-3 rounded-xl border border-emerald-100/50 flex items-start gap-2">
+                                        <i class="fas fa-info-circle text-emerald-500 mt-0.5 shrink-0"></i>
+                                        <div class="w-full">
+                                            <p
+                                                class="text-[11px] text-slate-600 font-medium leading-relaxed m-0 break-words">
+                                                รายงานสถานะน้ำไม่ท่วม หรืออาศัยอยู่ชั้นบนได้อย่างปลอดภัย
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- 🌟 แก้ไข 2: นำ !h- ออก แล้วใช้ lg:h-[700px] พร้อมเติม shrink-0 เพื่อป้องกันไม่ให้แผนที่โดนบีบ -->
+                        <div id="evacMap"
+                            class="w-full h-[400px] md:h-[500px] lg:h-[600px] shrink-0 rounded-2xl z-10 border-2 border-slate-100 bg-slate-50 relative overflow-hidden">
+                        </div>
+
+                    </div>
+                </section>
+                <section id="addWaterPage" class="content-page hidden">
+                    <div class="bg-white p-6 md:p-10 rounded-3xl shadow-lg border border-blue-50 max-w-2xl mx-auto">
+                        <h3 class="text-xl font-bold text-blue-900 mb-6 flex items-center tracking-tight">
+                            <i class="fas fa-camera-retro mr-3 text-blue-500"></i> บันทึกระดับน้ำ
+                        </h3>
+                        <form id="waterForm" onsubmit="saveWater(event)" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">พื้นที่จุดวัดน้ำ</label>
+                                    <select id="water_loc"
+                                        class="w-full p-3 border border-blue-100 bg-blue-50 rounded-xl outline-none"
+                                        required></select>
+                                </div>
+
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">แนวโน้มระดับน้ำ</label>
+                                    <div class="flex gap-2 mt-1">
+                                        <input type="hidden" id="water_trend" value="คงตัว" required>
+                                        <button type="button" onclick="selectTrend('เพิ่มขึ้น', this)"
+                                            class="trend-btn flex-1 py-3 rounded-xl border-2 border-transparent bg-red-50 text-red-600 text-[11px] font-bold transition-all flex flex-col items-center gap-1">
+                                            <i class="fas fa-chart-line"></i> เพิ่มขึ้น
+                                        </button>
+                                        <button type="button" onclick="selectTrend('คงตัว', this)"
+                                            class="trend-btn flex-1 py-3 rounded-xl border-2 border-yellow-400 bg-yellow-50 text-yellow-600 text-[11px] font-bold transition-all flex flex-col items-center gap-1 active-trend">
+                                            <i class="fas fa-equals"></i> คงตัว
+                                        </button>
+                                        <button type="button" onclick="selectTrend('ลดลง', this)"
+                                            class="trend-btn flex-1 py-3 rounded-xl border-2 border-transparent bg-green-50 text-green-600 text-[11px] font-bold transition-all flex flex-col items-center gap-1">
+                                            <i class="fas fa-chart-line fa-flip-vertical"></i> ลดลง
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">ระดับน้ำ (ซม.)</label>
+                                    <input type="number" id="water_val"
+                                        class="w-full p-3 border border-blue-100 bg-blue-50 rounded-xl font-bold text-blue-600 outline-none"
+                                        required>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">พิกัด GPS</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="water_coords" readonly
+                                            class="w-full p-3 border border-blue-100 bg-gray-100 rounded-xl text-[10px] outline-none"
+                                            placeholder="ดึงพิกัดอัตโนมัติ">
+                                        <button type="button" onclick="getLocation()"
+                                            class="bg-blue-100 text-blue-600 px-4 rounded-xl hover:bg-blue-200 transition">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 ml-1">รูปถ่ายสถานการณ์</label>
+                                <input type="file" id="water_img" accept="image/*" capture="environment"
+                                    onchange="previewImg(event)" class="hidden">
+                                <div onclick="document.getElementById('water_img').click()"
+                                    class="border-2 border-dashed border-blue-200 rounded-2xl h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition overflow-hidden"
+                                    id="img_preview_box">
+                                    <i class="fas fa-camera text-3xl text-blue-300"></i>
+                                    <p class="text-xs text-blue-400 mt-2 font-bold">แตะเพื่อถ่ายรูปหรือเลือกไฟล์</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 ml-1">รายละเอียดเพิ่มเติม</label>
+                                <textarea id="water_note"
+                                    class="w-full p-3 border border-blue-100 bg-blue-50 rounded-xl h-20 outline-none"
+                                    placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
+                            </div>
+
+                            <button id="saveWaterBtn" type="submit"
+                                class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-xl hover:bg-blue-700 transition active:scale-95">ส่งรายงานน้ำ</button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="shelterPage" class="content-page hidden">
+                    <!-- ปุ่มลงทะเบียนใหม่ (Popup) -->
+                    <!-- ปุ่มลงทะเบียนใหม่ (Quick Action Card สำหรับมือถือ) -->
+                    <div class="lg:hidden mb-6 px-1 animate-fade-in">
+                        <button onclick="showPage('regis')"
+                            class="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 p-4 rounded-[2rem] shadow-md shadow-emerald-200 flex items-center justify-between transition-transform active:scale-95 border border-emerald-400/30 relative overflow-hidden group">
+
+                            <!-- ลายน้ำพื้นหลัง (Decoration) -->
+                            <i
+                                class="fas fa-address-card absolute -right-2 -bottom-6 text-7xl text-white/10 transform -rotate-12 pointer-events-none group-active:scale-110 transition-transform"></i>
+
+                            <div class="flex items-center gap-4 relative z-10">
+                                <!-- กล่องไอคอน -->
+                                <div
+                                    class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-white shadow-inner shrink-0">
+                                    <i class="fas fa-user-plus text-2xl"></i>
+                                </div>
+
+                                <!-- ข้อความ -->
+                                <div class="text-left">
+                                    <h3 class="text-white font-black text-base md:text-lg leading-tight tracking-wide">
+                                        ลงทะเบียนศูนย์พักพิง</h3>
+                                    <p class="text-emerald-100 text-[10px] font-bold mt-0.5">
+                                        เพิ่มรายชื่อผู้เข้าพักพิงในระบบ</p>
+                                </div>
+                            </div>
+
+                            <!-- ปุ่มลูกศร -->
+                            <div
+                                class="w-8 h-8 bg-white text-emerald-600 rounded-full flex items-center justify-center shadow-sm relative z-10 shrink-0">
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </div>
+                        </button>
+
+                    </div>
+                    <div class="mb-6 overflow-x-auto no-scrollbar flex gap-2 pb-2">
+                        <button onclick="filterShelter('all')"
+                            class="shelter-filter-btn active-shelter-btn whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all"
+                            data-center="all">ทั้งหมด</button>
+                        <button onclick="filterShelter('ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา')"
+                            class="shelter-filter-btn bg-white whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all"
+                            data-center="ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา">ศูนย์เทศบาลตำบลตันหยงมัส</button>
+                        <button onclick="filterShelter('ศูนย์มัสยิดตันหยงมัส')"
+                            class="shelter-filter-btn bg-white whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all"
+                            data-center="ศูนย์มัสยิดตันหยงมัส">ศูนย์มัสยิดตันหยงมัส</button>
+                        <button onclick="filterShelter('ศูนย์โรงเรียนบ้านเขาพระ')"
+                            class="shelter-filter-btn bg-white whitespace-nowrap px-4 py-2 rounded-2xl text-[11px] font-bold shadow-sm transition-all"
+                            data-center="ศูนย์โรงเรียนบ้านเขาพระ">ศูนย์โรงเรียนบ้านเขาพระ</button>
+                        <button onclick="printShelterReport()"
+                            class="bg-slate-800 hover:bg-black text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center shadow-lg">
+                            <i class="fas fa-print mr-2"></i> พิมพ์รายงาน / PDF
+                        </button>
+                    </div>
+
+                    <!-- กลุ่มการ์ดสถิติ (ปรับใหม่) -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+
+                        <!-- 1. การ์ดจำนวนผู้เข้าพักพิง (ใหญ่) -->
+                        <div
+                            class="col-span-2 md:col-span-2 row-span-2 bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2rem] shadow-md p-6 flex flex-col justify-between relative overflow-hidden">
+                            <i
+                                class="fas fa-users absolute -right-6 -bottom-6 text-[9rem] text-white/10 transform -rotate-12"></i>
+                            <div>
+                                <h4 class="text-white/80 font-bold text-[11px] uppercase tracking-wider mb-1">
+                                    จำนวนผู้เข้าพักพิงทั้งหมด</h4>
+                            </div>
+                            <div class="mt-3 flex flex-col gap-3 z-10">
+                                <div class="flex items-end gap-2">
+                                    <span id="statTotalPeople"
+                                        class="text-6xl md:text-7xl font-black text-white leading-none tracking-tighter">0</span>
+                                    <span class="text-white/80 font-bold mb-2">คน (รวมทั้งหมด)</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span
+                                        class="bg-blue-400/25 text-blue-100 border border-blue-300/30 px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
+                                        <i class="fas fa-campground text-blue-200"></i> พักพิงอยู่ <b
+                                            id="statActivePeople" class="text-white font-black">0</b> คน
+                                    </span>
+                                    <span
+                                        class="bg-emerald-500/25 text-emerald-100 border border-emerald-400/30 px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm backdrop-blur-sm">
+                                        <i class="fas fa-house-chimney-user text-emerald-300"></i> กลับบ้านแล้ว <b
+                                            id="statReturnedPeople" class="text-white font-black">0</b> คน
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- หลอดความจุศูนย์พักพิง (ย้ายจากกราฟวงกลมเดิมมาไว้ตรงนี้) -->
+                            <div class="mt-8 z-10">
+                                <div class="flex justify-between text-[10px] text-white/80 font-bold mb-1.5">
+                                    <span>ความจุศูนย์ที่เลือก</span>
+                                    <span id="statCapacityText">0 / 0</span>
+                                </div>
+                                <div
+                                    class="w-full bg-black/20 rounded-full h-2.5 overflow-hidden border border-white/10">
+                                    <div id="statCapacityBar"
+                                        class="bg-green-400 h-full rounded-full transition-all duration-1000"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. การ์ดจำนวนครัวเรือน -->
+                        <div
+                            class="col-span-1 md:col-span-1 bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-center transition hover:shadow-md">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-inner">
+                                    <i class="fas fa-house-user"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-wide">ครัวเรือน</span>
+                            </div>
+                            <div class="flex items-end gap-1 mt-1">
+                                <p id="statTotalHouseholds" class="text-3xl font-black text-slate-700 leading-none">0
+                                </p>
+                                <span class="text-[9px] text-slate-400 font-bold mb-0.5">ครอบครัว</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. การ์ดผู้ป่วย/ผู้พิการ -->
+                        <div
+                            class="col-span-1 md:col-span-1 bg-white rounded-[2rem] shadow-sm border border-rose-50 p-5 flex flex-col justify-center transition hover:shadow-md">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-rose-100 text-rose-500 flex items-center justify-center shadow-inner">
+                                    <i class="fas fa-wheelchair"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] font-black text-rose-400 uppercase tracking-wide">ป่วย/พิการ</span>
+                            </div>
+                            <div class="flex items-end gap-1 mt-1">
+                                <p id="statSick" class="text-3xl font-black text-rose-600 leading-none">0</p>
+                                <span class="text-[9px] text-rose-400 font-bold mb-0.5">คน</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. การ์ดกลุ่มเปราะบาง -->
+                        <div
+                            class="col-span-2 md:col-span-2 bg-white rounded-[2rem] shadow-sm border border-amber-50 p-5 flex items-center justify-between transition hover:shadow-md">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-500 flex items-center justify-center text-xl shadow-inner">
+                                    <i class="fas fa-baby"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-[11px] font-black text-amber-600 uppercase tracking-wide">
+                                        กลุ่มเปราะบาง</h4>
+                                    <p class="text-[9px] text-slate-400 font-bold mt-0.5">(เด็กทารก, ผู้สูงอายุ)</p>
+                                </div>
+                            </div>
+                            <div class="flex items-end gap-1">
+                                <p id="statVulnerable" class="text-4xl font-black text-amber-500 leading-none">0</p>
+                                <span class="text-[11px] text-amber-400 font-bold mb-1">คน</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- แถวที่ 2: กราฟสัดส่วนเพศ และ อายุ (แสดงกราฟ + ตัวเลข) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+
+                        <!-- สัดส่วนเพศ -->
+                        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-blue-50 flex flex-col">
+                            <h4
+                                class="text-[11px] font-bold text-pink-600 mb-3 uppercase tracking-tight border-l-4 border-pink-500 pl-2">
+                                สัดส่วนเพศ</h4>
+                            <div class="flex items-center justify-between flex-1">
+                                <div class="h-[120px] w-1/2 relative">
+                                    <canvas id="chartGender"></canvas>
+                                </div>
+                                <div class="w-1/2 pl-4 space-y-3">
+                                    <div class="flex justify-between items-end border-b border-slate-50 pb-2">
+                                        <span class="text-xs font-bold text-slate-500"><i
+                                                class="fas fa-male text-blue-400 w-4"></i> ชาย</span>
+                                        <span id="numMale" class="text-xl font-black text-blue-500">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-end border-b border-slate-50 pb-2">
+                                        <span class="text-xs font-bold text-slate-500"><i
+                                                class="fas fa-female text-pink-400 w-4"></i> หญิง</span>
+                                        <span id="numFemale" class="text-xl font-black text-pink-500">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ช่วงอายุ -->
+                        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-blue-50 flex flex-col">
+                            <h4
+                                class="text-[11px] font-bold text-emerald-600 mb-3 uppercase tracking-tight border-l-4 border-emerald-500 pl-2">
+                                ช่วงอายุ</h4>
+                            <div class="flex items-center justify-between flex-1">
+                                <div class="h-[120px] w-[45%] relative">
+                                    <canvas id="chartAge"></canvas>
+                                </div>
+                                <div class="w-[55%] pl-4 grid grid-cols-2 gap-2">
+                                    <div class="bg-emerald-50 rounded-xl p-2 text-center border border-emerald-100">
+                                        <p class="text-[9px] text-emerald-600 font-bold uppercase tracking-wide">0-7 ปี
+                                        </p>
+                                        <p id="numAgeInfant" class="text-lg font-black text-emerald-600 leading-tight">0
+                                        </p>
+                                    </div>
+                                    <div class="bg-blue-50 rounded-xl p-2 text-center border border-blue-100">
+                                        <p class="text-[9px] text-blue-600 font-bold uppercase tracking-wide">8-15 ปี
+                                        </p>
+                                        <p id="numAgeChild" class="text-lg font-black text-blue-600 leading-tight">0</p>
+                                    </div>
+                                    <div class="bg-amber-50 rounded-xl p-2 text-center border border-amber-100">
+                                        <p class="text-[9px] text-amber-600 font-bold uppercase tracking-wide">16-59 ปี
+                                        </p>
+                                        <p id="numAgeAdult" class="text-lg font-black text-amber-600 leading-tight">0
+                                        </p>
+                                    </div>
+                                    <div class="bg-rose-50 rounded-xl p-2 text-center border border-rose-100">
+                                        <p class="text-[9px] text-rose-600 font-bold uppercase tracking-wide">60+ ปี</p>
+                                        <p id="numAgeElderly" class="text-lg font-black text-rose-600 leading-tight">0
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ส่วนแสดงตารางรายชื่อและตัวกรอง -->
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-blue-50 overflow-hidden mt-6">
+
+                        <!-- แถบเครื่องมือ: ค้นหา / ตัวกรองอายุ / ปุ่มพิมพ์ -->
+                        <div
+                            class="p-4 border-b border-blue-50 flex flex-col lg:flex-row justify-between lg:items-center bg-blue-50/30 gap-3">
+                            <h3 class="font-bold text-blue-900 text-sm flex items-center shrink-0">
+                                <i class="fas fa-list-ul mr-2 text-blue-500"></i> รายชื่อผู้เข้าพักพิง (ปัจจุบัน)
+                            </h3>
+
+                            <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                                <!-- 1. ช่องค้นหาชื่อ/ที่อยู่ -->
+                                <div class="relative flex-1 sm:w-48">
+                                    <i
+                                        class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    <input type="text" id="evacSearchInput" onkeyup="applyEvacFilters()"
+                                        placeholder="ค้นหาชื่อ, ที่อยู่..."
+                                        class="w-full pl-8 pr-3 py-2 border border-blue-100 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-blue-300">
+                                </div>
+
+                                <!-- 2. ตัวกรองช่วงอายุ -->
+                                <select id="evacAgeFilter" onchange="applyEvacFilters()"
+                                    class="py-2 px-2 border border-blue-100 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-blue-300 bg-white font-bold text-slate-600">
+                                    <option value="all">ทุกช่วงอายุ</option>
+                                    <option value="infant">เด็กเล็ก (0-7 ปี)</option>
+                                    <option value="child">เด็กโต (8-15 ปี)</option>
+                                    <option value="adult">ผู้ใหญ่ (16-59 ปี)</option>
+                                    <option value="elderly">ผู้สูงอายุ (60+ ปี)</option>
+                                </select>
+
+                                <!-- 3. ตัวกรองสถานะสุขภาพ (เพิ่มใหม่) -->
+                                <select id="evacHealthFilter" onchange="applyEvacFilters()"
+                                    class="py-2 px-2 border border-rose-100 rounded-xl text-[11px] outline-none focus:ring-2 focus:ring-rose-300 bg-rose-50/30 font-bold text-rose-600">
+                                    <option value="all">ทุกสถานะสุขภาพ</option>
+                                    <option value="normal">ร่างกายปกติ</option>
+                                    <option value="sick">ป่วย / พิการ</option>
+                                    <option value="vulnerable">กลุ่มเปราะบาง</option>
+                                </select>
+
+                                <!-- 4. ปุ่มพิมพ์ตารางเฉพาะที่กรอง -->
+                                <button onclick="printFilteredEvacuees()"
+                                    class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95 flex items-center justify-center shadow-md">
+                                    <i class="fas fa-print mr-2"></i> พิมพ์ตาราง
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- พื้นที่ตาราง -->
+                        <div class="overflow-x-auto max-h-[550px] overflow-y-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                                    <tr class="text-[10px] text-slate-500 uppercase font-bold border-b border-blue-50">
+                                        <th class="p-3 text-center w-12">#</th>
+                                        <th class="p-3">ชื่อ-นามสกุล</th>
+                                        <th class="p-3">อายุ/เพศ</th>
+                                        <th class="p-3">สถานะสุขภาพ</th>
+                                        <th class="p-3">ศูนย์พักพิง</th>
+                                        <th class="p-3 text-center">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="evacueeTableBody" class="text-[11px] divide-y divide-slate-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 🌟 ตารางรายชื่อผู้ที่เดินทางกลับบ้านแล้ว (เพิ่มใหม่) -->
+                    <div class="bg-white rounded-[2rem] shadow-sm border border-emerald-100 overflow-hidden mt-8">
+                        <div
+                            class="p-4 border-b border-emerald-100 flex flex-col sm:flex-row justify-between items-start sm:items-center bg-emerald-50/40 gap-2">
+                            <h3 class="font-bold text-emerald-900 text-sm flex items-center shrink-0">
+                                <i class="fas fa-house-chimney-user mr-2 text-emerald-600"></i>
+                                รายชื่อผู้ประสบภัยที่เดินทางกลับบ้านแล้ว
+                                <span
+                                    class="ml-2 text-[10px] bg-emerald-600 text-white font-bold px-2.5 py-0.5 rounded-full shadow-sm"
+                                    id="returnedCountBadge">0 คน</span>
+                            </h3>
+                            <span
+                                class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
+                                <i class="fas fa-check-circle text-emerald-600"></i> เดินทางกลับบ้านปลอดภัยแล้ว
+                            </span>
+                        </div>
+                        <div class="overflow-x-auto max-h-[400px] overflow-y-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                                    <tr
+                                        class="text-[10px] text-slate-500 uppercase font-bold border-b border-emerald-100">
+                                        <th class="p-3 text-center w-12">#</th>
+                                        <th class="p-3">ชื่อ-นามสกุล</th>
+                                        <th class="p-3">อายุ/เพศ</th>
+                                        <th class="p-3">ศูนย์พักพิงเดิม</th>
+                                        <th class="p-3 text-center">สถานะ</th>
+                                        <th class="p-3 text-center">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="returnedTableBody" class="text-[11px] divide-y divide-slate-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <div id="dataModal"
+                        class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
+                        <div
+                            class="bg-white w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl transition-all scale-in-center">
+                            <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-6 text-center relative">
+                                <button onclick="closeDataModal()"
+                                    class="absolute top-4 right-4 text-white/50 hover:text-white transition-colors">
+                                    <i class="fas fa-times-circle text-2xl"></i>
+                                </button>
+
+                                <div
+                                    class="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-3 backdrop-blur-sm">
+                                    <i class="fas fa-user text-3xl text-white"></i>
+                                </div>
+                                <h3 id="modalName" class="text-xl font-black text-white mb-1">ชื่อ-นามสกุล</h3>
+                                <span id="modalShelter"
+                                    class="inline-block bg-amber-400 text-amber-950 px-4 py-1 rounded-full text-[11px] font-black uppercase tracking-wider shadow-lg">
+                                    ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา
+                                </span>
+                            </div>
+
+                            <div id="modalContent" class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                            </div>
+
+                            <div class="p-4 bg-slate-50">
+                                <button onclick="closeDataModal()"
+                                    class="w-full bg-slate-200 hover:bg-slate-300 text-slate-600 py-3.5 rounded-2xl font-bold transition-all">
+                                    ปิดหน้าต่างข้อมูล
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="reliefPage" class="content-page hidden animate-fade-in">
+
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+
+                        <div
+                            class="bg-white border border-amber-100 rounded-[2rem] p-4 shadow-sm flex items-center gap-4 min-w-[200px]">
+                            <div
+                                class="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 text-white rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-100">
+                                <i class="fas fa-boxes-stacked"></i>
+                            </div>
+                            <div>
+                                <p
+                                    class="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1.5 tracking-wider">
+                                    จำนวนถุงยังชีพที่แจกแล้ว</p>
+                                <div class="flex items-baseline gap-1">
+                                    <p id="totalReliefCount" class="text-3xl font-black text-slate-800 leading-none">0
+                                    </p>
+                                    <p class="text-xs font-bold text-slate-400">ชุด</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="stockModal"
+                            class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity opacity-0 duration-300">
+                            <div
+                                class="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl scale-95 transition-transform duration-300">
+                                <div
+                                    class="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                                    <h3 class="font-black text-slate-800"><i
+                                            class="fas fa-boxes mr-2 text-blue-500"></i>บันทึกรับเข้า/จ่ายออก</h3>
+                                    <button onclick="closeStockModal()"
+                                        class="text-slate-400 hover:text-red-500 transition-colors"><i
+                                            class="fas fa-times-circle text-xl"></i></button>
+                                </div>
+                                <form id="stockForm" onsubmit="saveStock(event)" class="p-6 space-y-4">
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase">ประเภท</label>
+                                        <select id="stock_type"
+                                            class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none font-bold text-slate-700 mt-1"
+                                            required>
+                                            <option value="in">รับของเข้าสต๊อก (+)</option>
+                                            <option value="out">ปรับลดยอดสต๊อก (-)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase">จำนวน
+                                            (ถุง)</label>
+                                        <input type="number" id="stock_amount" min="1"
+                                            class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none font-black text-xl text-slate-700 mt-1"
+                                            required placeholder="0">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase">หมายเหตุ
+                                            (แหล่งที่มา/เหตุผล)</label>
+                                        <input type="text" id="stock_note"
+                                            class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm mt-1"
+                                            placeholder="เช่น รับบริจาคจาก..., ของชำรุด">
+                                    </div>
+                                    <button type="submit"
+                                        class="w-full bg-blue-600 text-white py-4 rounded-xl font-black shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all mt-4">บันทึกสต๊อก</button>
+                                </form>
+                                <div class="px-6 pb-6">
+                                    <div class="border-t border-slate-100 pt-4 mb-3">
+                                        <h4
+                                            class="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
+                                            ประวัติการทำรายการล่าสุด</h4>
+                                    </div>
+
+                                    <div class="overflow-y-auto pr-1 border border-slate-50 rounded-xl"
+                                        style="max-height: 250px;">
+                                        <table class="w-full text-left border-collapse">
+                                            <thead class="sticky top-0 bg-white shadow-sm z-10">
+                                                <tr
+                                                    class="text-[9px] text-slate-400 font-bold uppercase border-b border-slate-100">
+                                                    <th class="p-2 w-1/4">วัน/เวลา</th>
+                                                    <th class="p-2 text-center w-1/4">ประเภท</th>
+                                                    <th class="p-2 text-right w-1/6">จำนวน</th>
+                                                    <th class="p-2 text-right w-1/3">หมายเหตุ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="stockTableBody" class="divide-y divide-slate-50">
+                                                <tr>
+                                                    <td colspan="4"
+                                                        class="text-center py-10 text-slate-300 italic text-xs">
+                                                        กำลังโหลดข้อมูล...</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- แถบเครื่องมือ: ค้นหา / ปุ่มพิมพ์ / ปุ่มบันทึก -->
+                        <div class="flex flex-col sm:flex-row gap-3 flex-1 lg:max-w-3xl">
+                            <!-- ช่องค้นหา -->
+                            <div class="relative flex-1 group">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i
+                                        class="fas fa-search text-slate-300 group-focus-within:text-amber-500 transition-colors text-sm"></i>
+                                </div>
+                                <input type="text" id="reliefSearchInput" onkeyup="filterReliefTable()"
+                                    placeholder="ค้นหาชื่อ หรือที่อยู่..."
+                                    class="w-full pl-11 pr-32 py-4 bg-white border border-slate-200 rounded-[1.5rem] outline-none focus:ring-4 focus:ring-amber-50 focus:border-amber-400 transition-all shadow-sm text-sm font-medium">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span id="reliefMatchCount"
+                                        class="text-[8px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100 uppercase">
+                                        Ready
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- ปุ่มพิมพ์ตาราง -->
+                            <button onclick="printReliefTable()"
+                                class="bg-slate-700 text-white px-6 py-4 rounded-[1.5rem] font-black shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center whitespace-nowrap">
+                                <i class="fas fa-print mr-2"></i> พิมพ์ตาราง
+                            </button>
+
+                            <!-- ปุ่มบันทึก -->
+                            <button onclick="openReliefModal()"
+                                class="bg-amber-500 text-white px-6 py-4 rounded-[1.5rem] font-black shadow-lg shadow-amber-200 hover:bg-amber-600 transition-all active:scale-95 flex items-center justify-center whitespace-nowrap">
+                                <i class="fas fa-plus-circle mr-2"></i> แจกถุงยังชีพ
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm mb-6 relative overflow-hidden">
+                        <div class="absolute -right-10 -top-10 text-slate-50 opacity-50 pointer-events-none">
+                            <i class="fas fa-boxes-stacked text-[150px]"></i>
+                        </div>
+
+                        <div class="flex justify-between items-center mb-5 relative z-10">
+                            <div>
+                                <h3 class="font-black text-slate-800 text-lg flex items-center tracking-tight">
+                                    <i class="fas fa-warehouse text-blue-500 mr-2"></i> คลังถุงยังชีพ
+                                </h3>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Inventory Management</p>
+                            </div>
+                            <button id="adminStockBtn" onclick="openStockModal()"
+                                class="flex bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all shadow-md active:scale-95 items-center">
+                                <i class="fas fa-plus-minus mr-2"></i> จัดการสต๊อก
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3 relative z-10">
+                            <div
+                                class="bg-blue-50/50 rounded-2xl p-4 border border-blue-100 flex flex-col justify-center">
+                                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">
+                                    รับเข้าทั้งหมด (In)</p>
+                                <p id="stockInCount" class="text-3xl font-black text-blue-700">0</p>
+                            </div>
+                            <div
+                                class="bg-rose-50/50 rounded-2xl p-4 border border-rose-100 flex flex-col justify-center">
+                                <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider mb-1">จ่ายออก
+                                    (Out)</p>
+                                <p id="stockOutCount" class="text-3xl font-black text-rose-700">0</p>
+                            </div>
+                            <div
+                                class="bg-emerald-50 rounded-2xl p-4 border border-emerald-200 shadow-sm flex flex-col justify-center transform scale-105">
+                                <p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">คงเหลือ
+                                    (Balance)</p>
+                                <p id="stockRemainCount" class="text-4xl font-black text-emerald-600">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                        <button onclick="filterByZone('zone1')"
+                            class="zone-filter-btn bg-white border-l-4 border-blue-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-blue-50 transition-all active:scale-95 focus:ring-2 focus:ring-blue-200"
+                            id="btn-zone1">
+                            <div>
+                                <span class="text-[10px] font-black text-blue-500 uppercase tracking-wider">Zone
+                                    1</span>
+                                <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">
+                                    ชุมชนตลาดกลางผลไม้</p>
+                            </div>
+                            <div class="mt-2 flex items-end justify-between w-full">
+                                <span id="zone1Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+                                <i class="fas fa-map-marker-alt text-blue-100 text-lg"></i>
+                            </div>
+                        </button>
+
+                        <button onclick="filterByZone('zone2')"
+                            class="zone-filter-btn bg-white border-l-4 border-amber-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-emerald-50 transition-all active:scale-95 focus:ring-2 focus:ring-emerald-200"
+                            id="btn-zone2">
+                            <div>
+                                <span class="text-[10px] font-black text-amber-500 uppercase tracking-wider">Zone
+                                    2</span>
+                                <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">
+                                    หลังสระรพช-ตรอ</p>
+                            </div>
+                            <div class="mt-2 flex items-end justify-between w-full">
+                                <span id="zone2Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+                                <i class="fas fa-map-marker-alt text-amber-100 text-lg"></i>
+                            </div>
+                        </button>
+
+                        <button onclick="filterByZone('zone3')"
+                            class="zone-filter-btn bg-white border-l-4 border-rose-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-amber-50 transition-all active:scale-95 focus:ring-2 focus:ring-amber-200"
+                            id="btn-zone3">
+                            <div>
+                                <span class="text-[10px] font-black text-rose-500 uppercase tracking-wider">Zone
+                                    3</span>
+                                <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">
+                                    เขาพระ-โรงฆ่าสัตว์</p>
+                            </div>
+                            <div class="mt-2 flex items-end justify-between w-full">
+                                <span id="zone3Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+                                <i class="fas fa-map-marker-alt text-rose-100 text-lg"></i>
+                            </div>
+                        </button>
+
+                        <button onclick="filterByZone('zone4')"
+                            class="zone-filter-btn bg-white border-l-4 border-emerald-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-purple-50 transition-all active:scale-95 focus:ring-2 focus:ring-purple-200"
+                            id="btn-zone4">
+                            <div>
+                                <span class="text-[10px] font-black text-emerald-500 uppercase tracking-wider">Zone
+                                    4</span>
+                                <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">
+                                    ดารุสสลาม-สุขาภิบาล</p>
+                            </div>
+                            <div class="mt-2 flex items-end justify-between w-full">
+                                <span id="zone4Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+                                <i class="fas fa-map-marker-alt text-emerald-100 text-lg"></i>
+                            </div>
+                        </button>
+
+                        <button onclick="filterByZone('zone5')"
+                            class="zone-filter-btn bg-white border-l-4 border-purple-400 rounded-xl p-3 shadow-sm flex flex-col justify-between text-left hover:bg-rose-50 transition-all active:scale-95 focus:ring-2 focus:ring-rose-200"
+                            id="btn-zone5">
+                            <div>
+                                <span class="text-[10px] font-black text-purple-500 uppercase tracking-wider">Zone
+                                    5</span>
+                                <p class="text-[11px] font-bold text-slate-600 leading-tight mt-0.5 line-clamp-1">บาลูกา
+                                </p>
+                            </div>
+                            <div class="mt-2 flex items-end justify-between w-full">
+                                <span id="zone5Count" class="text-2xl font-black text-slate-800 leading-none">0</span>
+                                <i class="fas fa-map-marker-alt text-purple-100 text-lg"></i>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div id="clearFilterArea" class="hidden mb-4 px-2">
+                        <button onclick="clearZoneFilter()"
+                            class="text-[10px] font-black text-rose-500 hover:text-rose-600 flex items-center bg-rose-50 px-3 py-1 rounded-full transition-all">
+                            <i class="fas fa-times-circle mr-1"></i> ล้างการกรองข้อมูลตามโซน
+                        </button>
+                    </div>
+                    <div
+                        class="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden transition-all">
+                        <div class="overflow-x-auto overflow-y-auto max-h-[650px] custom-scrollbar">
+                            <table class="w-full text-left border-collapse min-w-[750px]">
+                                <thead class="bg-slate-50 sticky top-0 z-10 shadow-sm">
+                                    <tr
+                                        class="text-[10px] text-slate-500 font-bold uppercase border-b border-slate-100">
+                                        <th class="p-5 text-center w-20">ลำดับ</th>
+                                        <th class="p-5">วัน-เวลา / ชื่อ-นามสกุลผู้รับ</th>
+                                        <th class="p-5">ที่อยู่ปัจจุบัน</th>
+                                        <th class="p-5 text-center">จำนวนผู้อาศัย</th>
+                                        <th class="p-5 text-center">สถานะผู้รับ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reliefTableBody" class="text-xs text-slate-700 divide-y divide-slate-50">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center px-4">
+                        <p class="text-[10px] text-slate-400 font-medium italic">* แสดงข้อมูลล่าสุดอยู่ด้านบนสุด</p>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[9px] font-bold text-green-600"><i
+                                    class="fas fa-check-circle mr-1"></i>เจ้าบ้าน</span>
+                            <span class="text-[9px] font-bold text-amber-600"><i
+                                    class="fas fa-exclamation-circle mr-1"></i>ผู้อาศัย</span>
+                        </div>
+                    </div>
+                </section>
+                <div id="reliefModal"
+                    class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div
+                        class="bg-white w-full max-w-lg rounded-[2.5rem] p-6 shadow-2xl overflow-y-auto max-h-[90vh] scale-in-center">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-black text-slate-800">บันทึกการแจกถุงยังชีพ</h3>
+                            <button type="button" onclick="closeReliefModal()"
+                                class="text-slate-400 hover:text-red-500 transition-colors"><i
+                                    class="fas fa-times-circle text-xl"></i></button>
+                        </div>
+
+                        <!-- 🌟 ส่วนที่เพิ่มใหม่: ปุ่มสแกนบัตรประชาชนด้วย AI OCR พร้อมตัวเลือก Engine -->
+                        <div
+                            class="mb-5 bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex flex-col items-center justify-center transition-all">
+
+                            <!-- 🌟 เพิ่ม Dropdown เลือก AI ตรงนี้ -->
+                            <div
+                                class="w-full flex items-center justify-between bg-white p-2.5 rounded-xl border border-indigo-100 mb-3 shadow-sm">
+                                <label class="text-[11px] font-bold text-indigo-800"><i class="fas fa-robot mr-1"></i>
+                                    เลือกระบบ AI อ่านบัตร:</label>
+                                <select id="swal_ocr_engine"
+                                    class="p-1.5 border border-indigo-200 bg-indigo-50 rounded-lg text-xs font-bold text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-300 transition-all cursor-pointer">
+                                    <option value="typhoon" selected>Typhoon OCR (ระบบหลัก)</option>
+                                    <option value="akson">Akson OCR (ระบบสำรอง)</option>
+                                </select>
+                            </div>
+
+                            <!-- input file ซ่อนไว้ ใช้สำหรับเปิดกล้องถ่ายรูป หรือเลือกไฟล์รูป -->
+                            <input type="file" id="ocr_id_card" accept="image/*" capture="environment" class="hidden"
+                                onchange="processIdCardOCR(event)">
+
+                            <button type="button" onclick="document.getElementById('ocr_id_card').click()"
+                                class="w-full py-3.5 bg-white text-indigo-600 font-black rounded-[1.2rem] shadow-sm border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-all active:scale-95 flex items-center justify-center group">
+                                <i class="fas fa-id-card text-xl mr-2 group-hover:scale-110 transition-transform"></i>
+                                สแกนบัตรประชาชน (AI OCR)
+                            </button>
+                            <p class="text-[10px] text-indigo-400 mt-2 font-bold"><i
+                                    class="fas fa-magic mr-1"></i>ดึงชื่อและที่อยู่ตามทะเบียนบ้านอัตโนมัติ</p>
+                        </div>
+
+                        <form id="reliefForm" onsubmit="saveReliefData(event)" class="space-y-4">
+
+                            <div>
+                                <label
+                                    class="text-[10px] font-bold text-slate-400 uppercase ml-1">ชื่อ-นามสกุลผู้รับ</label>
+                                <input type="text" id="rel_name"
+                                    class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-50 transition-all"
+                                    required>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">สถานะ</label>
+                                    <select id="rel_status"
+                                        class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-amber-400">
+                                        <option value="เจ้าบ้าน">เจ้าบ้าน</option>
+                                        <option value="ผู้อาศัย">ผู้อาศัย</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[10px] font-bold text-slate-400 uppercase ml-1">จำนวนผู้อาศัย</label>
+                                    <select id="rel_members"
+                                        class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-amber-400"></select>
+                                </div>
+                            </div>
+
+                            <!-- ส่วนที่อัปเดต: เปลี่ยนเป็นช่องค้นหา AutoComplete -->
+                            <div class="relative z-50">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ที่อยู่ปัจจุบัน
+                                    (ที่รับของ) - พิมพ์เพื่อค้นหา</label>
+                                <input type="text" id="rel_address_search"
+                                    onkeyup="handleReliefAddressSearch(this.value)" autocomplete="off"
+                                    class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
+                                    placeholder="พิมพ์ชื่อถนน, ชุมชน หรือพิมพ์ที่อยู่ใหม่..." required>
+
+                                <!-- กล่องแสดงผลค้นหาจะลอยอยู่เหนือฟิลด์ด้านล่าง -->
+                                <div id="rel_address_results"
+                                    class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl hidden max-h-48 overflow-y-auto z-[100] custom-scrollbar">
+                                </div>
+                            </div>
+
+                            <!-- ส่วนทะเบียนบ้าน (ถูกดันไปอยู่ Layer ต่ำกว่าเพื่อไม่ให้บังกล่องค้นหา) -->
+                            <div class="pt-2 relative z-0">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <input type="checkbox" id="rel_same_addr" onchange="copyAddress(this.checked)"
+                                        class="w-4 h-4 text-amber-500 border-slate-300 rounded focus:ring-amber-500 cursor-pointer">
+                                    <label for="rel_same_addr"
+                                        class="text-xs text-slate-500 font-bold cursor-pointer select-none">ที่อยู่ทะเบียนบ้าน
+                                        ตรงกับที่อยู่ปัจจุบัน</label>
+                                </div>
+                                <label
+                                    class="text-[10px] font-bold text-slate-400 uppercase ml-1">ที่อยู่ตามทะเบียนบ้าน</label>
+                                <textarea id="rel_regis_address"
+                                    class="w-full p-3.5 bg-slate-50 border border-slate-100 rounded-2xl outline-none h-20 focus:border-amber-400 focus:ring-2 focus:ring-amber-50 transition-all"
+                                    required></textarea>
+                            </div>
+
+                            <button type="submit"
+                                class="w-full bg-amber-500 text-white py-4 rounded-2xl font-black shadow-lg shadow-amber-200 hover:bg-amber-600 active:scale-95 transition-all mt-4">
+                                <i class="fas fa-save mr-2"></i> บันทึกข้อมูล
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+
+                </section>
+
+                <section id="regisPage" class="content-page hidden">
+                    <div class="bg-white p-6 md:p-10 rounded-3xl shadow-lg border border-blue-50 max-w-xl mx-auto">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div
+                                class="w-10 h-10 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-blue-900 tracking-tight">ลงทะเบียนผู้ประสบภัยอพยพ</h3>
+                        </div>
+
+                        <form id="regisForm" onsubmit="saveEvacuee(event)" class="space-y-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 ml-1">เข้าพักที่ศูนย์พักพิง</label>
+                                <div class="relative">
+                                    <select id="regis_shelter"
+                                        class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none appearance-none focus:ring-2 focus:ring-blue-400 transition-all font-bold text-blue-900"
+                                        required>
+                                        <option value="" disabled selected>กรุณาเลือกศูนย์พักพิง</option>
+                                        <option value="ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกาฯ">ศูนย์เทศบาลตำบลตันหยงมัส
+                                        </option>
+                                        <option value="ศูนย์มัสยิดตันหยงมัส">ศูนย์มัสยิดตันหยงมัส</option>
+                                        <option value="ศูนย์โรงเรียนบ้านเขาพระ">ศูนย์โรงเรียนบ้านเขาพระ</option>
+                                    </select>
+                                    <div
+                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-blue-400">
+                                        <i class="fas fa-chevron-down text-xs"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 ml-1">ชื่อ-นามสกุล</label>
+                                <input type="text" id="regis_name"
+                                    class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                                    placeholder="ระบุชื่อ และนามสกุล" required>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">อายุ (ปี)</label>
+                                    <input type="number" id="regis_age"
+                                        class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400"
+                                        placeholder="ตัวเลข" required>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">เพศ</label>
+                                    <select id="regis_gender"
+                                        class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400"
+                                        required>
+                                        <option value="ชาย">ชาย</option>
+                                        <option value="หญิง">หญิง</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">เลขบัตรประจำตัวประชาชน</label>
+                                    <input type="text" id="regis_idcard"
+                                        class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none"
+                                        placeholder="13 หลัก" maxlength="13">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 ml-1">เบอร์โทรศัพท์</label>
+                                    <input type="tel" id="regis_phone"
+                                        class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none"
+                                        placeholder="08XXXXXXXX">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 ml-1">ที่อยู่เดิม/ชุมชน</label>
+                                <select id="regis_address_select" onchange="toggleOtherAddress(this.value)"
+                                    class="w-full p-3.5 border border-blue-100 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                                    required>
+                                </select>
+                            </div>
+
+                            <div id="other_address_container" class="hidden animate-fade-in">
+                                <label class="text-xs font-bold text-blue-600 ml-1 italic">ระบุที่อยู่เพิ่มเติม
+                                    (บ้านเลขที่/ซอย/หมู่ที่)</label>
+                                <textarea id="regis_address_custom"
+                                    class="w-full p-3.5 border-2 border-blue-100 bg-white rounded-2xl outline-none focus:border-blue-400 h-20 shadow-inner"
+                                    placeholder="ระบุที่อยู่ที่ต้องการลงทะเบียน..."></textarea>
+                            </div>
+
+                            <div class="bg-amber-50 p-4 rounded-[2rem] border border-amber-100 space-y-3 shadow-sm">
+                                <label
+                                    class="text-xs font-bold text-amber-700 ml-1 italic uppercase">สถานะสุขภาพ/กลุ่มเปราะบาง</label>
+                                <div class="grid grid-cols-1 gap-2">
+                                    <select id="regis_health_type" onchange="toggleHealthNote(this.value)"
+                                        class="w-full p-3 border border-amber-200 bg-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-400">
+                                        <option value="ปกติ">สุขภาพปกติ</option>
+                                        <option value="ผู้ป่วย">ผู้ป่วย</option>
+                                        <option value="ผู้พิการ">ผู้พิการ</option>
+                                        <option value="กลุ่มเปราะบาง">กลุ่มเปราะบาง (คนชรา/เด็กทารก)</option>
+                                    </select>
+                                </div>
+
+                                <div id="health_note_container" class="hidden animate-fade-in">
+                                    <label
+                                        class="text-[10px] font-bold text-amber-600 ml-1">รายละเอียดอาการ/โรคประจำตัว</label>
+                                    <textarea id="regis_health_note"
+                                        class="w-full p-3 border border-amber-200 bg-white rounded-xl h-20 text-sm outline-none shadow-inner"
+                                        placeholder="ระบุรายละเอียดเพิ่มเติม..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <button type="submit" id="saveRegisBtn"
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-[1.5rem] font-black text-lg shadow-xl shadow-blue-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                    <i class="fas fa-check-circle"></i>
+                                    ยืนยันการลงทะเบียน
+                                </button>
+                                <p class="text-center text-[10px] text-slate-400 mt-3 italic">*
+                                    ตรวจสอบความถูกต้องของข้อมูลก่อนกดยืนยัน</p>
+                            </div>
+                        </form>
+                </section>
+                <section id="userManagementPage" class="content-page hidden animate-fade-in">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-black text-slate-800 tracking-tight">จัดการผู้ใช้งานระบบ</h2>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">User & Role
+                                Management</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="col-span-1 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm h-fit">
+                            <h3 class="font-bold text-slate-700 mb-4 flex items-center"><i
+                                    class="fas fa-user-plus mr-2 text-blue-500"></i>เพิ่ม / แก้ไขสิทธิ์</h3>
+                            <form id="userForm" onsubmit="saveUser(event)" class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">ชื่อผู้ใช้งาน
+                                        (Username)</label>
+                                    <input type="text" id="manage_username"
+                                        class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none focus:border-blue-400 text-sm font-bold text-slate-700"
+                                        required placeholder="ระบุชื่อผู้ใช้...">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase ml-1">สิทธิ์การเข้าถึง
+                                        (Role)</label>
+                                    <select id="manage_role"
+                                        class="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl outline-none text-sm font-bold text-slate-700"
+                                        required>
+                                        <option value="admin">Admin (เข้าได้ทุกหน้า)</option>
+                                        <option value="shelter">Shelter (เฉพาะศูนย์พักพิง)</option>
+                                        <option value="water_staff">Water Staff (เฉพาะการจัดการระดับน้ำ)</option>
+                                        <option value="relief">Relief Staff (เฉพาะการจัดการถุงยังชีพ)</option>
+                                        <option value="community">Community (ตัวแทนชุมชน - ระดับน้ำและอพยพ)</option>
+                                        <!-- เพิ่มบรรทัดนี้ -->
+                                    </select>
+                                </div>
+                                <button type="submit"
+                                    class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 transition-all shadow-md">บันทึกข้อมูล</button>
+                            </form>
+                        </div>
+
+                        <div
+                            class="col-span-1 md:col-span-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                            <div class="p-4 border-b border-slate-50 bg-slate-50/50">
+                                <h3 class="font-bold text-slate-700 text-sm">รายชื่อผู้ใช้งานทั้งหมด</h3>
+                            </div>
+                            <div class="overflow-x-auto max-h-[400px] custom-scrollbar">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-50 sticky top-0">
+                                        <tr
+                                            class="text-[10px] text-slate-400 font-bold uppercase border-b border-slate-100">
+                                            <th class="p-4">ชื่อผู้ใช้งาน</th>
+                                            <th class="p-4 text-center">สิทธิ์ (Role)</th>
+                                            <th class="p-4 text-center">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userTableBody" class="text-sm text-slate-700 divide-y divide-slate-50">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="lookerPage" class="page-section hidden max-w-7xl mx-auto space-y-6 fade-in pb-10">
+                    <!-- ส่วนหัวข้อและการพิมพ์รายงาน -->
+                    <div
+                        class="relative bg-gradient-to-r from-blue-700 via-indigo-600 to-indigo-500 p-6 md:p-8 rounded-[2rem] shadow-xl border border-indigo-400/30 overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div
+                            class="absolute -top-24 -left-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none">
+                        </div>
+                        <div
+                            class="absolute -bottom-24 -right-24 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl pointer-events-none">
+                        </div>
+                        <div class="relative z-10 flex items-center gap-4">
+                            <div
+                                class="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/30 shadow-inner shrink-0">
+                                <i class="fas fa-file-invoice text-2xl drop-shadow-sm"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl md:text-3xl font-black text-white tracking-tight drop-shadow-md">
+                                    รายงานข้อมูลน้ำท่วม</h1>
+                                <p class="text-indigo-100 text-xs md:text-sm font-medium mt-1">
+                                    สรุปข้อมูลเชิงสถิติและแผนที่พื้นที่เสี่ยงภัยแบบอินเตอร์แอคทีฟ</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- การ์ดสรุปจำนวนสถิติต่างๆ -->
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <!-- การ์ด 1: ครัวเรือน -->
+                        <div
+                            class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-between transition hover:shadow-md hover:border-blue-100 duration-300">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-wider">จำนวนครัวเรือน</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 mt-4">
+                                <span id="flood_statHouseholds"
+                                    class="text-3xl font-black text-slate-700 leading-none font-sans">0</span>
+                                <span class="text-[10px] font-bold text-slate-400">ครัวเรือน</span>
+                            </div>
+                        </div>
+
+                        <!-- การ์ด 2: ประชากร -->
+                        <div
+                            class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-between transition hover:shadow-md hover:border-blue-100 duration-300">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-wider">จำนวนประชากร</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 mt-4">
+                                <span id="flood_statPopulation"
+                                    class="text-3xl font-black text-slate-700 leading-none font-sans">0</span>
+                                <span class="text-[10px] font-bold text-slate-400">คน</span>
+                            </div>
+                        </div>
+
+                        <!-- การ์ด 3: บ้านไม่มีเลขที่ -->
+                        <div
+                            class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-between transition hover:shadow-md hover:border-blue-100 duration-300">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-inner">
+                                    <i class="fas fa-house-chimney-user"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-wider">บ้านไม่มีเลขที่</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 mt-4">
+                                <span id="flood_statNoHouseNumber"
+                                    class="text-3xl font-black text-amber-600 leading-none font-sans">0</span>
+                                <span class="text-[10px] font-bold text-amber-500">หลัง</span>
+                            </div>
+                        </div>
+
+                        <!-- การ์ด 4: กลุ่มเปราะบาง -->
+                        <div
+                            class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-between transition hover:shadow-md hover:border-blue-100 duration-300">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-inner">
+                                    <i class="fas fa-baby"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-wider">กลุ่มเปราะบาง</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 mt-4">
+                                <span id="flood_statVulnerable"
+                                    class="text-3xl font-black text-rose-600 leading-none font-sans">0</span>
+                                <span class="text-[10px] font-bold text-rose-500">คน</span>
+                            </div>
+                        </div>
+
+                        <!-- การ์ด 5: ผู้สูงอายุ/ผู้พิการ -->
+                        <div
+                            class="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-5 flex flex-col justify-between transition hover:shadow-md hover:border-blue-100 duration-300">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-inner">
+                                    <i class="fas fa-wheelchair"></i>
+                                </div>
+                                <span
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-wider">สูงอายุ/ผู้พิการ</span>
+                            </div>
+                            <div class="flex items-baseline gap-1 mt-4">
+                                <span id="flood_statElderlyDisabled"
+                                    class="text-3xl font-black text-purple-600 leading-none font-sans">0</span>
+                                <span class="text-[10px] font-bold text-purple-500">คน</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- แถวที่ 1: แผนที่เต็มหน้าจอ -->
+                    <div
+                        class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col">
+                        <div
+                            class="p-5 border-b border-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/20">
+                            <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                                <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider">
+                                    แผนที่รายงานพิกัดและระดับความเสี่ยง</h3>
+                            </div>
+                            <div
+                                class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-full border border-blue-100 self-start sm:self-auto font-sans">
+                                Flood_DATA</div>
+                        </div>
+
+                        <!-- กล่องฟิลเตอร์และเสิร์ช -->
+                        <div class="p-5 border-b border-slate-50 bg-slate-50/5 flex flex-col sm:flex-row gap-3">
+                            <!-- ช่องค้นหา -->
+                            <div class="relative flex-1" id="floodSearchWrapper">
+                                <span
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 text-sm">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" id="floodSearchInput" oninput="handleFloodSearchInput(this.value)"
+                                    onfocus="handleFloodSearchFocus()" placeholder="ค้นหาตามชื่อ หรือที่อยู่..."
+                                    class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-xs font-bold text-slate-700 focus:border-blue-400 focus:bg-white transition-all shadow-inner"
+                                    autocomplete="off">
+                                <div id="floodSearchSuggestions"
+                                    class="hidden absolute left-0 right-0 mt-2 bg-white/90 backdrop-blur-md border border-slate-100 rounded-2xl shadow-xl z-50 max-h-60 overflow-y-auto custom-scrollbar text-xs font-bold text-slate-700 divide-y divide-slate-50 transition-all duration-200">
+                                </div>
+                            </div>
+                            <!-- ตัวกรองสถานะความเสี่ยง -->
+                            <div class="w-full sm:w-48 shrink-0">
+                                <select id="floodRiskFilter" onchange="filterFloodMap()"
+                                    class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl outline-none text-xs font-bold text-slate-700 focus:border-blue-400 focus:bg-white cursor-pointer">
+                                    <option value="all">ระดับความเสี่ยงทั้งหมด</option>
+                                    <option value="กลุ่มเปราะบาง">กลุ่มเปราะบาง</option>
+                                    <option value="กลุ่มผู้พิการ/ผู้สูงอายุ">กลุ่มผู้พิการ/ผู้สูงอายุ</option>
+                                    <option value="ปกติ">ปกติ</option>
+                                </select>
+                            </div>
+                            <!-- กรองบ้านไม่มีเลขที่ -->
+                            <button onclick="toggleUnnumberedFilter()" id="floodUnnumberedFilterBtn"
+                                class="px-4 py-3 border border-slate-200 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0 bg-slate-50 text-slate-600 hover:bg-slate-100">
+                                <i class="fas fa-house-circle-exclamation"></i> เฉพาะบ้านไม่มีเลขที่
+                            </button>
+                        </div>
+
+                        <!-- แผนที่ Leaflet -->
+                        <div class="relative h-[450px] w-full">
+                            <div id="floodReportMap" class="w-full h-full z-10"></div>
+                        </div>
+
+                        <!-- แถบอธิบายสัญลักษณ์ (Legend) -->
+                        <div
+                            class="p-4 bg-slate-50/50 flex flex-wrap gap-4 justify-center border-t border-slate-100 text-xs font-bold text-slate-500">
+                            <div class="flex items-center space-x-2">
+                                <div
+                                    class="w-3.5 h-3.5 rounded-full bg-red-500 border border-white shadow-sm critical-pulse">
+                                </div>
+                                <span>กลุ่มเปราะบาง (สีแดง)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3.5 h-3.5 rounded-full bg-yellow-400 border border-white shadow-sm"></div>
+                                <span>กลุ่มผู้พิการ/ผู้สูงอายุ (สีเหลือง)</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3.5 h-3.5 rounded-full bg-blue-500 border border-white shadow-sm"></div>
+                                <span>ปกติ (สีน้ำเงิน)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- แถวที่ 2: ตารางสรุปรายชื่อ + แผนที่รูปภาพพื้นที่เสี่ยงภัย -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- ตารางสรุปรายชื่อผู้ประสบภัย (Left, col-span-2) -->
+                        <div
+                            class="lg:col-span-2 bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col justify-between">
+                            <div>
+                                <div
+                                    class="p-5 border-b border-slate-50 bg-slate-50/20 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                        <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider">
+                                            รายชื่อข้อมูลผู้ประสบภัยน้ำท่วม</h3>
+                                    </div>
+                                    <span id="floodTableCount"
+                                        class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100 font-sans">0
+                                        ครัวเรือน</span>
+                                </div>
+                                <div class="overflow-x-auto max-h-[400px] custom-scrollbar">
+                                    <table class="w-full text-left border-collapse text-xs">
+                                        <thead
+                                            class="bg-slate-50 sticky top-0 font-bold text-slate-500 border-b border-slate-100">
+                                            <tr>
+                                                <th class="p-4 whitespace-nowrap">ชื่อ-สกุล</th>
+                                                <th class="p-4 whitespace-nowrap">ที่อยู่</th>
+                                                <th class="p-4 whitespace-nowrap text-center">ความเสี่ยง</th>
+                                                <th class="p-4 whitespace-nowrap text-center">จำนวนสมาชิก</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="floodTableBody"
+                                            class="text-slate-700 divide-y divide-slate-50 font-medium">
+                                            <!-- ข้อมูลจะแสดงผ่าน JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- การ์ดรูปภาพแผนที่เสี่ยงภัย (Right, col-span-1) -->
+                        <div
+                            class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col justify-between">
+                            <div>
+                                <div
+                                    class="p-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                                        <h3 class="text-sm font-black text-slate-700 uppercase tracking-wider">
+                                            แผนที่รูปภาพพื้นที่เสี่ยง</h3>
+                                    </div>
+                                    <span
+                                        class="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100 font-sans">ภาพนิ่ง</span>
+                                </div>
+
+                                <div class="p-5">
+                                    <div id="riskMapImageWrapper"
+                                        class="relative rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 aspect-video md:aspect-square flex items-center justify-center group/img">
+                                        <img id="riskMapImg" src="" onclick="openFullscreenRiskMap()"
+                                            class="hidden w-full h-full object-contain transition-transform duration-500 group-hover/img:scale-105 cursor-pointer hover:brightness-95"
+                                            alt="แผนที่พื้นที่เสี่ยงภัย">
+                                        <div id="riskMapPlaceholder"
+                                            class="flex flex-col items-center justify-center p-6 text-center text-slate-400">
+                                            <i class="fas fa-map-location-dot text-4xl mb-3 text-slate-300"></i>
+                                            <p class="text-xs font-bold">ยังไม่ได้อัปโหลดแผนที่พื้นที่เสี่ยง</p>
+                                            <p class="text-[10px] text-slate-400 mt-1">อัปโหลดแผนที่เพื่อแสดงผลตรงนี้
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="riskMapAdminUpload" class="hidden p-5 border-t border-slate-50 bg-slate-50/50">
+                                <label
+                                    class="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">อัปโหลดภาพแผนที่ใหม่
+                                    (เข้า Google Drive)</label>
+                                <div class="relative flex items-center justify-between gap-3">
+                                    <input type="file" id="riskMapFileInput" onchange="uploadRiskMapImage(event)"
+                                        accept="image/*" class="hidden">
+                                    <button onclick="document.getElementById('riskMapFileInput').click()"
+                                        id="uploadRiskMapBtn"
+                                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md">
+                                        <i class="fas fa-cloud-arrow-up"></i> เลือกไฟล์และอัปโหลด
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+    <div id="printArea" class="hidden">
+        <div class="print-page">
+            <div class="report-header">
+                <h1 class="text-2xl font-black">รายงานสรุปสถิติผู้พักพิง ศูนย์พักพิงชั่วคราวเทศบาลตำบลตันหยงมัส</h1>
+                <p class="text-sm mt-1">ข้อมูล ณ วันที่ <span id="printDate"></span></p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+                <div
+                    style="border: 2px solid #cbd5e1; border-radius: 12px; padding: 12px; text-align: center; background: #f8fafc;">
+                    <p style="font-size: 10px; font-weight: bold; color: #64748b;">ยอดผู้พักพิงรวม</p>
+                    <h2 id="printTotalEvacuees" style="font-size: 28px; font-weight: 900; margin: 2px 0;">0</h2>
+                    <p style="font-size: 9px; color: #94a3b8;">ราย</p>
+                </div>
+
+                <div
+                    style="border: 2px solid #cbd5e1; border-radius: 12px; padding: 12px; text-align: center; background: #f8fafc;">
+                    <p style="font-size: 10px; font-weight: bold; color: #64748b;">จำนวนครัวเรือน</p>
+                    <h2 id="printTotalHouseholds" style="font-size: 28px; font-weight: 900; margin: 2px 0;">0</h2>
+                    <p style="font-size: 9px; color: #94a3b8;">ครัวเรือน</p>
+                </div>
+                <div
+                    style="border: 2px solid #3b82f6; border-radius: 12px; padding: 12px; text-align: center; background: #eff6ff;">
+                    <p style="font-size: 10px; font-weight: bold; color: #1d4ed8;">แยกเพศ (ชาย/หญิง)</p>
+                    <div style="display: flex; justify-content: space-around; align-items: baseline; margin-top: 5px;">
+                        <div><span id="printMaleTotal" style="font-size: 22px; font-weight: 900;">0</span><small>
+                                ชาย</small></div>
+                        <div style="border-left: 1px solid #bfdbfe; height: 20px;"></div>
+                        <div><span id="printFemaleTotal" style="font-size: 22px; font-weight: 900;">0</span><small>
+                                หญิง</small></div>
+                    </div>
+                </div>
+                <div
+                    style="border: 2px solid #e11d48; border-radius: 12px; padding: 12px; text-align: center; background: #fff1f2;">
+                    <p style="font-size: 10px; font-weight: bold; color: #be123c;">กลุ่มเปราะบาง/ป่วย</p>
+                    <h2 id="printTotalHealth" style="font-size: 28px; font-weight: 900; margin: 2px 0; color: #e11d48;">
+                        0</h2>
+                    <p style="font-size: 9px; color: #fb7185;">ราย</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                    <h3
+                        style="font-size: 12px; font-weight: 800; border-bottom: 2px solid #3b82f6; padding-bottom: 5px; margin-bottom: 8px;">
+                        แยกตามศูนย์</h3>
+                    <div id="printShelterList" style="font-size: 10px;" class="space-y-1"></div>
+                </div>
+                <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                    <h3
+                        style="font-size: 12px; font-weight: 800; border-bottom: 2px solid #f59e0b; padding-bottom: 5px; margin-bottom: 8px;">
+                        แยกตามช่วงอายุ</h3>
+                    <div id="printAgeList" style="font-size: 10px;" class="space-y-1"></div>
+                </div>
+                <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px;">
+                    <h3
+                        style="font-size: 12px; font-weight: 800; border-bottom: 2px solid #e11d48; padding-bottom: 5px; margin-bottom: 8px;">
+                        สถานะสุขภาพ</h3>
+                    <div id="printHealthList" style="font-size: 10px;" class="space-y-1"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="print-page page-break">
+            <div class="report-header" style="text-align: left; border-bottom: 1px solid #eee;">
+                <h2 class="text-lg font-bold">บัญชีรายชื่อผู้ลงทะเบียน</h2>
+            </div>
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">ลำดับ</th>
+                        <th>ศูนย์พักพิง</th>
+                        <th>ชื่อ-นามสกุล</th>
+                        <th>เพศ</th>
+                        <th>อายุ</th>
+                        <th>ที่อยู่</th>
+                        <th>เบอร์โทรศัพท์</th>
+                    </tr>
+                </thead>
+                <tbody id="printTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="imageLightbox" onclick="closeLightbox()"
+        class="hidden fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity opacity-0 duration-300">
+        <button onclick="closeLightbox()"
+            class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-50">
+            <i class="fas fa-times-circle text-4xl drop-shadow-lg"></i>
+        </button>
+
+        <img id="lightboxImg" src=""
+            class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl scale-95 transition-transform duration-300"
+            onclick="event.stopPropagation()">
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+
+</html>
