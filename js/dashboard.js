@@ -1921,7 +1921,7 @@ window.currentFilteredData = [];
                 }
             });
 
-            // --- 🌟 อัปเดตตัวเลขเข้าสู่การ์ดสรุปสถานะการอพยพ ---
+            // --- 🌟 อัปเดตตัวเลขเข้าสู่การ์ดสรุปสถานะการอพยพ (ทั้งหน้ารายงานสถานะ และ หน้าหลัก ภาพรวม) ---
             if (document.getElementById('sumEvacTotal')) document.getElementById('sumEvacTotal').innerText = evacPeople.toLocaleString();
             if (document.getElementById('sumEvacHousehold')) document.getElementById('sumEvacHousehold').innerText = evacHouseholds.toLocaleString();
             if (document.getElementById('sumEvacCenter')) document.getElementById('sumEvacCenter').innerText = centerPeople.toLocaleString();
@@ -1929,6 +1929,15 @@ window.currentFilteredData = [];
 
             if (document.getElementById('sumSafeTotal')) document.getElementById('sumSafeTotal').innerText = safePeople.toLocaleString();
             if (document.getElementById('sumSafeHousehold')) document.getElementById('sumSafeHousehold').innerText = safeHouseholds.toLocaleString();
+
+            // อัปเดตการ์ดหน้าหลัก (ภาพรวม Dashboard) ให้ซิงค์ 100%
+            if (document.getElementById('dash_sumEvacTotal')) document.getElementById('dash_sumEvacTotal').innerText = evacPeople.toLocaleString();
+            if (document.getElementById('dash_sumEvacHousehold')) document.getElementById('dash_sumEvacHousehold').innerText = evacHouseholds.toLocaleString();
+            if (document.getElementById('dash_sumEvacCenter')) document.getElementById('dash_sumEvacCenter').innerText = centerPeople.toLocaleString();
+            if (document.getElementById('dash_sumEvacOther')) document.getElementById('dash_sumEvacOther').innerText = otherPeople.toLocaleString();
+
+            if (document.getElementById('dash_sumSafeTotal')) document.getElementById('dash_sumSafeTotal').innerText = safePeople.toLocaleString();
+            if (document.getElementById('dash_sumSafeHousehold')) document.getElementById('dash_sumSafeHousehold').innerText = safeHouseholds.toLocaleString();
         };
 
         // เรียกใช้งาน window.loadEvacuationMarkers จากหน้ารายงาน
@@ -4003,57 +4012,10 @@ window.currentFilteredData = [];
             // 1. สั่งอัปเดตหมุดแผนที่ระดับน้ำ
             if (typeof updateDashWaterMapMarkers === 'function') updateDashWaterMapMarkers();
 
-            // 🌟 2. คำนวณข้อมูลการอพยพ (ส่วนที่เพิ่มใหม่)
-            let evacTotalPeople = 0;
-            let evacTotalHouseholds = 0;
-            let evacCenterPeople = 0;
-            let evacOtherPeople = 0;
-            let safeTotalPeople = 0;
-            let safeTotalHouseholds = 0;
-
-            if (store.evacReports && store.evacReports.length > 0) {
-                // กรองเอาเฉพาะข้อมูลการรายงานล่าสุดของแต่ละที่อยู่
-                const latestReports = {};
-                store.evacReports.forEach(report => {
-                    const address = report[1] ? report[1].toString().trim() : '';
-                    const time = new Date(report[0]).getTime();
-                    if (address && (!latestReports[address] || time > latestReports[address].time)) {
-                        latestReports[address] = { data: report, time: time };
-                    }
-                });
-
-                // วนลูปบวกเลขจากข้อมูลล่าสุด
-                Object.values(latestReports).forEach(item => {
-                    const report = item.data;
-                    const count = parseInt(report[2]) || 0;
-                    const destType = report[3]; // 'ศูนย์' หรือ 'ที่อื่น'
-                    const status = report[8] ? report[8].toString().trim() : 'อพยพ';
-
-                    // 🌟 แยกคำนวณตามสถานะ
-                    if (status === 'ปลอดภัย') {
-                        safeTotalHouseholds++;
-                        safeTotalPeople += count;
-                    } else {
-                        evacTotalHouseholds++;
-                        evacTotalPeople += count;
-                        if (destType === 'ศูนย์') {
-                            evacCenterPeople += count;
-                        } else {
-                            evacOtherPeople += count;
-                        }
-                    }
-                });
+            // 🌟 2. คำนวณและอัปเดตข้อมูลการอพยพ/ปลอดภัยขึ้นการ์ดแบบ Auto-Sync
+            if (typeof window.loadEvacuationMarkers === 'function') {
+                window.loadEvacuationMarkers();
             }
-
-            // อัปเดตตัวเลขขึ้นการ์ดหน้า Dashboard
-            if (document.getElementById('dash_sumEvacTotal')) document.getElementById('dash_sumEvacTotal').innerText = evacTotalPeople.toLocaleString();
-            if (document.getElementById('dash_sumEvacHousehold')) document.getElementById('dash_sumEvacHousehold').innerText = evacTotalHouseholds.toLocaleString();
-            if (document.getElementById('dash_sumEvacCenter')) document.getElementById('dash_sumEvacCenter').innerText = evacCenterPeople.toLocaleString();
-            if (document.getElementById('dash_sumEvacOther')) document.getElementById('dash_sumEvacOther').innerText = evacOtherPeople.toLocaleString();
-
-            // 🌟 อัปเดตตัวเลขการ์ดปลอดภัยหน้า Dashboard
-            if (document.getElementById('dash_sumSafeTotal')) document.getElementById('dash_sumSafeTotal').innerText = safeTotalPeople.toLocaleString();
-            if (document.getElementById('dash_sumSafeHousehold')) document.getElementById('dash_sumSafeHousehold').innerText = safeTotalHouseholds.toLocaleString();
 
             // 3. คำนวณข้อมูลศูนย์พักพิง
             const evacuees = store.evacuees || [];
