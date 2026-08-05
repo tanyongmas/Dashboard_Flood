@@ -447,6 +447,7 @@ window.currentFilteredData = [];
                 }
                 if (typeof initDashOneMap === 'function') initDashOneMap();
                 if (typeof renderDashOneMapLayers === 'function') renderDashOneMapLayers();
+                if (typeof window.loadEvacuationMarkers === 'function') window.loadEvacuationMarkers();
 
                 // โหลดข้อมูลเข้าหน้ารายงานน้ำท่วมด้วย
                 if (typeof renderFloodReportDashboard === 'function') {
@@ -1643,31 +1644,49 @@ window.currentFilteredData = [];
 
             evacMarkerLayer.clearLayers();
 
-            if (!store.addressEvac || !store.evacReports) {
-                console.warn("ไม่พบข้อมูล Address_Evacuation หรือ Evacuation_Reports");
-                return;
+            const coordsMap = {};
+            if (store.addressEvac) {
+                store.addressEvac.forEach(row => {
+                    const address = row[0] ? row[0].toString().trim() : '';
+                    const lat = parseFloat(row[1]);
+                    const lng = parseFloat(row[2]);
+                    if (address && !isNaN(lat) && !isNaN(lng)) {
+                        coordsMap[address] = { lat, lng };
+                    }
+                });
             }
 
-            const coordsMap = {};
-            store.addressEvac.forEach(row => {
-                const address = row[0] ? row[0].toString().trim() : '';
-                const lat = parseFloat(row[1]);
-                const lng = parseFloat(row[2]);
-                if (address && !isNaN(lat) && !isNaN(lng)) {
-                    coordsMap[address] = { lat, lng };
+            // จัดกลุ่มผู้เข้าพักพิงในศูนย์พักพิง (store.evacuees) แยกตามที่อยู่บ้าน
+            const evacuees = store.evacuees || [];
+            const houseShelterMap = {};
+            evacuees.forEach(r => {
+                const sName = (r[1] || '').toString().trim();
+                const address = (r[2] || '').toString().trim();
+                const name = (r[4] || '').toString().trim();
+                const health = (r[8] || 'ปกติ').toString().trim();
+                const status = (r[10] || '').toString().trim();
+
+                if (address && status !== 'กลับบ้านแล้ว') {
+                    if (!houseShelterMap[address]) {
+                        houseShelterMap[address] = { count: 0, members: [], shelters: new Set() };
+                    }
+                    houseShelterMap[address].count += 1;
+                    houseShelterMap[address].members.push({ name, shelter: sName, health });
+                    if (sName) houseShelterMap[address].shelters.add(sName);
                 }
             });
 
             const latestReports = {};
-            store.evacReports.forEach(report => {
-                const address = report[1] ? report[1].toString().trim() : '';
-                const time = new Date(report[0]).getTime();
-                if (address && (!latestReports[address] || time > latestReports[address].time)) {
-                    latestReports[address] = { data: report, time: time };
-                }
-            });
+            if (store.evacReports && store.evacReports.length > 0) {
+                store.evacReports.forEach(report => {
+                    const address = report[1] ? report[1].toString().trim() : '';
+                    const time = new Date(report[0]).getTime();
+                    if (address && (!latestReports[address] || time > latestReports[address].time)) {
+                        latestReports[address] = { data: report, time: time };
+                    }
+                });
+            }
 
-            // --- 🌟 ประกาศตัวแปรแยกสำหรับอพยพและปลอดภัย ---
             let evacPeople = 0;
             let evacHouseholds = 0;
             let centerPeople = 0;
@@ -1676,34 +1695,48 @@ window.currentFilteredData = [];
             let safePeople = 0;
             let safeHouseholds = 0;
 
+            const processedAddresses = new Set();
+
+            // 1. ประมวลผลจากรายงานสถานะ (Evacuation Reports)
             Object.values(latestReports).forEach(item => {
                 const report = item.data;
                 const timestamp = new Date(report[0]).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
                 const address = report[1].toString().trim();
-                const count = parseInt(report[2]) || 0;
-                const destType = report[3];
-                const destName = report[4];
+                processedAddresses.add(address);
+
+                let count = parseInt(report[2]) || 0;
+                let destType = report[3];
+                let destName = report[4];
                 const reporter = report[5] || 'ไม่มีข้อมูล';
                 const customCoords = report[6] ? report[6].toString().trim() : '';
                 const evacName = report[7] ? report[7].toString().trim() : '<span class="text-slate-400 italic font-normal">ไม่ระบุชื่อ</span>';
                 const status = report[8] ? report[8].toString().trim() : 'อพยพ';
                 const note = report[9] ? report[9].toString().trim() : '-';
 
-                // --- 🌟 แยกการคำนวณยอด ---
+                const shelterHouseData = houseShelterMap[address];
+                if (shelterHouseData && status !== 'ปลอดภัย') {
+                    count = Math.max(count, shelterHouseData.count);
+                    destType = 'ศูนย์';
+                    if (shelterHouseData.shelters.size > 0) {
+                        destName = Array.from(shelterHouseData.shelters).join(', ');
+                    }
+                }
+
+                // สรุปยอด
                 if (status === 'ปลอดภัย') {
-                    safeHouseholds++; // นับครัวเรือนปลอดภัย
-                    safePeople += count; // นับคนปลอดภัย
+                    safeHouseholds++;
+                    safePeople += count;
                 } else {
-                    evacHouseholds++; // นับครัวเรือนที่อพยพ
-                    evacPeople += count; // นับคนอพยพ
-                    if (destType === 'ศูนย์') {
+                    evacHouseholds++;
+                    evacPeople += count;
+                    if (destType === 'ศูนย์' || shelterHouseData) {
                         centerPeople += count;
                     } else {
                         otherPeople += count;
                     }
                 }
 
-                // --- วาดหมุด ---
+                // วาดหมุด
                 let pos = null;
                 if (customCoords && customCoords.includes(',')) {
                     const parts = customCoords.split(',');
@@ -1713,23 +1746,22 @@ window.currentFilteredData = [];
                 }
 
                 if (pos) {
-                    // 🌟 กำหนดสีและไอคอนตามสถานะ
-                    let markerColor = '#8b5cf6'; // สีม่วงสำหรับอพยพไปที่อื่น
+                    let markerColor = '#8b5cf6';
                     let iconClass = 'fa-house-user';
-                    let bgHeaderColor = 'bg-orange-500'; // สีหัว Popup
+                    let bgHeaderColor = 'bg-orange-500';
                     let statusBadge = '';
 
                     if (status === 'ปลอดภัย') {
-                        markerColor = '#10b981'; // 🟢 สีเขียว (ปลอดภัย)
+                        markerColor = '#10b981';
                         iconClass = 'fa-check-circle';
                         bgHeaderColor = 'bg-emerald-500';
                         statusBadge = '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-bold ml-2">ปลอดภัย</span>';
-                    } else if (destType === 'ศูนย์') {
-                        markerColor = '#3b82f6'; // 🔵 สีน้ำเงิน (อพยพเข้าศูนย์)
+                    } else if (destType === 'ศูนย์' || shelterHouseData) {
+                        markerColor = '#3b82f6';
                         iconClass = 'fa-campground';
                         bgHeaderColor = 'bg-blue-500';
+                        statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[9px] font-bold ml-2">เข้าศูนย์พักพิง</span>';
                     } else {
-                        // อพยพไปที่อื่น ใช้สีม่วงที่ตั้งเป็นค่าเริ่มต้นไว้
                         bgHeaderColor = 'bg-purple-500';
                     }
 
@@ -1739,7 +1771,7 @@ window.currentFilteredData = [];
                     <div class="relative flex flex-col items-center">
                         <div style="color: ${markerColor}; border-color: ${markerColor}" class="bg-white w-8 h-8 rounded-full flex items-center justify-center border-2 shadow-md text-sm z-10 relative">
                             <i class="fas ${iconClass}"></i>
-                            <span class="absolute -top-1.5 -right-1.5 ${status === 'ปลอดภัย' ? 'bg-emerald-500' : 'bg-rose-500'} text-white text-[8px] font-black min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm leading-none px-1">${count}</span>
+                            <span class="absolute -top-1.5 -right-1.5 ${status === 'ปลอดภัย' ? 'bg-emerald-500' : 'bg-blue-600'} text-white text-[8px] font-black min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm leading-none px-1">${count}</span>
                         </div>
                         <div style="border-top-color: ${markerColor}" class="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent mx-auto -mt-[1px] z-0"></div>
                     </div>
@@ -1751,13 +1783,24 @@ window.currentFilteredData = [];
 
                     const marker = L.marker([pos.lat, pos.lng], { icon: evacIcon });
 
-                    // 🌟 ซ่อนบรรทัด "ปลายทาง" ถ้าสถานะคือ "ปลอดภัย"
                     const destHtml = status === 'ปลอดภัย' ? '' : `
                 <p class="text-[11px] text-slate-600 flex items-start">
                     <span class="font-bold text-slate-500 w-16 shrink-0">ปลายทาง:</span> 
-                    <span><span class="font-bold text-slate-800">${destName}</span> <br><span class="text-[9px] text-slate-400">ประเภท: ${destType}</span></span>
+                    <span><span class="font-bold text-slate-800">${destName || 'ศูนย์พักพิง'}</span> <br><span class="text-[9px] text-slate-400">ประเภท: ${destType || 'ศูนย์'}</span></span>
                 </p>
             `;
+
+                    let shelterMembersHtml = '';
+                    if (shelterHouseData && shelterHouseData.members.length > 0) {
+                        shelterMembersHtml = `
+                            <div class="mt-2 pt-2 border-t border-slate-200">
+                                <p class="text-[10px] font-bold text-blue-700 mb-1"><i class="fas fa-campground mr-1"></i>ผู้อพยพเข้าพักพิงในศูนย์ (${shelterHouseData.count} คน):</p>
+                                <ul class="text-[11px] text-slate-700 space-y-0.5 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                    ${shelterHouseData.members.map(m => `<li>• <b>${m.name}</b> (${m.shelter || 'ศูนย์พักพิง'}) ${m.health !== 'ปกติ' ? `<span class="text-rose-600 font-bold">(${m.health})</span>` : ''}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
 
                     const popupHTML = `
                 <div class="w-full font-sans bg-white relative min-w-[200px]">
@@ -1778,6 +1821,7 @@ window.currentFilteredData = [];
                                 <span class="font-bold ${status === 'ปลอดภัย' ? 'text-emerald-600' : 'text-blue-600'}">${evacName}</span>
                             </p>
                             ${destHtml}
+                            ${shelterMembersHtml}
                             <p class="text-[11px] text-slate-600 flex items-start">
                                 <span class="font-bold text-slate-500 w-16 shrink-0">ผู้รายงาน:</span> 
                                 <span>${reporter}</span>
@@ -1787,7 +1831,6 @@ window.currentFilteredData = [];
                                 <span>${timestamp}</span>
                             </p>
                             
-                            <!-- 🌟 แสดงรายละเอียดความช่วยเหลือ/Note -->
                             <div class="mt-2 pt-2 border-t border-slate-200">
                                 <p class="text-[10px] font-bold text-slate-500 mb-1">รายละเอียด / ความช่วยเหลือ:</p>
                                 <p class="text-[11px] text-slate-700 bg-white p-2 rounded-lg border border-slate-200">${note}</p>
@@ -1801,13 +1844,89 @@ window.currentFilteredData = [];
                 }
             });
 
-            // --- 🌟 อัปเดตตัวเลขเข้าสู่การ์ดดีไซน์ใหม่ ---
+            // 2. เพิ่มหมุดบ้านที่มีผู้อพยพเข้าศูนย์พักพิง (store.evacuees) แต่ยังไม่มีในรายงานสถานะ
+            Object.entries(houseShelterMap).forEach(([address, houseData]) => {
+                if (!processedAddresses.has(address) && houseData.count > 0) {
+                    let pos = coordsMap[address];
+                    if (!pos && store.floodData && store.floodData.length > 1) {
+                        const matchedFloodRow = store.floodData.slice(1).find(r => (r[2] || '').toString().trim() === address || (r[1] || '').toString().trim() === address);
+                        if (matchedFloodRow && matchedFloodRow[7] && matchedFloodRow[8]) {
+                            const lat = parseFloat(matchedFloodRow[7]);
+                            const lng = parseFloat(matchedFloodRow[8]);
+                            if (!isNaN(lat) && !isNaN(lng)) pos = { lat, lng };
+                        }
+                    }
+
+                    evacHouseholds++;
+                    evacPeople += houseData.count;
+                    centerPeople += houseData.count;
+
+                    if (pos) {
+                        const markerColor = '#3b82f6';
+                        const iconClass = 'fa-campground';
+                        const bgHeaderColor = 'bg-blue-500';
+                        const statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[9px] font-bold ml-2">เข้าศูนย์พักพิง</span>';
+
+                        const evacIcon = L.divIcon({
+                            className: 'custom-evac-marker bg-transparent border-0',
+                            html: `
+                        <div class="relative flex flex-col items-center">
+                            <div style="color: ${markerColor}; border-color: ${markerColor}" class="bg-white w-8 h-8 rounded-full flex items-center justify-center border-2 shadow-md text-sm z-10 relative">
+                                <i class="fas ${iconClass}"></i>
+                                <span class="absolute -top-1.5 -right-1.5 bg-blue-600 text-white text-[8px] font-black min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm leading-none px-1">${houseData.count}</span>
+                            </div>
+                            <div style="border-top-color: ${markerColor}" class="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] border-l-transparent border-r-transparent mx-auto -mt-[1px] z-0"></div>
+                        </div>
+                    `,
+                            iconSize: [32, 38],
+                            iconAnchor: [16, 38],
+                            popupAnchor: [0, -38]
+                        });
+
+                        const marker = L.marker([pos.lat, pos.lng], { icon: evacIcon });
+
+                        const shelterNames = Array.from(houseData.shelters).join(', ') || 'ศูนย์พักพิง';
+
+                        const popupHTML = `
+                    <div class="w-full font-sans bg-white relative min-w-[200px]">
+                        <div class="${bgHeaderColor} p-3 flex justify-between items-center text-white relative overflow-hidden">
+                            <i class="fas ${iconClass} absolute -right-2 -bottom-2 text-5xl opacity-20 transform -rotate-12"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-lg border border-white/20 z-10 shadow-sm">
+                                <i class="fas fa-users mr-1"></i> เข้าพักพิงศูนย์ ${houseData.count} คน
+                            </span>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-black text-slate-800 text-[14px] leading-tight mb-2 flex items-center">
+                                ${address} ${statusBadge}
+                            </h4>
+                            
+                            <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 shadow-inner space-y-1.5">
+                                <p class="text-[11px] text-slate-600 flex items-start border-b border-slate-200 pb-1.5 mb-1.5">
+                                    <span class="font-bold text-slate-500 w-16 shrink-0">ศูนย์พักพิง:</span> 
+                                    <span class="font-bold text-blue-600">${shelterNames}</span>
+                                </p>
+                                <div class="mt-2 pt-1">
+                                    <p class="text-[10px] font-bold text-blue-700 mb-1"><i class="fas fa-campground mr-1"></i>รายชื่อผู้อพยพเข้าพักพิง:</p>
+                                    <ul class="text-[11px] text-slate-700 space-y-0.5 bg-blue-50 p-2 rounded-lg border border-blue-100">
+                                        ${houseData.members.map(m => `<li>• <b>${m.name}</b> (${m.shelter || 'ศูนย์พักพิง'}) ${m.health !== 'ปกติ' ? `<span class="text-rose-600 font-bold">(${m.health})</span>` : ''}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                        marker.bindPopup(popupHTML);
+                        evacMarkerLayer.addLayer(marker);
+                    }
+                }
+            });
+
+            // --- 🌟 อัปเดตตัวเลขเข้าสู่การ์ดสรุปสถานะการอพยพ ---
             if (document.getElementById('sumEvacTotal')) document.getElementById('sumEvacTotal').innerText = evacPeople.toLocaleString();
             if (document.getElementById('sumEvacHousehold')) document.getElementById('sumEvacHousehold').innerText = evacHouseholds.toLocaleString();
             if (document.getElementById('sumEvacCenter')) document.getElementById('sumEvacCenter').innerText = centerPeople.toLocaleString();
             if (document.getElementById('sumEvacOther')) document.getElementById('sumEvacOther').innerText = otherPeople.toLocaleString();
 
-            // อัปเดตตัวเลขการ์ดปลอดภัย
             if (document.getElementById('sumSafeTotal')) document.getElementById('sumSafeTotal').innerText = safePeople.toLocaleString();
             if (document.getElementById('sumSafeHousehold')) document.getElementById('sumSafeHousehold').innerText = safeHouseholds.toLocaleString();
         };
@@ -3090,6 +3209,7 @@ window.currentFilteredData = [];
                     const centerName = activeBtn ? activeBtn.getAttribute('data-center') : 'all';
                     if (typeof filterShelter === 'function') filterShelter(centerName);
                     if (typeof renderDashOneMapLayers === 'function') renderDashOneMapLayers();
+                    if (typeof window.loadEvacuationMarkers === 'function') window.loadEvacuationMarkers();
                 } else {
                     throw new Error(data.error || 'ไม่สามารถอัปเดตสถานะได้');
                 }
