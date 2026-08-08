@@ -130,3 +130,47 @@ function closeDataModal() {
         modal.classList.add('hidden');
     }
 }
+
+// ==========================================
+// 🚀 ระบบ Browser Storage Caching (TTL Support)
+// ==========================================
+window.setAppCache = function (key, data, ttlMinutes = 15) {
+    try {
+        const item = {
+            data: data,
+            expiry: Date.now() + (ttlMinutes * 60 * 1000)
+        };
+        localStorage.setItem(`flood_cache_${key}`, JSON.stringify(item));
+    } catch (e) {
+        console.warn("Storage Cache Write Error:", e);
+    }
+};
+
+window.getAppCache = function (key) {
+    try {
+        const itemStr = localStorage.getItem(`flood_cache_${key}`);
+        if (!itemStr) return null;
+        const item = JSON.parse(itemStr);
+        if (Date.now() > item.expiry) {
+            localStorage.removeItem(`flood_cache_${key}`);
+            return null;
+        }
+        return item.data;
+    } catch (e) {
+        console.warn("Storage Cache Read Error:", e);
+        return null;
+    }
+};
+
+window.clearAppCache = function (key) {
+    try {
+        if (key) {
+            localStorage.removeItem(`flood_cache_${key}`);
+        } else {
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('flood_cache_')) localStorage.removeItem(k);
+            });
+        }
+    } catch (e) { }
+};
+

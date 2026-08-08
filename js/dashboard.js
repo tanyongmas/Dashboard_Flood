@@ -8,6 +8,30 @@ let waterChartInstance = null;
 let currentZoneFilter = null;
 window.currentFilteredData = [];
 
+// 🗺️ One Map Global Declarations (Top-level to prevent TDZ error)
+let dashOneMap = null;
+let dashOsmLayer = null;
+let dashSatLayer = null;
+let dashDrawnItems = null;
+
+let dashLayers = {
+    water: null,
+    shelter: null,
+    relief: null,
+    evac: null,
+    flood: null,
+    polygon: null
+};
+
+let dashLayerStates = {
+    water: true,
+    shelter: true,
+    relief: true,
+    evac: true,
+    flood: true,
+    polygon: true
+};
+
 // ==========================================
         // ระบบตรวจสอบโหมดการใช้งานตอนโหลดหน้าเว็บ
         // ==========================================
@@ -77,7 +101,12 @@ window.currentFilteredData = [];
                     if (typeof setupUserInterface === 'function') setupUserInterface(userData);
                     if (typeof updateMenuByRole === 'function') updateMenuByRole();
 
-                    await loadData();
+                    // 🚀 โหลดข้อมูลหลัก, ระดับน้ำ RID และพยากรณ์อากาศพร้อมกันแบบขนาน (Parallel Fetching)
+                    await Promise.allSettled([
+                        loadData(),
+                        typeof loadRIDWaterLevel === 'function' ? loadRIDWaterLevel() : Promise.resolve(),
+                        typeof loadWeatherForecast === 'function' ? loadWeatherForecast() : Promise.resolve()
+                    ]);
 
                     let targetPage = 'water';
                     if (userRole === 'admin') targetPage = 'dashboard';
@@ -92,10 +121,12 @@ window.currentFilteredData = [];
                     localStorage.removeItem('user_session');
                 }
             } else {
-                // ถ้ายังไม่ได้เข้าสู่ระบบ ให้โหลดข้อมูลระดับน้ำและพยากรณ์อากาศล่วงหน้าตามลำดับ
+                // ถ้ายังไม่ได้เข้าสู่ระบบ ให้โหลดข้อมูลระดับน้ำและพยากรณ์อากาศแบบขนาน
                 try {
-                    if (typeof loadRIDWaterLevel === 'function') await loadRIDWaterLevel();
-                    if (typeof loadWeatherForecast === 'function') await loadWeatherForecast();
+                    await Promise.allSettled([
+                        typeof loadRIDWaterLevel === 'function' ? loadRIDWaterLevel() : Promise.resolve(),
+                        typeof loadWeatherForecast === 'function' ? loadWeatherForecast() : Promise.resolve()
+                    ]);
                 } catch (e) { console.warn(e); }
             }
 
@@ -317,8 +348,18 @@ window.currentFilteredData = [];
         }
         window.toggleDashboardSkeleton = toggleDashboardSkeleton;
 
-        async function loadData() {
+        async function loadData(forceRefresh = false) {
             toggleDashboardSkeleton(true);
+            const cacheKey = `initial_data_${currentPeriod || 'default'}`;
+
+            // 🚀 เช็ค Browser Cache ก่อน เพื่อเรนเดอร์ข้อมูลขึ้นมาทันที (Stale-While-Revalidate)
+            if (!forceRefresh && typeof window.getAppCache === 'function') {
+                const cachedData = window.getAppCache(cacheKey);
+                if (cachedData && cachedData.waterLevels) {
+                    store = cachedData;
+                }
+            }
+
             try {
                 const payload = { action: 'getInitialData' };
                 if (currentPeriod) {
@@ -348,11 +389,14 @@ window.currentFilteredData = [];
                         data = JSON.parse(text);
                     } catch (fallbackErr) {
                         console.error("GAS API Fallback Error:", text.substring(0, 150));
-                        toggleDashboardSkeleton(false);
+                        if (!store || !store.waterLevels) toggleDashboardSkeleton(false);
                         return;
                     }
                 }
                 store = data;
+                if (typeof window.setAppCache === 'function') {
+                    window.setAppCache(cacheKey, data, 3);
+                }
 
                 // อัปเดต Dropdown การเลือกปี/เดือน โดยเลือกช่วงเวลาปัจจุบันก่อนเสมอ
                 if (store.periods && store.periods.length > 0) {
@@ -360,7 +404,7 @@ window.currentFilteredData = [];
                     if (bestPeriod !== currentPeriod && !window._hasResolvedPeriodOnce) {
                         window._hasResolvedPeriodOnce = true;
                         currentPeriod = bestPeriod;
-                        await loadData();
+                        await loadData(true);
                         return;
                     }
                     window._hasResolvedPeriodOnce = true;
@@ -437,8 +481,8 @@ window.currentFilteredData = [];
                 }
 
                 // 6. ประมวลผลหน้าศูนย์พักพิง (สถิติ + กราฟวงกลม + รายชื่อ)
-                if (store.evacuees) {
-                    filterShelter('all');
+                if (store.evacuees && typeof window.filterShelter === 'function') {
+                    window.filterShelter('all');
                 }
 
                 // หลังจากโหลดข้อมูลหน้าอื่นๆ เสร็จหมดแล้ว ให้โหลดข้อมูลเข้าหน้าหลักด้วย
@@ -1965,28 +2009,7 @@ window.currentFilteredData = [];
         // ==========================================
         // 🗺️ ระบบ One Map แผนที่รวมสถานการณ์ภัยพิบัติ (Dashboard)
         // ==========================================
-        let dashOneMap = null;
-        let dashOsmLayer = null;
-        let dashSatLayer = null;
-        let dashDrawnItems = null;
-
-        let dashLayers = {
-            water: null,
-            shelter: null,
-            relief: null,
-            evac: null,
-            flood: null,
-            polygon: null
-        };
-
-        let dashLayerStates = {
-            water: true,
-            shelter: true,
-            relief: true,
-            evac: true,
-            flood: true,
-            polygon: true
-        };
+        // (ตัวแปร dashOneMap และเลเยอร์ประกาศไว้ด้านบนสุดของไฟล์แล้ว)
 
         function initDashOneMap() {
             if (dashOneMap) return;
@@ -5047,7 +5070,7 @@ window.currentFilteredData = [];
         //----------ฟังก์ชันโหลดข้อมูลจาก RID------------//
         //-------------------------------------------//
 
-        async function loadRIDWaterLevel() {
+        async function loadRIDWaterLevel(forceRefresh = false) {
             window.loadRIDWaterLevel = loadRIDWaterLevel;
             // 📌 Element สำหรับการ์ดขนาดใหญ่
             const levelEl = document.getElementById('rid_water_level');
@@ -5066,25 +5089,45 @@ window.currentFilteredData = [];
 
             if (!levelEl && !levelMiniEl) return;
 
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'getRIDData' })
-                });
+            let result = null;
 
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            // 🚀 ตรวจสอบ Browser Cache ก่อน หากยังไม่หมดอายุและไม่ได้ forceRefresh ให้ใช้แสดงผลทันที
+            if (!forceRefresh && typeof window.getAppCache === 'function') {
+                const cached = window.getAppCache('rid_data');
+                if (cached && cached.success && cached.data) {
+                    result = cached;
+                }
+            }
 
-                const text = await res.text();
-                let result;
+            if (!result) {
                 try {
-                    result = JSON.parse(text);
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'getRIDData' })
+                    });
+
+                    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+                    const text = await res.text();
+                    try {
+                        result = JSON.parse(text);
+                        if (result && result.success && result.data && typeof window.setAppCache === 'function') {
+                            window.setAppCache('rid_data', result, 5); // Cache 5 นาที
+                        }
+                    } catch (e) {
+                        console.error("RID Data response non-JSON:", text.substring(0, 100));
+                        return;
+                    }
                 } catch (e) {
-                    console.error("RID Data response non-JSON:", text.substring(0, 100));
+                    console.error("🚨 Connection Error:", e);
+                    if (levelEl) levelEl.innerText = "Error";
+                    if (levelMiniEl) levelMiniEl.innerText = "Error";
                     return;
                 }
+            }
 
-                if (result.success && result.data) {
+            if (result && result.success && result.data) {
                     if (levelEl) levelEl.innerText = result.data.level;
                     if (timeEl) timeEl.innerText = result.data.time;
 
@@ -5209,16 +5252,11 @@ window.currentFilteredData = [];
                         // 🟢 เปลี่ยนสีไอคอนเล็กเป็นสีเขียว
                         if (iconMiniBg) iconMiniBg.className = 'w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-400 to-green-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md';
                     }
-                } else {
+                } else if (result) {
                     console.error("❌ Error:", result.error);
                     if (statusEl) statusEl.innerText = "ข้อมูลไม่ถูกต้อง";
                     if (statusMiniEl) statusMiniEl.innerText = "ข้อมูลไม่ถูกต้อง";
                 }
-            } catch (e) {
-                console.error("🚨 Connection Error:", e);
-                if (levelEl) levelEl.innerText = "Error";
-                if (levelMiniEl) levelMiniEl.innerText = "Error";
-            }
         }
 
 
@@ -5226,29 +5264,55 @@ window.currentFilteredData = [];
         //----------ฟังก์ชันโหลดข้อมูลพยากรณ์อากาศ---------//
         //-------------------------------------------//
 
-        async function loadWeatherForecast() {
+        async function loadWeatherForecast(forceRefresh = false) {
             const listEl = document.getElementById('weather-forecast-list');
             const loadingEl = document.getElementById('weather-loading');
             if (!listEl) return;
 
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'getWeatherData' })
-                });
+            let result = null;
 
-                if (!res.ok) throw new Error("การร้องขอข้อมูลล้มเหลว");
-                const text = await res.text();
-                let result;
+            // 🚀 ตรวจสอบ Browser Cache ก่อน หากยังไม่หมดอายุและไม่ได้ forceRefresh ให้ใช้แสดงผลทันที
+            if (!forceRefresh && typeof window.getAppCache === 'function') {
+                const cached = window.getAppCache('weather_data');
+                if (cached && cached.success && cached.forecast) {
+                    result = cached;
+                }
+            }
+
+            if (!result) {
                 try {
-                    result = JSON.parse(text);
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'getWeatherData' })
+                    });
+
+                    if (!res.ok) throw new Error("การร้องขอข้อมูลล้มเหลว");
+                    const text = await res.text();
+                    try {
+                        result = JSON.parse(text);
+                        if (result && result.success && result.forecast && typeof window.setAppCache === 'function') {
+                            window.setAppCache('weather_data', result, 30); // Cache 30 นาที
+                        }
+                    } catch (e) {
+                        console.error("Weather Data response non-JSON:", text.substring(0, 100));
+                        return;
+                    }
                 } catch (e) {
-                    console.error("Weather Data response non-JSON:", text.substring(0, 100));
+                    console.error("🚨 Weather Forecast Load Error:", e);
+                    if (loadingEl) {
+                        loadingEl.innerHTML = `
+                            <div class="text-center py-4 text-slate-400">
+                                <i class="fas fa-exclamation-circle text-amber-500 mb-1"></i>
+                                <p class="text-xs">ไม่สามารถดึงข้อมูลพยากรณ์อากาศได้</p>
+                            </div>
+                        `;
+                    }
                     return;
                 }
+            }
 
-                if (result.success && result.forecast) {
+            if (result && result.success && result.forecast) {
                     if (loadingEl) loadingEl.classList.add('hidden');
                     listEl.classList.remove('hidden');
 
@@ -5327,21 +5391,18 @@ window.currentFilteredData = [];
                     </div>
                 `;
                     }).join('');
-                } else {
-                    throw new Error(result.error || "ไม่มีข้อมูลพยากรณ์อากาศ");
-                }
-            } catch (e) {
-                console.error("🚨 Weather Forecast Load Error:", e);
-                if (loadingEl) {
-                    loadingEl.innerHTML = `
+                } else if (result) {
+                    console.error("🚨 Weather Forecast Load Error:", result.error);
+                    if (loadingEl) {
+                        loadingEl.innerHTML = `
                 <div class="text-center text-red-500 p-4">
                     <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
                     <p class="text-xs font-bold">ไม่สามารถดึงข้อมูลสภาพอากาศได้</p>
-                    <p class="text-[10px] text-slate-400 mt-1">${e.message || e}</p>
+                    <p class="text-[10px] text-slate-400 mt-1">${result.error || ''}</p>
                 </div>
             `;
+                    }
                 }
-            }
         }
 
         function setWeatherMode(mode) {
