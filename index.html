@@ -379,7 +379,7 @@
 
                             <!-- ส่วนหัวข้อ: ไอคอน Gradient และข้อความ -->
                             <div
-                                class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10">
+                                class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 relative z-10">
                                 <div class="flex items-center gap-4">
                                     <div
                                         class="w-12 h-12 bg-gradient-to-tr from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg rotate-3 shrink-0">
@@ -401,8 +401,40 @@
                                 </div>
                             </div>
 
+                            <!-- 🤖 กล่องระบบ AI Hydrograph Analytics แนะนำการส่งเตือนภัย -->
+                            <div id="ai_line_recommendation_box"
+                                class="w-full mb-5 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white shadow-md border border-blue-400/30 relative overflow-hidden transition-all duration-500 z-10">
+                                <div class="flex flex-col sm:flex-row items-start gap-3 relative z-10">
+                                    <div id="ai_rec_icon_bg"
+                                        class="w-10 h-10 rounded-xl bg-indigo-500/30 border border-indigo-300/30 flex items-center justify-center text-indigo-300 text-lg shrink-0 shadow-inner">
+                                        <i class="fas fa-brain animate-pulse"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0 w-full">
+                                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                                            <div class="flex flex-wrap items-center gap-1.5">
+                                                <span
+                                                    class="text-[9px] font-black uppercase tracking-widest bg-indigo-500/30 text-indigo-200 px-2 py-0.5 rounded-md border border-indigo-400/30">
+                                                    <i class="fas fa-robot mr-1"></i>AI Hydrograph Analytics
+                                                </span>
+                                                <span id="ai_lag_time_badge"
+                                                    class="text-[9px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-400/30">
+                                                    <i class="fas fa-clock mr-1"></i>Lag Time 4–6 ชม.
+                                                </span>
+                                            </div>
+                                            <span id="ai_rec_action_badge"
+                                                class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/30">
+                                                🟢 สภาพการณ์ปกติ
+                                            </span>
+                                        </div>
+                                        <p id="ai_rec_message" class="text-xs font-semibold leading-relaxed text-slate-200 mt-1">
+                                            กำลังประมวลผลสถิติระยะเวลาเดินทางของมวลน้ำ (Lag Time) จากสถานี X.73A (บ้านบองอ) สู่เทศบาลตำบลตันหยงมัส...
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- กลุ่มปุ่มแบบ Outline พร้อมเอฟเฟกต์ Glow -->
-                            <div class="grid grid-cols-3 gap-4 relative z-10">
+                            <div class="grid grid-cols-3 gap-3 md:gap-4 relative z-10">
                                 <!-- ปุ่มปกติ (Outline เขียว) -->
                                 <button onclick="sendMessagingAPI('normal')"
                                     class="group flex flex-col items-center justify-center gap-2 py-3 border-2 border-green-500 text-green-600 rounded-2xl transition-all duration-300 hover:bg-green-500 hover:text-white hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] active:scale-95 bg-transparent overflow-hidden relative">
@@ -440,13 +472,13 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-0.05 md:gap-0.5 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
+                            <!-- กล่องสถานี X.73 (ปลายน้ำ - เทศบาลตำบลตันหยงมัส) -->
                             <div id="rid_card_mini"
                                 class="h-[120px] w-full flex items-center justify-between bg-emerald-50/40 rounded-2xl p-4 md:p-5 shadow-sm border border-emerald-100 relative overflow-hidden transition-all hover:shadow-md">
 
-                                <div
-                                    class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-500">
+                                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-500">
                                 </div>
 
                                 <div class="flex items-center gap-3 pl-2 md:gap-4 relative z-10 w-full min-w-0">
@@ -455,15 +487,12 @@
                                         <i class="fas fa-water"></i>
                                     </div>
                                     <div class="min-w-0 flex-1 pr-2">
-                                        <p
-                                            class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wide truncate">
-                                            สถานี X.73 กรมชลประทาน</p>
-                                        <h3
-                                            class="text-sm md:text-base font-black text-slate-700 leading-tight truncate">
+                                        <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wide truncate">
+                                            สถานี X.73 กรมชลประทาน (ปลายน้ำ)</p>
+                                        <h3 class="text-sm md:text-base font-black text-slate-700 leading-tight truncate">
                                             ระดับน้ำคลองตันหยงมัส</h3>
                                         <p class="text-[9px] text-slate-400 mt-1 flex items-center gap-1 truncate">
-                                            <i class="fas fa-sync-alt"></i> <span
-                                                id="rid_update_time_mini">กำลังเชื่อมต่อ...</span>
+                                            <i class="fas fa-sync-alt"></i> <span id="rid_update_time_mini">กำลังเชื่อมต่อ...</span>
                                         </p>
                                     </div>
                                 </div>
@@ -483,6 +512,51 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- กล่องสถานี X.73A (ต้นน้ำ - บ้านบองอ อ.ระแงะ แจ้งเตือนล่วงหน้า) -->
+                            <div id="rid_x73a_card_mini"
+                                class="h-[120px] w-full flex items-center justify-between bg-emerald-50/40 rounded-2xl p-4 md:p-5 shadow-sm border border-emerald-100 relative overflow-hidden transition-all hover:shadow-md">
+
+                                <div id="rid_x73a_sidebar_mini"
+                                    class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-green-500">
+                                </div>
+
+                                <div class="flex items-center gap-3 pl-2 md:gap-4 relative z-10 w-full min-w-0">
+                                    <div id="rid_x73a_icon_bg_mini"
+                                        class="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-400 to-green-500 text-white rounded-[1rem] flex items-center justify-center text-2xl md:text-3xl shrink-0 shadow-md">
+                                        <i class="fas fa-mountain"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pr-2">
+                                        <div class="flex items-center gap-1">
+                                            <p class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wide truncate">
+                                                สถานี X.73A กรมชลประทาน</p>
+                                            <span class="text-[8px] bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded-md font-extrabold shrink-0">เตือนล่วงหน้า</span>
+                                        </div>
+                                        <h3 class="text-sm md:text-base font-black text-slate-700 leading-tight truncate">
+                                            บ้านบองอ อ.ระแงะ</h3>
+                                        <p class="text-[9px] text-slate-400 mt-1 flex items-center gap-1 truncate">
+                                            <i class="fas fa-sync-alt"></i> <span id="rid_x73a_update_time_mini">กำลังเชื่อมต่อ...</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="text-right relative z-10 shrink-0">
+                                    <div class="flex items-baseline justify-end gap-1">
+                                        <span id="rid_x73a_water_level_mini"
+                                            class="text-2xl md:text-3xl font-black text-emerald-600 tracking-tight">--.--</span>
+                                        <span class="text-[10px] md:text-xs font-bold text-slate-400">ม.รทก.</span>
+                                    </div>
+                                    <div class="mt-0.5 flex items-center justify-end gap-1.5">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500" id="rid_x73a_status_dot_mini">
+                                        </div>
+                                        <p id="rid_x73a_water_status_mini"
+                                            class="text-[10px] md:text-xs font-bold text-emerald-600">
+                                            รอข้อมูล</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
 
                             <a href="Rainfall.html"
                                 class="h-[100px] w-full flex items-center justify-between bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-sky-300 transition-all duration-300 group relative overflow-hidden cursor-pointer">
