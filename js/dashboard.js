@@ -2427,13 +2427,102 @@ let dashLayerStates = {
                 });
             }
 
+            function getReliefCoordinates(address, coordsMap) {
+                if (!address) return null;
+                const cleanAddress = address.toString().trim();
+
+                // 1. ลองจับคู่แบบตรงตัวกับ coordsMap (Exact Match)
+                if (coordsMap[cleanAddress]) {
+                    return { ...coordsMap[cleanAddress], matchType: 'exact' };
+                }
+
+                // สกัดคอมโพเนนต์ที่อยู่ (เลขที่บ้าน + ชื่อถนน)
+                const { houseNo, streetName, normalized } = typeof window.extractAddressComponents === 'function'
+                    ? window.extractAddressComponents(cleanAddress)
+                    : { houseNo: '', streetName: '', normalized: cleanAddress };
+
+                const compactInput = normalized.replace(/\s+/g, '');
+
+                // 2. ลองเปรียบเทียบ "เลขที่บ้าน + ชื่อถนน" กับชีท addressEvac
+                if (houseNo && streetName) {
+                    let bestHouseKey = null;
+                    for (const key of Object.keys(coordsMap)) {
+                        const keyNorm = typeof window.normalizeThaiAddress === 'function' ? window.normalizeThaiAddress(key) : key;
+                        const keyCompact = keyNorm.replace(/\s+/g, '');
+                        // ตรวจสอบว่าในที่อยู่ของ addressEvac มีทั้งเลขที่บ้านและชื่อถนนตรงกัน
+                        if (keyNorm.includes(houseNo) && (keyNorm.includes(streetName) || keyCompact.includes(streetName.replace(/\s+/g, '')))) {
+                            bestHouseKey = key;
+                            break;
+                        }
+                    }
+                    if (bestHouseKey && coordsMap[bestHouseKey]) {
+                        const offsetLat = (Math.random() - 0.5) * 0.0001; // Offset ขนาดเล็กมากสำหรับบ้านเลขที่ตรงกัน
+                        const offsetLng = (Math.random() - 0.5) * 0.0001;
+                        return {
+                            lat: coordsMap[bestHouseKey].lat + offsetLat,
+                            lng: coordsMap[bestHouseKey].lng + offsetLng,
+                            matchType: 'exact_house'
+                        };
+                    }
+                }
+
+                // 3. ลองจับคู่ชื่อถนน/ชุมชนกับชีท addressEvac
+                let bestMatchKey = null;
+                let maxMatchLength = 0;
+
+                for (const [key, pos] of Object.entries(coordsMap)) {
+                    const normalizedKey = typeof window.normalizeThaiAddress === 'function'
+                        ? window.normalizeThaiAddress(key)
+                        : key;
+                    const compactKey = normalizedKey.replace(/\s+/g, '');
+
+                    if (normalized.includes(normalizedKey) || compactInput.includes(compactKey)) {
+                        if (compactKey.length > maxMatchLength) {
+                            maxMatchLength = compactKey.length;
+                            bestMatchKey = key;
+                        }
+                    }
+                }
+
+                if (bestMatchKey && coordsMap[bestMatchKey]) {
+                    const offsetLat = (Math.random() - 0.5) * 0.0004;
+                    const offsetLng = (Math.random() - 0.5) * 0.0004;
+                    return {
+                        lat: coordsMap[bestMatchKey].lat + offsetLat,
+                        lng: coordsMap[bestMatchKey].lng + offsetLng,
+                        matchType: 'street'
+                    };
+                }
+
+                // 4. หากสกัดชื่อถนนได้จาก ZONE_RULES ให้ใช้พิกัดของถนนนั้นใน coordsMap
+                if (streetName) {
+                    for (const [key, pos] of Object.entries(coordsMap)) {
+                        const normKey = typeof window.normalizeThaiAddress === 'function' ? window.normalizeThaiAddress(key) : key;
+                        if (normKey.includes(streetName) || streetName.includes(normKey)) {
+                            const offsetLat = (Math.random() - 0.5) * 0.0004;
+                            const offsetLng = (Math.random() - 0.5) * 0.0004;
+                            return {
+                                lat: pos.lat + offsetLat,
+                                lng: pos.lng + offsetLng,
+                                matchType: 'zone_street'
+                            };
+                        }
+                    }
+                }
+
+                // 5. Fallback: หากไม่พบชื่อถนนเลย ให้ใช้พิกัดศูนย์กลางเทศบาลตำบลตันหยงมัส ป้องกันหมุดหาย
+                const defaultLat = 6.29445 + ((Math.random() - 0.5) * 0.0006);
+                const defaultLng = 101.72362 + ((Math.random() - 0.5) * 0.0006);
+                return { lat: defaultLat, lng: defaultLng, matchType: 'fallback' };
+            }
+
             if (store.reliefData && store.reliefData.length > 0) {
                 store.reliefData.forEach(r => {
                     const name = r[1] || 'ผู้รับถุงยังชีพ';
                     const status = r[2] || 'ปกติ';
                     const members = r[3] || 1;
                     const address = r[4] ? r[4].toString().trim() : '';
-                    const pos = coordsMap[address];
+                    const pos = getReliefCoordinates(address, coordsMap);
 
                     if (pos) {
                         const icon = L.divIcon({
@@ -2451,6 +2540,15 @@ let dashLayerStates = {
                             popupAnchor: [0, -46]
                         });
 
+                        let matchBadgeHTML = '';
+                        if (pos.matchType === 'exact_house') {
+                            matchBadgeHTML = `<div class="mt-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full inline-block border border-emerald-200"><i class="fas fa-home mr-1"></i>ตรงกับบ้านเลขที่ในชีท addressEvac</div>`;
+                        } else if (pos.matchType === 'street' || pos.matchType === 'zone_street') {
+                            matchBadgeHTML = `<div class="mt-1 text-[9px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full inline-block border border-sky-200"><i class="fas fa-road mr-1"></i>ตรงกับพิกัดถนนในเทศบาล</div>`;
+                        } else if (pos.matchType === 'fallback') {
+                            matchBadgeHTML = `<div class="mt-1 text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full inline-block border border-amber-200"><i class="fas fa-location-crosshairs mr-1"></i>พิกัดโดยประมาณ (ไม่พบถนนในเทศบาล)</div>`;
+                        }
+
                         const popup = `
                             <div class="font-sans p-2">
                                 <div class="border-b pb-1 mb-1 font-black text-xs text-amber-700">
@@ -2459,6 +2557,7 @@ let dashLayerStates = {
                                 <p class="text-xs font-bold text-slate-800">${name}</p>
                                 <p class="text-[11px] text-slate-600 mt-1">ที่อยู่: ${address}</p>
                                 <p class="text-[10px] text-slate-500">จำนวนสมาชิก: ${members} คน | สถานะ: ${status}</p>
+                                ${matchBadgeHTML}
                             </div>
                         `;
 
