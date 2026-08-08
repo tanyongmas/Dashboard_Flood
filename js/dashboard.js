@@ -3775,27 +3775,55 @@ let dashLayerStates = {
             }
         };
 
+        // ฟังก์ชันดึงประวัติที่อยู่จากชีททั้งหมดในระบบ (Address_Evacuation, Addresses, Flood_DATA, Relief)
+        window.getEvacAddressList = function () {
+            if (typeof store === 'undefined' || !store) return [];
+
+            const evacAddrs = (store.addressEvac && Array.isArray(store.addressEvac))
+                ? store.addressEvac.map(row => row[0] ? row[0].toString().trim() : '').filter(a => a !== '')
+                : [];
+
+            const regisAddrs = (store.addresses && Array.isArray(store.addresses))
+                ? store.addresses.map(a => a ? a.toString().trim() : '').filter(a => a !== '')
+                : [];
+
+            const floodAddrs = (store.floodData && Array.isArray(store.floodData))
+                ? store.floodData.map(row => row[2] ? row[2].toString().trim() : (row[1] ? row[1].toString().trim() : '')).filter(a => a !== '')
+                : [];
+
+            const reliefAddrs = (store.reliefData && Array.isArray(store.reliefData))
+                ? store.reliefData.map(r => r[4] ? r[4].toString().trim() : '').filter(a => a !== '')
+                : [];
+
+            return [...new Set([...evacAddrs, ...regisAddrs, ...floodAddrs, ...reliefAddrs])].filter(a => a !== '').sort();
+        };
+
         // ฟังก์ชันค้นหาที่อยู่ (Autocomplete)
         window.handleEvacAddressSearch = function (val) {
             const resultBox = document.getElementById('swal_evac_addr_results');
             if (!resultBox) return;
 
-            if (val.length < 1) {
+            if (!val || val.trim().length < 1) {
                 resultBox.classList.add('hidden');
                 return;
             }
 
-            const filtered = window.evacAddressList.filter(a => a.toLowerCase().includes(val.toLowerCase())).slice(0, 10);
+            if (!window.evacAddressList || window.evacAddressList.length === 0) {
+                window.evacAddressList = getEvacAddressList();
+            }
+
+            const searchVal = val.toLowerCase().trim();
+            const filtered = window.evacAddressList.filter(a => a.toLowerCase().includes(searchVal)).slice(0, 15);
 
             if (filtered.length > 0) {
                 let html = '';
                 filtered.forEach(addr => {
-                    html += `<div onclick='selectEvacAddress(${JSON.stringify(addr)})' class="p-3 hover:bg-orange-100 cursor-pointer border-b text-sm text-slate-700">${addr}</div>`;
+                    html += `<div onclick='selectEvacAddress(${JSON.stringify(addr)})' class="p-3 hover:bg-orange-100 cursor-pointer border-b border-slate-100 text-sm text-slate-700 transition-colors flex items-center justify-between"><span class="font-medium">${addr}</span><i class="fas fa-chevron-right text-[10px] text-orange-400"></i></div>`;
                 });
                 resultBox.innerHTML = html;
                 resultBox.classList.remove('hidden');
             } else {
-                resultBox.innerHTML = '<div class="p-3 text-xs text-rose-500">ไม่พบที่อยู่นี้ กรุณาเลือก "ระบุที่อยู่อื่นๆ" ด้านล่าง</div>';
+                resultBox.innerHTML = '<div class="p-3 text-xs text-orange-600 font-bold bg-orange-50 flex items-center"><i class="fas fa-info-circle mr-2"></i>ไม่พบที่อยู่นี้ในระบบ (สามารถเลือก "ระบุที่อยู่อื่นๆ" ด้านล่างได้)</div>';
                 resultBox.classList.remove('hidden');
             }
         };
@@ -4985,7 +5013,7 @@ let dashLayerStates = {
         };
         // 🌟 2. อัปเดตฟังก์ชันฟอร์ม: ให้รับพารามิเตอร์ status
         window.openEvacReportModal = function (status = 'อพยพ') {
-            window.evacAddressList = (typeof store !== 'undefined' && store.addressEvac) ? store.addressEvac.map(row => row[0]).filter(a => a && a.toString().trim() !== '') : [];
+            window.evacAddressList = (typeof getEvacAddressList === 'function') ? getEvacAddressList() : [];
 
             const shelters = ["ศูนย์เทศบาลตำบลตันหยงมัส/บาลูกา", "ศูนย์มัสยิดตันหยงมัส", "ศูนย์โรงเรียนบ้านเขาพระ"];
             const shelterOptions = shelters.map(s => `<option value="${s}">${s}</option>`).join('');
